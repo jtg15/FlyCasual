@@ -27,6 +27,21 @@ namespace Abilities.SecondEdition
 {
     public class AdvancedSlamAbility : Abilities.FirstEdition.AdvancedSlamAbility
     {
+        protected override void CheckSlamAction(GenericAction action)
+        {
+            if (action is SlamAction)
+            {
+                if (HostShip.IsBumped)
+                {
+                    Messages.ShowErrorToHuman("SLAM maneuver overlapped another ship, Advanced SLAM action is skipped");
+                }
+                else
+                {
+                    RegisterTrigger();
+                }
+            }
+        }
+
         protected override void PerfromFreeActionFromUpgradeBar(object sender, EventArgs e)
         {
             List<GenericAction> actions = HostShip.GetAvailableActions();
@@ -35,7 +50,13 @@ namespace Abilities.SecondEdition
                 .Select(n => n.AsRedAction)
                 .ToList();
 
-            Selection.ThisShip.AskPerformFreeAction(whiteActionBarActionsAsRed, Triggers.FinishTrigger);
+            Selection.ThisShip.AskPerformFreeAction(
+                whiteActionBarActionsAsRed,
+                Triggers.FinishTrigger,
+                HostUpgrade.UpgradeInfo.Name,
+                "After you perform a SLAM action, if you fully executed the maneuver, you may perform a white action on your action bar, treating that action as red",
+                HostUpgrade
+            );
         }
     }
 }

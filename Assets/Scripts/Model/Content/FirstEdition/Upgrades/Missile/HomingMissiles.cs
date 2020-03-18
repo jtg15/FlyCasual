@@ -71,7 +71,7 @@ namespace Abilities.FirstEdition
         {
             if (action.TokensSpend.Contains(typeof(EvadeToken)))
             {
-                Messages.ShowErrorToHuman("Homing Missiles: Cannot spend evade");
+                Messages.ShowErrorToHuman("Homing Missiles: The defender cannot spend evade tokens");
                 canBeUsed = false;
             }
         }
@@ -93,7 +93,7 @@ namespace Conditions
     {
         public HomingMissilesCondition(GenericShip host) : base(host)
         {
-            Name = "Debuff Token";
+            Name = ImageName = "Debuff Token";
             Temporary = false;
             Tooltip = new UpgradesList.FirstEdition.HomingMissiles().ImageUrl;
         }

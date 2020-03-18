@@ -15,12 +15,13 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Chewbacca",
                     4,
-                    72,
+                    63,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.ChewbaccaPilotAbility),
-                    extraUpgradeIcon: UpgradeType.Talent //,
-                                                         //seImageNumber: 69
+                    extraUpgradeIcon: UpgradeType.Talent
                 );
+
+                PilotNameCanonical = "chewbacca-scavengedyt1300";
 
                 ImageUrl = "https://sb-cdn.fantasyflightgames.com/card_images/en/422fc30e0e10445e80b304ef2d96dc06.png";
             }
@@ -36,12 +37,12 @@ namespace Abilities.SecondEdition
         private bool performedRegularAttack;
         public override void ActivateAbility()
         {
-            GenericShip.OnDestroyedGlobal += RegisterOnDestroyedFriendly;
+            GenericShip.OnShipIsDestroyedGlobal += RegisterOnDestroyedFriendly;
         }
 
         public override void DeactivateAbility()
         {
-            GenericShip.OnDestroyedGlobal -= RegisterOnDestroyedFriendly;
+            GenericShip.OnShipIsDestroyedGlobal -= RegisterOnDestroyedFriendly;
         }
 
         protected void RegisterOnDestroyedFriendly(GenericShip ship, bool isFled)
@@ -54,19 +55,26 @@ namespace Abilities.SecondEdition
 
         private void PerformAction(object sender, System.EventArgs e)
         {
-            Messages.ShowInfoToHuman("Chewbacca: a friendly ship was destroyed you may to perform an action");
-
             selectedShip = Selection.ThisShip;
             selectedShip.OnCombatCheckExtraAttack += StartBonusAttack;
             Roster.HighlightPlayer(HostShip.Owner.PlayerNo);
             Selection.ChangeActiveShip(HostShip);
             performedRegularAttack = HostShip.IsAttackPerformed;
             List<GenericAction> actions = Selection.ThisShip.GetAvailableActions();
-            HostShip.AskPerformFreeAction(actions, delegate {
-                Roster.HighlightPlayer(selectedShip.Owner.PlayerNo);
-                Selection.ChangeActiveShip(selectedShip);
-                Triggers.FinishTrigger();
-            });
+
+            CameraScript.RestoreCamera();
+
+            HostShip.AskPerformFreeAction(
+                actions, 
+                delegate {
+                    Roster.HighlightPlayer(selectedShip.Owner.PlayerNo);
+                    Selection.ChangeActiveShip(selectedShip);
+                    Triggers.FinishTrigger();
+                },
+                HostShip.PilotInfo.PilotName,
+                "After a friendly ship at range 0-3 is destroyed, you may perform an action",
+                HostShip
+            );
         }
 
         private void StartBonusAttack(GenericShip ship)
@@ -77,17 +85,11 @@ namespace Abilities.SecondEdition
 
         private void RegisterBonusAttack(object sender, System.EventArgs e)
         {
-            if (HostShip.IsDestroyed)
-            {
-                Triggers.FinishTrigger();
-                return;
-            }
-
             if (!HostShip.IsCannotAttackSecondTime)
             {
                 HostShip.IsCannotAttackSecondTime = true;
 
-                Combat.StartAdditionalAttack(
+                Combat.StartSelectAttackTarget(
                         HostShip,
                         CleanupBonusAttack,
                         null,
@@ -107,6 +109,8 @@ namespace Abilities.SecondEdition
         {
             // Restore previous value of "is already attacked" flag
             HostShip.IsAttackPerformed = performedRegularAttack;
+            //if bonus attack was skipped, allow bonus attacks again
+            if (HostShip.IsAttackSkipped) HostShip.IsCannotAttackSecondTime = false;
             Triggers.FinishTrigger();
         }
     }

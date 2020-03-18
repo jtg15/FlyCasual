@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using System.Linq;
 using GameModes;
 using GameCommands;
+using Actions;
 
 namespace SubPhases
 {
@@ -16,7 +17,7 @@ namespace SubPhases
         public EventHandler Effect { get; private set; }
         public string Tooltip { get; private set; }
         public int Count { get; private set; }
-        public bool IsRed { get; private set; }
+        public ActionColor Color { get; private set; }
         public bool IsCentered { get; private set; }
 
         public bool HasTooltip
@@ -24,13 +25,13 @@ namespace SubPhases
             get { return Tooltip != null; }
         }
 
-        public Decision(string name, EventHandler effect, string tooltip = null, int count = -1, bool isRed = false, bool isCentered = false)
+        public Decision(string name, EventHandler effect, string tooltip = null, int count = -1, ActionColor color = ActionColor.White, bool isCentered = false)
         {
             Name = name;
             Effect = effect;
             Tooltip = tooltip;
             Count = count;
-            IsRed = isRed;
+            Color = color;
             IsCentered = isCentered;
         }
 
@@ -59,11 +60,18 @@ namespace SubPhases
 
     public class DecisionSubPhase : GenericSubPhase
     {
-        public override List<GameCommandTypes> AllowedGameCommandTypes { get { return new List<GameCommandTypes>() { GameCommandTypes.Decision, GameCommandTypes.PressSkip, GameCommandTypes.AssignManeuver }; } }
+        public override List<GameCommandTypes> AllowedGameCommandTypes {
+            get {
+                return new List<GameCommandTypes>() {
+                    GameCommandTypes.Decision,
+                    GameCommandTypes.PressSkip,
+                    GameCommandTypes.PressNext
+                };
+            }
+        }
 
-        private GameObject decisionPanel;
-        private GameObject buttonsHolder;
-        public string InfoText;
+        private GameObject DecisionPanel;
+        private GameObject ButtonsHolder;
         protected List<Decision> decisions = new List<Decision>();
         public string DefaultDecisionName;
         public Players.GenericPlayer DecisionOwner;
@@ -71,22 +79,17 @@ namespace SubPhases
         public DecisionViewTypes DecisionViewType = DecisionViewTypes.TextButtons;
         public Action OnSkipButtonIsPressed;
         public Action OnSkipButtonIsPressedOverwrite;
+        public Action OnNextButtonIsPressed;
         public bool WasDecisionButtonPressed;
         public bool IsForced;
         public bool DecisionWasPreparedAndShown;
         public Vector2 ImagesDamageCardSize = new Vector2(194, 300);
-
-        private const float defaultWindowHeight = 75*1.5f;
-        private const float buttonHeight = 45*1.5f;
 
         public override void Start()
         {
             base.Start();
 
             IsTemporary = true;
-
-            decisionPanel = GameObject.Find("UI").transform.Find("DecisionsPanel").gameObject;
-            buttonsHolder = decisionPanel.transform.Find("Center/DecisionsPanel").gameObject;
 
             PrepareDecision(StartIsFinished);
         }
@@ -110,7 +113,7 @@ namespace SubPhases
             }
         }
 
-        public string AddDecision(string name, EventHandler call, string tooltip = null, int count = -1, bool isRed = false, bool isCentered = false)
+        public string AddDecision(string name, EventHandler call, string tooltip = null, int count = -1, ActionColor color = ActionColor.White, bool isCentered = false)
         {
             int counter = 2;
             string newName = name;
@@ -118,7 +121,7 @@ namespace SubPhases
             {
                 newName = name + " #" + counter++;
             }
-            decisions.Add(new Decision(newName, call, tooltip, count, isRed, isCentered));
+            decisions.Add(new Decision(newName, call, tooltip, count, color, isCentered));
 
             return newName;
         }
@@ -183,9 +186,18 @@ namespace SubPhases
 
         public override void Initialize()
         {
+            DecisionPanel = GameObject.Instantiate<GameObject>(Resources.Load<GameObject>("Prefabs/UI/DecisionsPanel"), GameObject.Find("UI/DecisionPanelHolder").transform);
+            DecisionPanel.name = "DecisionsPanel";
+            ButtonsHolder = DecisionPanel.transform.Find("Center/DecisionsPanel").gameObject;
+
+            if (DescriptionShort != null) ShowDecisionDescription(DescriptionShort, DescriptionLong, ImageSource);
+
+            float defaultWindowHeight = (DescriptionLong != null) ? 190f : 70f;
+            float buttonHeight = 70f;
+
             if (decisions.Count != 0)
             {
-                decisionPanel.transform.Find("InformationPanel").GetComponentInChildren<Text>().text = InfoText;
+                if (DescriptionLong == null) DecisionPanel.transform.Find("DescriptionHolder/Description").GetComponentInChildren<Text>().text = DescriptionShort;
 
                 int i = 0;
                 int rowsUsed = 0;
@@ -208,7 +220,7 @@ namespace SubPhases
                             break;
                     }
 
-                    GameObject button = MonoBehaviour.Instantiate(prefab, buttonsHolder.transform);
+                    GameObject button = MonoBehaviour.Instantiate(prefab, ButtonsHolder.transform);
                     SmallCardPanel script = null;
 
                     switch (DecisionViewType)
@@ -216,9 +228,10 @@ namespace SubPhases
                         case DecisionViewTypes.TextButtons:
                             if (!decision.IsCentered)
                             {
-                                float offsetX = (currentColumn == 1) ? 7.5f : 300;
-                                
-                                button.transform.localPosition = new Vector3(offsetX, -buttonHeight * rowsUsed, 0);
+                                float offsetX = (currentColumn == 1) ? 7.5f : 350;
+
+                                button.transform.localPosition = new Vector3(offsetX, -(buttonHeight + 5)* rowsUsed, 0);
+                                button.GetComponent<RectTransform>().sizeDelta = new Vector2(335, 67.5f);
 
                                 if (currentColumn == 1)
                                 {
@@ -232,14 +245,29 @@ namespace SubPhases
                             }
                             else
                             {
-                                button.transform.localPosition = new Vector3(105 * 1.5f, -buttonHeight * rowsUsed, 0);
+                                button.transform.localPosition = new Vector3(182.5f, -(buttonHeight + 5) * rowsUsed, 0);
+                                button.GetComponent<RectTransform>().sizeDelta = new Vector2(335, 67.5f);
 
                                 rowsUsed++;
                                 currentColumn = 1;
                             }
 
                             button.GetComponentInChildren<Text>().text = decision.Name;
-                            button.GetComponentInChildren<Text>().color = (decision.IsRed) ? Color.red : Color.white;
+
+                            switch (decision.Color)
+                            {
+                                case ActionColor.White:
+                                    button.GetComponentInChildren<Text>().color = Color.white;
+                                    break;
+                                case ActionColor.Red:
+                                    button.GetComponentInChildren<Text>().color = Color.red;
+                                    break;
+                                case ActionColor.Purple:
+                                    button.GetComponentInChildren<Text>().color = new Color(128, 0, 128);
+                                    break;
+                                default:
+                                    break;
+                            }
 
                             if (decision.HasTooltip)
                             {
@@ -272,7 +300,14 @@ namespace SubPhases
 
                             break;
                         case DecisionViewTypes.ImagesDamageCard:
-                            button.transform.localPosition = new Vector3(15 * (i + 1) + i * ImagesDamageCardSize.x, 0, 0);
+
+                            if (currentColumn == 6)
+                            {
+                                currentColumn = 1;
+                                rowsUsed++;
+                            }
+
+                            button.transform.localPosition = new Vector3(15 * (currentColumn) + (currentColumn-1) * ImagesDamageCardSize.x, rowsUsed * -ImagesDamageCardSize.y - 15 * rowsUsed, 0);
 
                             script = button.GetComponent<SmallCardPanel>();
                             script.Initialize(
@@ -285,6 +320,8 @@ namespace SubPhases
                                 DecisionViewTypes.ImagesDamageCard,
                                 decision.Count
                             );
+
+                            currentColumn++;
 
                             break;
                         default:
@@ -299,42 +336,47 @@ namespace SubPhases
                 {
                     case DecisionViewTypes.TextButtons:
                         if (currentColumn == 2) rowsUsed++;
-                        decisionPanel.GetComponent<RectTransform>().sizeDelta = new Vector3(
-                            395*1.5f,
-                            defaultWindowHeight + rowsUsed * buttonHeight
+                        DecisionPanel.GetComponent<RectTransform>().sizeDelta = new Vector3(
+                            700f,
+                            defaultWindowHeight + rowsUsed * (buttonHeight + 5)
                         );
-                        buttonsHolder.GetComponent<RectTransform>().sizeDelta = new Vector3(
-                            395*1.5f,
-                            defaultWindowHeight + rowsUsed * buttonHeight
+                        ButtonsHolder.GetComponent<RectTransform>().sizeDelta = new Vector3(
+                            700f,
+                            defaultWindowHeight + rowsUsed * (buttonHeight + 5)
                         );
                         break;
                     case DecisionViewTypes.ImagesUpgrade:
-                        decisionPanel.GetComponent<RectTransform>().sizeDelta = new Vector3(
-                            Mathf.Max(395 * 1.5f, decisions.Count * Editions.Edition.Current.UpgradeCardSize.x + (decisions.Count + 1) * 15),
+                        DecisionPanel.GetComponent<RectTransform>().sizeDelta = new Vector3(
+                            Mathf.Max(700f, decisions.Count * Editions.Edition.Current.UpgradeCardSize.x + (decisions.Count + 1) * 15),
                             defaultWindowHeight + Editions.Edition.Current.UpgradeCardSize.y + 15
                         );
-                        buttonsHolder.GetComponent<RectTransform>().sizeDelta = new Vector3(
+                        ButtonsHolder.GetComponent<RectTransform>().sizeDelta = new Vector3(
                             decisions.Count * Editions.Edition.Current.UpgradeCardSize.x + (decisions.Count + 1) * 15,
                             defaultWindowHeight + Editions.Edition.Current.UpgradeCardSize.y + 15
                         );
                         break;
                     case DecisionViewTypes.ImagesDamageCard:
-                        decisionPanel.GetComponent<RectTransform>().sizeDelta = new Vector3(
-                            Mathf.Max(395 * 1.5f, decisions.Count * ImagesDamageCardSize.x + (decisions.Count + 1) * 15),
-                            defaultWindowHeight + ImagesDamageCardSize.y + 10
+                        DecisionPanel.GetComponent<RectTransform>().sizeDelta = new Vector3(
+                            Mathf.Max(700f, Mathf.Min(decisions.Count, 5) * ImagesDamageCardSize.x + (Mathf.Min(decisions.Count, 5) + 1) * 15),
+                            defaultWindowHeight + ImagesDamageCardSize.y * (rowsUsed + 1) + 10 * (rowsUsed + 1)
                         );
-                        buttonsHolder.GetComponent<RectTransform>().sizeDelta = new Vector3(
-                            decisions.Count * ImagesDamageCardSize.x + (decisions.Count + 1) * 15,
-                            defaultWindowHeight + ImagesDamageCardSize.y + 15
+                        ButtonsHolder.GetComponent<RectTransform>().sizeDelta = new Vector3(
+                            Mathf.Min(decisions.Count, 5) * ImagesDamageCardSize.x + (Mathf.Min(decisions.Count, 5) + 1) * 15,
+                            defaultWindowHeight + ImagesDamageCardSize.y * (rowsUsed + 1) + 15 * (rowsUsed + 1)
                         );
                         break;
                     default:
                         break;
                 }
 
-                buttonsHolder.transform.localPosition = new Vector2(-buttonsHolder.GetComponent<RectTransform>().sizeDelta.x / 2, -105);
+                ButtonsHolder.transform.localPosition = new Vector2(-ButtonsHolder.GetComponent<RectTransform>().sizeDelta.x / 2, -185);
 
-                if (DecisionOwner == null) DecisionOwner = Roster.GetPlayer(Phases.CurrentPhasePlayer);
+                if (DecisionOwner == null)
+                {
+                    DecisionOwner = Roster.GetPlayer(Phases.CurrentPhasePlayer);
+                }
+                RequiredPlayer = DecisionOwner.PlayerNo;
+                Roster.HighlightPlayer(RequiredPlayer);
 
                 if (ShowSkipButton) UI.ShowSkipButton(); else UI.HideSkipButton();
             }
@@ -368,6 +410,12 @@ namespace SubPhases
             PrepareDecision(StartIsFinished);
         }
 
+        public static void ResetInput()
+        {
+            (Phases.CurrentSubPhase as DecisionSubPhase).WasDecisionButtonPressed = false;
+            (Phases.CurrentSubPhase as DecisionSubPhase).IsReadyForCommands = true;
+        }
+
         public override void Next()
         {
             HideDecisionWindowUI();
@@ -375,19 +423,14 @@ namespace SubPhases
             UpdateHelpInfo();
         }
 
+        public override void NextButton()
+        {
+            OnNextButtonIsPressed();
+        }
+
         protected void HideDecisionWindowUI()
         {
-            decisions = new List<Decision>();
-
-            if (decisionPanel != null) decisionPanel.gameObject.SetActive(false);
-
-            if (buttonsHolder != null)
-            {
-                foreach (Transform button in buttonsHolder.transform)
-                {
-                    MonoBehaviour.Destroy(button.gameObject);
-                }
-            }
+            GameObject.Destroy(DecisionPanel);
         }
 
         public override bool ThisShipCanBeSelected(Ship.GenericShip ship, int mouseKeyIsPressed)
@@ -431,7 +474,7 @@ namespace SubPhases
             }
             else
             {
-                if (OnSkipButtonIsPressed != null) OnSkipButtonIsPressed();
+                OnSkipButtonIsPressed?.Invoke();
                 ConfirmDecision();
             }
         }
@@ -439,7 +482,34 @@ namespace SubPhases
         public void ShowDecisionWindowUI()
         {
             WasDecisionButtonPressed = false;
-            GameObject.Find("UI").transform.Find("DecisionsPanel").gameObject.SetActive(true);
+            GameObject.Find("UI/DecisionPanelHolder").transform.Find("DecisionsPanel").gameObject.SetActive(true);
+        }
+
+        public void ShowDecisionDescription(string title, string description, IImageHolder imageSource = null)
+        {
+            if (title != null)
+            {
+                DecisionPanel.transform.Find("AbilityName").GetComponent<Text>().text = title;
+
+                if (DescriptionLong != null)
+                {
+                    DecisionPanel.transform.Find("DescriptionHolder/Description").GetComponent<Text>().text = description;
+                    if (imageSource != null)
+                    {
+                        DecisionPanel.transform.Find("DescriptionHolder/CardImage").GetComponent<SmallCardArt>().Initialize(imageSource);
+                    }
+                    else
+                    {
+                        DecisionPanel.transform.Find("DescriptionHolder/CardImage").gameObject.SetActive(false);
+                        DecisionPanel.transform.Find("DescriptionHolder/Description").GetComponent<RectTransform>().sizeDelta = new Vector2(680, 100);
+                    }
+                }
+                else
+                {
+                    DecisionPanel.transform.Find("DescriptionHolder").gameObject.SetActive(false);
+                    DecisionPanel.transform.Find("Center").localPosition += new Vector3(0, 120, 0);
+                }
+            }
         }
 
     }

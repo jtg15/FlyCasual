@@ -13,20 +13,23 @@ namespace RulesList
     public class ActionsRule
     {
 
-        public void CanPerformActions(GenericAction action, ref bool result)
+        public void CanPerformActions(GenericShip ship, GenericAction action, ref bool result)
         {
-            if (Selection.ThisShip.IsAlreadyExecutedAction(action.GetType())) result = false;
+            if (ship.IsAlreadyExecutedAction(action)) result = false;
+
+            if (action.Color == ActionColor.Purple && ship.State.Force == 0) result = false;
         }
 
-        public void RedActionCheck(GenericAction action)
+        public void ActionColorCheck(GenericAction action)
         {
             // Selection.ThisShip is null during tractor beam
             if (action == null || Selection.ThisShip == null) return;
 
-            Selection.ThisShip.CallOnCheckActionComplexity(ref action);
+            ActionColor color = action.Color;
+            color = Selection.ThisShip.CallOnCheckActionComplexity(action, ref color);
 
-            //AI perfroms red actions as white
-            if (action.IsRed && !(Selection.ThisShip.Owner is Players.GenericAiPlayer))
+            //AI perfroms red actions as white, because it is hard to calculate correct priority of red action
+            if (color == ActionColor.Red && !(Selection.ThisShip.Owner is Players.GenericAiPlayer))
             {
                 Triggers.RegisterTrigger(new Trigger()
                 {
@@ -36,6 +39,8 @@ namespace RulesList
                     EventHandler = GetStress
                 });
             }
+
+            if (color == ActionColor.Purple) Selection.ThisShip.State.Force--;
         }
 
         private void GetStress(object sender, System.EventArgs e)
@@ -81,7 +86,11 @@ namespace RulesList
         private void PerformLinkedAction(object sender, System.EventArgs e)
         {
             Selection.ThisShip.GenerateAvailableActionsList();
-            Selection.ThisShip.AskPerformFreeAction(Selection.ThisShip.PlannedLinkedActions, Triggers.FinishTrigger);
+            Selection.ThisShip.AskPerformFreeAction(
+                Selection.ThisShip.PlannedLinkedActions,
+                Triggers.FinishTrigger,
+                (Selection.ThisShip.PlannedLinkedActions.Count == 1) ? "Linked Action" : "Linked Actions"
+            );
         }
 
         public static bool HasPerformActionStep(GenericShip ship)
@@ -91,7 +100,7 @@ namespace RulesList
             
             if (ship.Tokens.HasToken(typeof(StressToken)))
             {
-                if ((!ship.CanPerformActionsWhileStressed) && (!ship.GetAvailableActions().Any(n => n.CanBePerformedWhileStressed)) && (ship.ActionBar.ActionsThatCanbePreformedwhileStressed.Count == 0)) return false;
+                if ((!ship.CallCheckCanPerformActionsWhileStressed()) && (!ship.GetAvailableActions().Any(n => n.CanBePerformedWhileStressed)) && (ship.ActionBar.ActionsThatCanbePreformedwhileStressed.Count == 0)) return false;
             }
 
             return true;

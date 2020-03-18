@@ -13,15 +13,13 @@ namespace UpgradesList.SecondEdition
     {
         public static readonly int LowestPossibleInitiative = 0;
         public static readonly int HighestPossibleInitiative = 6;
-        public static readonly int ShortestTokenDistance = 0;
-        public static readonly int LongestTokenDistance = 2;
 
         public HyperspaceTrackingData() : base()
         {
             UpgradeInfo = new UpgradeCardInfo(
                 "Hyperspace Tracking Data",
                 UpgradeType.Tech,
-                cost: 2,
+                cost: 10,
                 restrictions: new UpgradeCardRestrictions(
                     new BaseSizeRestriction(BaseSize.Large),
                     new FactionRestriction(Faction.FirstOrder)
@@ -92,12 +90,14 @@ namespace Abilities.SecondEdition
                     Triggers.FinishTrigger
                 );
 
-            initiativeSubPhase.InfoText = String.Format("{0}: ({1}) You may choose a number between {2} and {3}. "
+            initiativeSubPhase.DescriptionShort = "Hyperspace Tracking Data";
+            initiativeSubPhase.DescriptionLong = String.Format("{0}: ({1}) You may choose a number between {2} and {3}. "
                 + "Treat your initiative as the chosen value during Setup.",
                 HostShip.ShipId,
                 HostShip.PilotInfo.PilotName,
                 UpgradesList.SecondEdition.HyperspaceTrackingData.LowestPossibleInitiative,
                 UpgradesList.SecondEdition.HyperspaceTrackingData.HighestPossibleInitiative);
+            initiativeSubPhase.ImageSource = HostUpgrade;
 
             for (var i = UpgradesList.SecondEdition.HyperspaceTrackingData.LowestPossibleInitiative;
                 i <= UpgradesList.SecondEdition.HyperspaceTrackingData.HighestPossibleInitiative; i++)
@@ -155,7 +155,7 @@ namespace Abilities.SecondEdition
                     getAiPriority: delegate { return 100; },
                     subphaseOwnerPlayerNo: HostShip.Owner.PlayerNo,
                     name: String.Format("{0} {1} - {2}", HostShip.ShipId, HostShip.PilotInfo.PilotName, HostName),
-                    description: "Choose a ship to assign 1 focus or 1 evade token to.",
+                    description: "Choose a ship to assign 1 focus or 1 evade token to",
                     showSkipButton: true
                 );
             }
@@ -176,11 +176,14 @@ namespace Abilities.SecondEdition
             );
 
             tokenSubPhase.ShowSkipButton = true;
-            tokenSubPhase.InfoText = String.Format("Hyperspace Tracking Data: {0}: ({1}) "
-                + "Assign 1 Focus Token or 1 Evade Token",
+
+            tokenSubPhase.DescriptionShort = "Hyperspace Tracking Data";
+            tokenSubPhase.DescriptionLong = String.Format("{0}: ({1}) Assign 1 Focus Token or 1 Evade Token",
                 TargetShip.ShipId,
                 TargetShip.PilotInfo
-                );
+            );
+            tokenSubPhase.ImageSource = HostUpgrade;
+
             tokenSubPhase.DecisionViewType = SubPhases.DecisionViewTypes.TextButtons;
 
             tokenSubPhase.AddDecision("Focus", delegate {
@@ -205,12 +208,8 @@ namespace Abilities.SecondEdition
             return
                 FilterByTargetType(ship, new List<SubPhases.TargetTypes>() {
                     SubPhases.TargetTypes.OtherFriendly,
-                    SubPhases.TargetTypes.This }) &&
-                FilterTargetsByRange(
-                    ship,
-                    UpgradesList.SecondEdition.HyperspaceTrackingData.ShortestTokenDistance,
-                    UpgradesList.SecondEdition.HyperspaceTrackingData.LongestTokenDistance
-                    );
+                    SubPhases.TargetTypes.This })
+                && Board.CheckInRange(HostShip, ship, 0, 2, RangeCheckReason.UpgradeCard);
         }
 
         private void CheckMoreTargets()

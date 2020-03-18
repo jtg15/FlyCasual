@@ -67,7 +67,7 @@ namespace Abilities.FirstEdition
 
         private void DoBTL4AExtraAttack(object sender, System.EventArgs e)
         {
-            Combat.StartAdditionalAttack(
+            Combat.StartSelectAttackTarget(
                 HostShip,
                 delegate {
                     Selection.ThisShip.IsAttackPerformed = true;
@@ -75,7 +75,7 @@ namespace Abilities.FirstEdition
                 },
                 IsSecondaryShot,
                 HostUpgrade.UpgradeInfo.Name,
-                "You can perform an addition attack with a turret againts target inside your firing arc.",
+                "You can perform an addition attack with a turret againts target inside your firing arc",
                 HostUpgrade
             );
         }
@@ -89,7 +89,7 @@ namespace Abilities.FirstEdition
             }
             else
             {
-                if (!isSilent) Messages.ShowError("Attack must be performed from secondary weapon");
+                if (!isSilent) Messages.ShowError("This attack must be performed with a secondary weapon");
             }
             return result;
         }

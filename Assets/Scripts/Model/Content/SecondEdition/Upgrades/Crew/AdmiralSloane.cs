@@ -1,6 +1,7 @@
 ﻿using Ship;
 using Upgrade;
 using System.Linq;
+using UnityEngine;
 
 namespace UpgradesList.SecondEdition
 {
@@ -11,12 +12,14 @@ namespace UpgradesList.SecondEdition
             UpgradeInfo = new UpgradeCardInfo(
                 "Admiral Sloane",
                 UpgradeType.Crew,
-                cost: 10,
+                cost: 9,
                 isLimited: true,
                 restriction: new FactionRestriction(Faction.Imperial),
                 abilityType: typeof(Abilities.SecondEdition.AdmiralSloaneCrewAbility),
                 seImageNumber: 109
             );
+
+            Avatar = new AvatarInfo(Faction.Imperial, new Vector2(385, 11));
         }
     }
 }
@@ -28,7 +31,7 @@ namespace Abilities.SecondEdition
     {
         public override void ActivateAbility()
         {
-            GenericShip.OnDestroyedGlobal += RegisterAbility;
+            GenericShip.OnShipIsDestroyedGlobal += RegisterAbility;
 
             AddDiceModification(
                 HostName,
@@ -42,7 +45,7 @@ namespace Abilities.SecondEdition
 
         public override void DeactivateAbility()
         {
-            GenericShip.OnDestroyedGlobal -= RegisterAbility;
+            GenericShip.OnShipIsDestroyedGlobal -= RegisterAbility;
             RemoveDiceModification();
         }
 

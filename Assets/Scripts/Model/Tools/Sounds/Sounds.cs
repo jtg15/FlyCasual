@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Players;
 using Ship;
+using Bombs;
 
 public static class Sounds {
 
@@ -28,6 +29,11 @@ public static class Sounds {
         PlaySound(audioSource, path);
     }
 
+    public static void PlayBombSound(GenericDeviceGameObject bombObjectComponent, string path)
+    {
+        PlayBombSound(bombObjectComponent.gameObject, path);
+    }
+
     private static float PlaySound(AudioSource audioSource, string path)
     {
         audioSource.volume = Options.SfxVolume;
@@ -41,7 +47,7 @@ public static class Sounds {
     {
         for (int i = 0; i < times; i++)
         {
-            AudioSource audio = Selection.AnotherShip.Model.GetComponents<AudioSource>()[i];
+            AudioSource audio = Selection.ThisShip.Model.GetComponents<AudioSource>()[i];
             audio.volume = Options.SfxVolume;
             audio.clip = (AudioClip)Resources.Load("Sounds/" + path);
             audio.PlayDelayed(i * 0.5f);

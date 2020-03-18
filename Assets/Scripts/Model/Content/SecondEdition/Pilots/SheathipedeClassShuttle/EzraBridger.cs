@@ -16,9 +16,12 @@ namespace Ship
                     42,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.EzraBridgerPilotAbility),
-                    extraUpgradeIcon: UpgradeType.Force,
+                    force: 1,
+                    extraUpgradeIcon: UpgradeType.ForcePower,
                     seImageNumber: 39
                 );
+
+                PilotNameCanonical = "ezrabridger-sheathipedeclassshuttle";
             }
         }
     }

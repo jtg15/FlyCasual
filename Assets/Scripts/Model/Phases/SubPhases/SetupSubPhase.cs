@@ -28,12 +28,14 @@ namespace SubPhases
         public override void Start()
         {
             base.Start();
+
             Name = "Setup SubPhase";
+            inReposition = false;
         }
 
         public override void Prepare()
         {
-            RequiredPilotSkill = PILOTSKILL_MIN - 1;
+            RequiredInitiative = PILOTSKILL_MIN - 1;
         }
 
         public override void Initialize()
@@ -43,10 +45,10 @@ namespace SubPhases
 
         public override void Next()
         {
-            bool success = GetNextActivation(RequiredPilotSkill);
+            bool success = GetNextActivation(RequiredInitiative);
             if (!success)
             {
-                int nextPilotSkill = GetNextPilotSkill(RequiredPilotSkill);
+                int nextPilotSkill = GetNextPilotSkill(RequiredInitiative);
                 if (nextPilotSkill != int.MinValue)
                 {
                     success = GetNextActivation(nextPilotSkill);
@@ -80,7 +82,7 @@ namespace SubPhases
 
             if (pilotSkillResults.Count() > 0)
             {
-                RequiredPilotSkill = pilotSkill;
+                RequiredInitiative = pilotSkill;
 
                 var playerNoResults =
                     from n in pilotSkillResults
@@ -132,7 +134,7 @@ namespace SubPhases
         public override bool ThisShipCanBeSelected(GenericShip ship, int mouseKeyIsPressed)
         {
             bool result = false;
-            if ((ship.Owner.PlayerNo == RequiredPlayer) && (ship.State.Initiative == RequiredPilotSkill) && (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(Players.HumanPlayer)))
+            if ((ship.Owner.PlayerNo == RequiredPlayer) && (ship.State.Initiative == RequiredInitiative) && (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(Players.HumanPlayer)))
             {
                 if (ship.IsSetupPerformed == false)
                 {
@@ -140,27 +142,27 @@ namespace SubPhases
                 }
                 else
                 {
-                    Messages.ShowErrorToHuman("Ship cannot be selected: Starting position is already set");
+                    Messages.ShowErrorToHuman(ship.PilotInfo.PilotName + " cannot be selected: its starting position is already set");
                 }
             }
             else
             {
-                Messages.ShowErrorToHuman("Ship cannot be selected:\n Need " + Phases.CurrentSubPhase.RequiredPlayer + " and pilot skill " + Phases.CurrentSubPhase.RequiredPilotSkill);
+                Messages.ShowErrorToHuman("This ship cannot be selected: the ship must be owned by " + Phases.CurrentSubPhase.RequiredPlayer + " and have a pilot skill of " + Phases.CurrentSubPhase.RequiredInitiative);
             }
             return result;
         }
 
         private bool FilterShipsToSetup(GenericShip ship)
         {
-            return ship.State.Initiative == RequiredPilotSkill && !ship.IsSetupPerformed && ship.Owner.PlayerNo == RequiredPlayer;
+            return ship.State.Initiative == RequiredInitiative && !ship.IsSetupPerformed && ship.Owner.PlayerNo == RequiredPlayer;
         }
 
         public static GameCommand GeneratePlaceShipCommand(int shipId, Vector3 position, Vector3 angles)
         {
             JSONObject parameters = new JSONObject();
             parameters.AddField("id", shipId.ToString());
-            parameters.AddField("positionX", position.x); parameters.AddField("positionY", position.y); parameters.AddField("positionZ", position.z);
-            parameters.AddField("rotationX", angles.x); parameters.AddField("rotationY", angles.y); parameters.AddField("rotationZ", angles.z);
+            parameters.AddField("positionX", position.x.ToString()); parameters.AddField("positionY", position.y.ToString()); parameters.AddField("positionZ", position.z.ToString());
+            parameters.AddField("rotationX", angles.x.ToString()); parameters.AddField("rotationY", angles.y.ToString()); parameters.AddField("rotationZ", angles.z.ToString());
             return GameController.GenerateGameCommand(
                 GameCommandTypes.ShipPlacement,
                 typeof(SetupSubPhase),
@@ -191,7 +193,7 @@ namespace SubPhases
 
         private void CheckPerformRotation()
         {
-            if (Console.IsActive) return;
+            if (Console.IsActive || Selection.ThisShip == null || Selection.ThisShip.Owner is Players.GenericAiPlayer) return;
 
             CheckResetRotation();
             if (Input.GetKey(KeyCode.LeftControl))
@@ -294,9 +296,11 @@ namespace SubPhases
                 
             }
 
-            CheckControlledModeLimits();
+            // TODO: Rework
+            //CheckControlledModeLimits();
+
             ApplySetupPositionLimits();
-            if (SetupRangeHelper != null) SetupRangeHelper();
+            SetupRangeHelper?.Invoke();
         }
 
         private void PerformTouchDragRotate() {
@@ -375,7 +379,7 @@ namespace SubPhases
             }
         }
 
-        private Dictionary<string, float> GetSpaceBetween(Ship.GenericShip thisShip, Ship.GenericShip anotherShip)
+        private Dictionary<string, float> GetSpaceBetween(GenericShip thisShip, GenericShip anotherShip)
         {
             Dictionary<string, float> result = new Dictionary<string, float>();
 
@@ -397,7 +401,8 @@ namespace SubPhases
 
             if (!isInsideStartingZone)
             {
-                if ((newBounds["maxZ"] < StartingZone.TransformPoint(0.5f, 0.5f, 0.5f).z) && (newBounds["minZ"] > StartingZone.TransformPoint(-0.5f, -0.5f, -0.5f).z))
+                if ((Selection.ThisShip.Owner.PlayerNo == Players.PlayerNo.Player2 && (newBounds["maxZ"] < StartingZone.TransformPoint(0.5f, 0.5f, 0.5f).z))
+                    || (Selection.ThisShip.Owner.PlayerNo == Players.PlayerNo.Player1 && (newBounds["minZ"] > StartingZone.TransformPoint(-0.5f, -0.5f, -0.5f).z)))
                 {
                     isInsideStartingZone = true;
                 }
@@ -425,7 +430,10 @@ namespace SubPhases
 
         public override void ProcessClick()
         {
-            if (inReposition && CameraScript.InputMouseIsEnabled) TryConfirmPosition(Selection.ThisShip);
+            if (inReposition && CameraScript.InputMouseIsEnabled)
+            {
+                UI.CallClickNextPhase();
+            }
         }
 
         public bool TryConfirmPosition(GenericShip ship)
@@ -436,7 +444,7 @@ namespace SubPhases
             {
                 if (Selection.ThisShip.Model.GetComponentInChildren<ObstaclesStayDetector>().OverlapedShips.Count > 0)
                 {
-                    Messages.ShowErrorToHuman("This ship shouldn't collide with another ships");
+                    Messages.ShowErrorToHuman("This ship shouldn't overlap other ships");
                     result = false;
                 }
 
@@ -445,17 +453,17 @@ namespace SubPhases
                     if (CameraScript.InputTouchIsEnabled)
                     {
                         // Touch-tailored error message
-                        Messages.ShowErrorToHuman("Drag ship into highlighted area");
+                        Messages.ShowErrorToHuman("Drag the ship into the highlighted area");
                     }
                     else
                     {
-                        Messages.ShowErrorToHuman("Place ship into highlighted area");
+                        Messages.ShowErrorToHuman("Place the ship in the highlighted area");
                     }
                     result = false;
                 }
                 else if (SetupFilter != null && (!SetupFilter() && !ship.ShipBase.IsInside(StartingZone)))
                 {
-                    Messages.ShowErrorToHuman("Position is not valid");
+                    Messages.ShowErrorToHuman("This ship's position is not valid");
                     result = false;
                 }
             }
@@ -474,7 +482,7 @@ namespace SubPhases
 
         public override void NextButton() {
             // Next button is only used for touch controls -- on next, try to confirm ship's position
-            if (!TryConfirmPosition(Selection.ThisShip))
+            if (Selection.ThisShip != null && !TryConfirmPosition(Selection.ThisShip))
             {
                 Console.Write("ship:" + Selection.ThisShip);
                 Console.Write("shipbase:" + Selection.ThisShip.ShipBase);

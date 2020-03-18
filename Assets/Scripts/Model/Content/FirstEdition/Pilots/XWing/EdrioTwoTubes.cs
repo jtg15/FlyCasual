@@ -50,12 +50,18 @@ namespace Abilities.FirstEdition
 
         private void RegisterEdrioTwoTubesTrigger()
         {
-            RegisterAbilityTrigger(TriggerTypes.OnMovementActivation, AskToPerfromFreeAction);
+            RegisterAbilityTrigger(TriggerTypes.OnMovementActivationStart, AskToPerfromFreeAction);
         }
 
         private void AskToPerfromFreeAction(object sender, EventArgs e)
         {
-            HostShip.AskPerformFreeAction(HostShip.GetAvailableActions(), Triggers.FinishTrigger);
+            HostShip.AskPerformFreeAction(
+                HostShip.GetAvailableActions(),
+                Triggers.FinishTrigger,
+                HostShip.PilotInfo.PilotName,
+                "When you become the active ship during the Activation phase, if you have 1 or more focus tokens, you may perform a free action",
+                HostShip
+            );
         }
     }
 }

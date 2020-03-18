@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ship;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,7 @@ namespace Upgrade
 {
     public class UpgradeSlot
     {
+        public GenericShip HostShip { get; private set; }
         public UpgradeType Type { get; private set; }
         public object GrantedBy { get; set; }
         public int Counter { get; set; }
@@ -30,7 +32,6 @@ namespace Upgrade
             get { return (InstalledUpgrade == null); }
         }
 
-
         public UpgradeSlot(UpgradeType type)
         {
             Type = type;
@@ -39,54 +40,56 @@ namespace Upgrade
             MaxCost = int.MaxValue;
         }
 
-        public void TryInstallUpgrade(GenericUpgrade upgrade, Ship.GenericShip host)
+        public void TryInstallUpgrade(GenericUpgrade upgrade, GenericShip host)
         {
+            HostShip = host;
             if (upgrade != null) InstallUpgrade();
-
-            /*if (CheckRequirements(upgrade))
-            {
-                InstallUpgrade(upgrade, host);
-            }
-            else
-            {
-                Debug.Log("Requirements are not met: " + upgrade.Name);
-            }*/
         }
 
-        public void PreInstallUpgrade(GenericUpgrade upgrade, Ship.GenericShip host)
+        public void PreInstallUpgrade(GenericUpgrade upgrade, GenericShip host)
         {
+            HostShip = host;
             InstalledUpgrade = upgrade;
             upgrade.Slot = this;
             InstalledUpgrade.PreAttachToShip(host);
 
-            // check if its a dual upgrade
             if (upgrade.UpgradeInfo.UpgradeTypes.Count > 1)
             {
-                // clone upgrade
-                //GenericUpgrade newUpgrade = (GenericUpgrade)System.Activator.CreateInstance(upgrade.Types[0]);
-                UpgradesList.EmptyUpgrade emptyUpgrade = new UpgradesList.EmptyUpgrade();
-                emptyUpgrade.SetUpgradeInfo(upgrade.UpgradeInfo.UpgradeTypes, upgrade.UpgradeInfo.Name, 0);
+                List<UpgradeType> extraSlots = new List<UpgradeType>(upgrade.UpgradeInfo.UpgradeTypes);
+                extraSlots.Remove(extraSlots.First(n => n == this.Type));
 
-                int emptySlotsFilled = 0; // Fixes bug #708. TODO: Will need to revisit to support multi-type upgrades.
-                // find another slot
-                foreach (UpgradeSlot tempSlot in host.UpgradeBar.GetUpgradeSlots())
+                foreach (UpgradeType upgradeType in extraSlots)
                 {
-                    if (emptySlotsFilled < emptyUpgrade.UpgradeInfo.UpgradeTypes.Count && tempSlot.IsEmpty && upgrade.HasType(tempSlot.Type))
-                    {
-                        emptySlotsFilled += 1; // Fixes bug #708.
-                        tempSlot.PreInstallUpgrade(emptyUpgrade, host);
-                    }
+                    // Clone upgrade to fill extra slots
+                    UpgradesList.EmptyUpgrade emptyUpgrade = new UpgradesList.EmptyUpgrade();
+                    emptyUpgrade.SetUpgradeInfo(upgradeType, upgrade.UpgradeInfo.Name, 0);
+
+                    UpgradeSlot tempSlot = host.UpgradeBar.GetUpgradeSlots().First(n => n.IsEmpty && emptyUpgrade.HasType(n.Type));
+                    tempSlot.PreInstallUpgrade(emptyUpgrade, host);
                 }
             }
 
-            if (OnPreInstallUpgrade != null) OnPreInstallUpgrade(upgrade);
+            if (DebugManager.FreeMode)
+            {
+                if (!host.UpgradeBar.HasFreeUpgradeSlot(new List<UpgradeType>(){ UpgradeType.Omni })) host.UpgradeBar.AddSlot(UpgradeType.Omni);
+            }
+
+            OnPreInstallUpgrade?.Invoke(upgrade);
         }
 
         public void RemovePreInstallUpgrade()
         {
             InstalledUpgrade.PreDettachFromShip();
-            if (OnRemovePreInstallUpgrade != null) OnRemovePreInstallUpgrade(InstalledUpgrade);
+            OnRemovePreInstallUpgrade?.Invoke(InstalledUpgrade);
             InstalledUpgrade = null;
+
+            if (DebugManager.FreeMode)
+            {
+                if (HostShip.UpgradeBar.GetUpgradeSlots().Count(n => n.Type == UpgradeType.Omni && n.IsEmpty) > 1)
+                {
+                    HostShip.UpgradeBar.RemoveEmptySlot(UpgradeType.Omni);
+                }
+            }
         }
 
         private void InstallUpgrade()
@@ -94,31 +97,5 @@ namespace Upgrade
             //TODO: Remove host paramater
             InstalledUpgrade.AttachToShip(InstalledUpgrade.HostShip);
         }
-
-        //No more used ?
-        /*private bool CheckRequirements(GenericUpgrade upgrade)
-        {
-            bool result = true;
-            return result;
-        }
-        
-        public bool UpgradeIsAllowed(GenericUpgrade upgrade)
-        {
-            bool result = true;
-
-            if (upgrade.Cost > MaxCost)
-            {
-                //Messages.ShowError(upgrade.Name + "cannot be installed. Max cost: " + MaxCost);
-                result = false;
-            }
-
-            if (MustBeNonUnique && upgrade.isUnique)
-            {
-                result = false;
-            }
-
-            return result;
-        }*/
-
     }
 }

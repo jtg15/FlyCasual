@@ -60,7 +60,7 @@ namespace Abilities.FirstEdition
                 GetAiAbilityPriority,
                 HostShip.Owner.PlayerNo,
                 HostShip.PilotInfo.PilotName,
-                "Choose another ship.\nThat ship may perform free action.",
+                "Choose another ship, that ship may perform free action",
                 HostShip
             );
         }
@@ -97,7 +97,11 @@ namespace Abilities.FirstEdition
                 delegate {
                     Selection.ThisShip = HostShip;
                     SelectShipSubPhase.FinishSelection();
-                });
+                },
+                HostShip.PilotInfo.PilotName,
+                "You may perform 1 free action",
+                HostShip
+            );
         }
     }
 }

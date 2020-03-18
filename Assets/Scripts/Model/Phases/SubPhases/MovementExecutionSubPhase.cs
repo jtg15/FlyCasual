@@ -4,20 +4,19 @@ using UnityEngine;
 using GameModes;
 using Movement;
 using Obstacles;
+using Bombs;
 
 namespace SubPhases
 {
 
     public class MovementExecutionSubPhase : GenericSubPhase
     {
-        public override List<GameCommandTypes> AllowedGameCommandTypes { get { return new List<GameCommandTypes>() { GameCommandTypes.AssignManeuver }; } }
-
         public override void Start()
         {
             base.Start();
 
             Name = "Movement";
-            RequiredPilotSkill = PreviousSubPhase.RequiredPilotSkill;
+            RequiredInitiative = PreviousSubPhase.RequiredInitiative;
             RequiredPlayer = PreviousSubPhase.RequiredPlayer;
             UpdateHelpInfo();
 
@@ -32,7 +31,7 @@ namespace SubPhases
             Roster.AllShipsHighlightOff();
 
             Selection.ThisShip.ObstaclesHit = new List<GenericObstacle>();
-            Selection.ThisShip.MinesHit = new List<GameObject>();
+            Selection.ThisShip.MinesHit = new List<GenericDeviceGameObject>();
 
             CheckAssignedManeuver();
         }
@@ -41,9 +40,9 @@ namespace SubPhases
         {
             if (Selection.ThisShip.AssignedManeuver.ColorComplexity == MovementComplexity.Complex && Selection.ThisShip.Tokens.HasToken(typeof(Tokens.StressToken)))
             {
-                if (!Selection.ThisShip.CanPerformRedManeuversWhileStressed)
+                if (!Selection.ThisShip.CanPerformRedManeuverWhileStressed())
                 {
-                    Messages.ShowErrorToHuman("Red maneuver while stresses: Maneuver is changed to white straight 2");
+                    Messages.ShowErrorToHuman(Selection.ThisShip.PilotInfo.PilotName + " attempted to perform a red maneuver while stressed: it will instead perform a white straight 2");
                     Selection.ThisShip.SetAssignedManeuver(new StraightMovement(2, ManeuverDirection.Forward, ManeuverBearing.Straight, MovementComplexity.Normal));
                 }
             }

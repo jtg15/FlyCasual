@@ -54,7 +54,13 @@ namespace Abilities
             {
                 if (HostShip.UpgradeBar.GetUpgradesOnlyFaceup().Any(n => n.UpgradeInfo.HasType(UpgradeType.Torpedo) && n.State.Charges > 0))
                 {
-                    AskToUseAbility(AlwaysUseByDefault, UseJoyRekkoffAbility);
+                    AskToUseAbility(
+                        HostShip.PilotInfo.PilotName,
+                        AlwaysUseByDefault,
+                        UseJoyRekkoffAbility,
+                        descriptionLong: "Do you wand to spend 1 Charge from an equipped Torpedo Upgrade? (If you do, the defender rolls 1 fewer defense die)",
+                        imageHolder: HostShip
+                    );
                 }
                 else
                 {
@@ -86,7 +92,7 @@ namespace Conditions
 
         public JoyRekkoffCondition(GenericShip host) : base(host)
         {
-            Name = "Debuff Token";
+            Name = ImageName = "Debuff Token";
             TooltipType = typeof(Ship.SecondEdition.FangFighter.JoyRekkoff);
 
             Temporary = false;
@@ -98,7 +104,7 @@ namespace Conditions
             {
                 AgilityWasDecreased = true;
 
-                Messages.ShowError("Joy Rekkoff: Agility is decreased");
+                Messages.ShowInfo("Joy Rekkoff causes " + Host.PilotInfo.PilotName + "'s Agility to be decreased by 1");
                 Host.ChangeAgilityBy(-1);
             }
 
@@ -114,7 +120,7 @@ namespace Conditions
         {
             if (AgilityWasDecreased)
             {
-                Messages.ShowInfo("Agility is restored");
+                Messages.ShowInfo("Joy Rekkoff: " + Host.PilotInfo.PilotName + "'s Agility has been restored");
                 Host.ChangeAgilityBy(+1);
             }
 

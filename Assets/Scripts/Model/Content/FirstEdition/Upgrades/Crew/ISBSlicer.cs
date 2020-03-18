@@ -67,14 +67,14 @@ namespace Abilities.FirstEdition
                   GetAiJamPriority,
                   HostShip.Owner.PlayerNo,
                   HostUpgrade.UpgradeInfo.Name,
-                  "Choose ship at range 1 of the target that isn't jammed.\nIt gets a Jam token.",
+                  "Choose ship at range 1 of the target that isn't jammed, \nit gets a Jam token",
                   HostUpgrade
               );
         }
 
         private void AssignExtraJamToken()
         {
-            TargetShip.Tokens.AssignToken(typeof(JamToken), SelectShipSubPhase.FinishSelection);
+            TargetShip.Tokens.AssignToken(new JamToken(TargetShip, HostShip.Owner), SelectShipSubPhase.FinishSelection);
         }
 
         private bool IsShipWithoutJamAtRangeOneOfTarget(GenericShip ship)

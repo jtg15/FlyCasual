@@ -18,7 +18,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Edon Kappehl",
                     3,
-                    66,
+                    60,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.EdonKappehlAbility),
                     pilotTitle: "Crimson Hailstorm"
@@ -59,18 +59,24 @@ namespace Abilities.SecondEdition
                 return;
             }
 
-            RegisterAbilityTrigger(TriggerTypes.OnMovementActivation, AskEdonKappehlAbility);
+            RegisterAbilityTrigger(TriggerTypes.OnMovementActivationStart, AskEdonKappehlAbility);
         }
 
         private void AskEdonKappehlAbility(object sender, EventArgs e)
         {
-            AskToUseAbility(NeverUseByDefault, UseEdonKappehlAbility);
+            AskToUseAbility(
+                HostShip.PilotInfo.PilotName,
+                NeverUseByDefault,
+                UseEdonKappehlAbility,
+                descriptionLong: "Do you want to drop 1 device?",
+                imageHolder: HostShip
+            );
         }
 
         private void UseEdonKappehlAbility(object sender, EventArgs e)
         {
             DecisionSubPhase.ConfirmDecisionNoCallback();
-            BombsManager.CreateAskBombDropSubPhase(HostShip);
+            BombsManager.CreateAskBombDropSubPhase(HostShip, onlyDrop: true);
         }
     }
 }

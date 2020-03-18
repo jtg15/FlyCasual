@@ -3,6 +3,7 @@ using Ship;
 using System;
 using SubPhases;
 using System.Collections.Generic;
+using Tokens;
 
 namespace UpgradesList.SecondEdition
 {
@@ -27,6 +28,9 @@ namespace UpgradesList.SecondEdition
     {
         public PivotWingClosed() : base()
         {
+            IsHidden = true;
+            NameCanonical = "pivotwing-anotherside";
+
             UpgradeInfo = new UpgradeCardInfo(
                 "Pivot Wing (Closed)",
                 UpgradeType.Configuration,
@@ -63,8 +67,11 @@ namespace Abilities.SecondEdition
         {
             if (BoardTools.Board.IsOffTheBoard(ship)) return;
 
-            RegisterAbilityTrigger(TriggerTypes.OnMovementActivation, AskToFlip);
+            RegisterAbilityTrigger(TriggerTypes.OnMovementActivationStart, AskToFlip);
         }
+
+        public override void ActivateAbilityForSquadBuilder() {}
+        public override void DeactivateAbilityForSquadBuilder() {}
     }
 
     public class PivotWingClosedAbility : Abilities.FirstEdition.PivotWingLandingAbility
@@ -73,23 +80,35 @@ namespace Abilities.SecondEdition
         {
             ChangeInitialWingsPosition();
             HostShip.OnMovementActivationStart += RegisterAskToFlip;
-            HostShip.OnManeuverIsRevealed += RegisterAskToRotate;
-            HostShip.ChangeAgilityBy(-1);
+            HostShip.OnMovementExecuted += RegisterAskToRotate;
+
+            HostShip.AfterGotNumberOfDefenceDice += DecreaseDice;
+            HostShip.Tokens.AssignCondition(new Conditions.PivotWingCondition(HostShip, HostUpgrade));
         }
 
         public override void DeactivateAbility()
         {
             HostShip.WingsOpen();
             HostShip.OnMovementActivationStart -= RegisterAskToFlip;
-            HostShip.OnManeuverIsRevealed -= RegisterAskToRotate;
-            HostShip.ChangeAgilityBy(+1);
+            HostShip.OnMovementExecuted -= RegisterAskToRotate;
+
+            HostShip.AfterGotNumberOfDefenceDice -= DecreaseDice;
+            HostShip.Tokens.RemoveCondition(typeof(Conditions.PivotWingCondition));
+        }
+
+        private void DecreaseDice(ref int count)
+        {
+            Messages.ShowInfo("Pivot Wing Ability: This ship has -1 defense die");
+            count--;
         }
 
         protected override void AskToRotate(object sender, EventArgs e)
         {
             PivotWindDecisionSubphase subphase = Phases.StartTemporarySubPhaseNew<PivotWindDecisionSubphase>("Rotate the ship?", Triggers.FinishTrigger);
 
-            subphase.InfoText = "Rotate the ship?";
+            subphase.DescriptionShort = "Pivot Wing";
+            subphase.DescriptionLong = "Rotate the ship?";
+            subphase.ImageSource = HostUpgrade;
 
             subphase.AddDecision("180", Rotate180, isCentered: true);
             subphase.AddDecision("90 Counterclockwise", Rotate90Counterclockwise);
@@ -118,5 +137,18 @@ namespace Abilities.SecondEdition
         }
 
         private class PivotWindDecisionSubphase : DecisionSubPhase { };
+    }
+}
+
+namespace Conditions
+{
+    public class PivotWingCondition : GenericToken
+    {
+        public PivotWingCondition(GenericShip host, GenericUpgrade source) : base(host)
+        {
+            Name = ImageName = "Debuff Token";
+            TooltipType = source.GetType();
+            Temporary = false;
+        }
     }
 }

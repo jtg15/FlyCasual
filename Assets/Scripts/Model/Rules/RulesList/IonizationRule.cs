@@ -32,7 +32,19 @@ namespace RulesList
 
         private static void AssignIonizationManeuver(GenericShip ship)
         {
-            GenericMovement ionizedMovement = new StraightMovement(1, ManeuverDirection.Forward, ManeuverBearing.Straight, Edition.Current.IonManeuverComplexity) {
+            GenericMovement ionizedMovement = new StraightMovement(
+                1,
+                ManeuverDirection.Forward,
+                ManeuverBearing.Straight,
+                ship.GetColorComplexityOfManeuver(
+                    new ManeuverHolder(
+                        ManeuverSpeed.Speed1,
+                        ManeuverDirection.Forward,
+                        ManeuverBearing.Straight,
+                        Edition.Current.IonManeuverComplexity
+                    )
+                )
+            ) {
                 IsRevealDial = false, IsIonManeuver = true
             };
             ship.SetAssignedManeuver(ionizedMovement);
@@ -57,9 +69,9 @@ namespace RulesList
 
         private static void RemoveIonization(object sender, System.EventArgs e)
         {
-            Messages.ShowInfo("Ship isn't ionized anymore");
-
             GenericShip ship = sender as GenericShip;
+            Messages.ShowInfo(ship.PilotInfo.PilotName + " isn't ionized anymore");
+
             ship.ToggleIonized(false);
 
             ship.Tokens.RemoveAllTokensByType(

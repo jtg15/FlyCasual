@@ -70,7 +70,7 @@ namespace Abilities.FirstEdition
         {
             HostShip.OnAttackFinishAsAttacker -= ApplyHarpoonMissilesCondition;
 
-            Messages.ShowInfo("\"Harpooned!\" condition is assigned");
+            Messages.ShowInfo("The \"Harpooned!\" condition has been assigned to " + Combat.Defender.PilotInfo.PilotName);
             Combat.Defender.Tokens.AssignCondition(typeof(Conditions.Harpooned));
         }
     }
@@ -116,7 +116,7 @@ namespace Conditions
     {
         public Harpooned(GenericShip host) : base(host)
         {
-            Name = "Harpooned Condition";
+            Name = ImageName = "Harpooned Condition";
             Temporary = false;
             Tooltip = "https://raw.githubusercontent.com/guidokessels/xwing-data/master/images/conditions/harpooned.png";
         }
@@ -221,7 +221,7 @@ namespace Conditions
             Triggers.RegisterTrigger(
                 new Trigger()
                 {
-                    Name = "Harpooned!: Ship is destryed",
+                    Name = "Harpooned!: Ship is destroyed",
                     TriggerType = TriggerTypes.OnShipIsDestroyed,
                     TriggerOwner = Host.Owner.PlayerNo,
                     EventHandler = HarpoonDetonationByDestruction

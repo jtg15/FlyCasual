@@ -57,12 +57,18 @@ namespace Abilities.FirstEdition
         {
             if (CanUseAbility())
             {
-                Messages.ShowInfoToHuman(string.Format("{0} token is ready for detonation", BombsManager.CurrentBomb.UpgradeInfo.Name));
-                AskToUseAbility(NeverUseByDefault, UseAbility);
+                Messages.ShowInfoToHuman(string.Format("{0} token is ready for detonation", BombsManager.CurrentDevice.UpgradeInfo.Name));
+                AskToUseAbility(
+                    HostShip.PilotInfo.PilotName,
+                    NeverUseByDefault,
+                    UseAbility,
+                    descriptionLong: "Do you want to prevent a friendly bomb from detonating?",
+                    imageHolder: HostShip
+                );
             }
             else
             {
-                Messages.ShowErrorToHuman("Captain Nym already have used his ability");
+                Messages.ShowErrorToHuman("Captain Nym has already used his ability");
                 Triggers.FinishTrigger();
             }
         }

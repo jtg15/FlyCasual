@@ -15,11 +15,10 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     pilotName: "Colonel Jendon",
                     initiative: 3,
-                    cost: 46,
+                    cost: 48,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.ColonelJendonAbility),
-                    charges: 2,                    
-                    extraUpgradeIcon: UpgradeType.Talent,
+                    charges: 2,
                     seImageNumber: 143
                 );
             }
@@ -53,11 +52,17 @@ namespace Abilities.SecondEdition
 
         private void AskUseColonelJendonAbility(object sender, EventArgs e)
         {
-            AskToUseAbility(NeverUseByDefault, delegate (object s, EventArgs ev)
-            {
-                HostShip.SpendCharge();
-                UseColonelJendonAbility(sender, e);
-            });
+            AskToUseAbility(
+                HostShip.PilotInfo.PilotName,
+                NeverUseByDefault,
+                delegate (object s, EventArgs ev)
+                {
+                    HostShip.SpendCharge();
+                    UseColonelJendonAbility(sender, e);
+                },
+                descriptionLong: "Do you want to spend 1 Charge? (If you do, while friendly ships acquire locks this round, they must acquire locks beyond range 3 instead of at range 0-3)",
+                imageHolder: HostShip
+            );
         }
 
         private void UseColonelJendonAbility(object sender, EventArgs e)

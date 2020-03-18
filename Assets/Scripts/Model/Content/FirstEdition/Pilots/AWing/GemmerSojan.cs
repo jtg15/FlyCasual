@@ -64,7 +64,7 @@ namespace Abilities.FirstEdition
         {
             if (!AbilityIsActive)
             {
-                Messages.ShowInfo(HostShip.PilotInfo.PilotName + ": +1 Agility");
+                Messages.ShowInfo(HostShip.PilotInfo.PilotName + " is within range 1 of at least one enemy ship and gains +1 Agility");
                 HostShip.ChangeAgilityBy(+1);
                 HostShip.Tokens.AssignCondition(typeof(Conditions.GemmerSojanCondition));
                 AbilityIsActive = true;
@@ -75,7 +75,7 @@ namespace Abilities.FirstEdition
         {
             if (AbilityIsActive)
             {
-                Messages.ShowError(HostShip.PilotInfo.PilotName + ": -1 Agility");
+                Messages.ShowInfo(HostShip.PilotInfo.PilotName + ": -1 Agility");
                 HostShip.ChangeAgilityBy(-1);
                 HostShip.Tokens.RemoveCondition(typeof(Conditions.GemmerSojanCondition));
                 AbilityIsActive = false;
@@ -90,7 +90,7 @@ namespace Conditions
     {
         public GemmerSojanCondition(GenericShip host) : base(host)
         {
-            Name = "Buff Token";
+            Name = ImageName = "Buff Token";
             Temporary = false;
             Tooltip = host.ImageUrl;
         }

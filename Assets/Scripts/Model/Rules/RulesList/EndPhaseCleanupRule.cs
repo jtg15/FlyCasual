@@ -45,14 +45,14 @@ namespace RulesList
         {
             List<GenericToken> tokensList = new List<GenericToken>();
 
-            foreach (var shipHolder in Roster.AllShips.Values)
+            foreach (var shipHolder in Roster.AllUnits.Values)
             {
                 ClearShipFlags(shipHolder);
                 ClearAssignedManeuvers(shipHolder);
                 shipHolder.ClearAlreadyExecutedActions();
 
                 List<GenericToken> allShipTokens = shipHolder.Tokens.GetAllTokens();
-                if (allShipTokens != null) tokensList.AddRange(allShipTokens.Where(n => n.Host.ShouldRemoveTokenInEndPhase(n)));
+                if (allShipTokens != null) tokensList.AddRange(allShipTokens.Where(n => n.Host != null && n.Host.ShouldRemoveTokenInEndPhase(n)));
             }
 
             foreach (var shipHolder in Roster.Reserve)
@@ -62,7 +62,7 @@ namespace RulesList
                 shipHolder.ClearAlreadyExecutedActions();
 
                 List<GenericToken> allShipTokens = shipHolder.Tokens.GetAllTokens();
-                if (allShipTokens != null) tokensList.AddRange(allShipTokens.Where(n => n.Host.ShouldRemoveTokenInEndPhase(n)));
+                if (allShipTokens != null) tokensList.AddRange(allShipTokens.Where(n => n.Host != null && n.Host.ShouldRemoveTokenInEndPhase(n)));
             }
 
             ClearShipTokens(tokensList, Triggers.FinishTrigger);
@@ -76,13 +76,15 @@ namespace RulesList
         private void ClearShipFlags(GenericShip ship)
         {
             ship.IsAttackPerformed = false;
+            ship.IsAttackSkipped = false;
+            ship.IsManeuverSkipped = false;
             ship.IsManeuverPerformed = false;
             ship.IsSkipsActionSubPhase = false;
             ship.IsBombAlreadyDropped = false;
             ship.IsCannotAttackSecondTime = false;
-            ship.IsActivatedDuringCombat = false;
             ship.IsSystemsAbilityInactive = false;
             ship.AlwaysShowAssignedManeuver = false;
+            ship.RevealedManeuver = null;
 
             ClearUsedArcs(ship);
         }

@@ -49,42 +49,45 @@ namespace Abilities.SecondEdition
 
         public override void ActivateAbility()
         {
-            HostShip.OnManeuverIsRevealed += PlanAction;
+            HostShip.BeforeMovementIsExecuted += PlanAction;
         }
 
         public override void DeactivateAbility()
         {
-            HostShip.OnManeuverIsRevealed -= PlanAction;
+            HostShip.BeforeMovementIsExecuted -= PlanAction;
         }
 
         private void PlanAction(GenericShip host)
         {
             if (host.AssignedManeuver.ColorComplexity == Movement.MovementComplexity.Easy && HostUpgrade.State.Charges > 0)
             {
-                RegisterAbilityTrigger(TriggerTypes.OnManeuverIsRevealed, AskPerformAction);
+                RegisterAbilityTrigger(TriggerTypes.BeforeMovementIsExecuted, AskPerformAction);
             }
         }
 
         private void AskPerformAction(object sender, EventArgs e)
         {
-            HostShip.BeforeFreeActionIsPerformed += SpendCharge;
+            HostShip.BeforeActionIsPerformed += SpendCharge;
 
             HostShip.AskPerformFreeAction(
                 AbilityActions,
-                CleanUp
+                CleanUp,
+                HostUpgrade.UpgradeInfo.Name,
+                "Before you execute a blue maneuver, you may spend 1 Charge to perform a Barrel Roll action",
+                HostUpgrade
             );
         }
 
-        private void SpendCharge(GenericAction action)
+        private void SpendCharge(GenericAction action, ref bool isFreeAction)
         {
-            HostShip.BeforeFreeActionIsPerformed -= SpendCharge;
+            HostShip.BeforeActionIsPerformed -= SpendCharge;
             Sounds.PlayShipSound("BB-8-Sound");
             HostUpgrade.State.SpendCharge();
         }
 
         private void CleanUp()
         {
-            HostShip.BeforeFreeActionIsPerformed -= SpendCharge;
+            HostShip.BeforeActionIsPerformed -= SpendCharge;
             Triggers.FinishTrigger();
         }
     }

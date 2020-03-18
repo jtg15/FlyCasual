@@ -17,11 +17,11 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Asajj Ventress",
                     4,
-                    76,
+                    72,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.AsajjVentressPilotAbility),
                     force: 2,
-                    extraUpgradeIcon: UpgradeType.Force,
+                    extraUpgradeIcon: UpgradeType.ForcePower,
                     seImageNumber: 219
                 );
             }
@@ -52,7 +52,7 @@ namespace Abilities.SecondEdition
                 GetAiPriorityOfTarget,
                 HostShip.Owner.PlayerNo,
                 HostShip.PilotInfo.PilotName,
-                "Choose a ship inside your mobile firing arc to assign Stress token to it.",
+                "Choose a ship inside your mobile firing arc to assign Stress token to it",
                 HostShip
             );
         }
@@ -69,6 +69,7 @@ namespace Abilities.SecondEdition
 
             Selection.ThisShip = TargetShip;
             Selection.ActiveShip = HostShip;
+            subphase.SourceUpgrade = HostUpgrade;
             subphase.Start();
         }
     }
@@ -78,9 +79,14 @@ namespace SubPhases
 {
     public class AsajjVentressAbilityDecisionSubPhaseSE : RemoveGreenTokenDecisionSubPhase
     {
+        public GenericUpgrade SourceUpgrade;
+
         public override void PrepareCustomDecisions()
         {
-            InfoText = Selection.ThisShip.ShipId + ": " + "Select the effect of Asajj Ventress' ability.";
+            DescriptionShort = "Asajj Ventress";
+            DescriptionLong = Selection.ThisShip.ShipId + ": " + "Select the effect of Asajj Ventress' ability.";
+            ImageSource = SourceUpgrade;
+
             DecisionOwner = Selection.ThisShip.Owner;
             DefaultDecisionName = "Recieve a stress token.";
 

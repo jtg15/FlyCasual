@@ -49,13 +49,17 @@ public class SmallCardPanel : MonoBehaviour {
         {
             Global.Instance.StartCoroutine(ImageManager.GetTexture((texture) =>
             {
-                if (thisGameObject != null && texture != null)
+                if (thisGameObject != null)
                 {
-                    SetObjectSprite(thisGameObject.transform.Find("CardImage").gameObject, texture, false);
-                }
-                else
-                {
-                    ShowTextVersionOfCard();
+                    if (texture != null)
+                    {
+                        SetObjectSprite(thisGameObject.transform.Find("CardImage").gameObject, texture, false);
+                    }
+                    else
+                    {
+                        ShowTextVersionOfCard();
+
+                    }
                 }
             }, url));
         }
@@ -106,13 +110,21 @@ public class SmallCardPanel : MonoBehaviour {
 
         ShowCounter();
 
-        this.gameObject.SetActive(true);
+        try
+        {
+            this.gameObject.SetActive(true);
+        }
+        catch { }
     }
 
     private void ShowCounter()
     {
-        this.transform.Find("CountPanel").gameObject.SetActive(Count != -1);
-        this.transform.Find("CountPanel").Find("CountText").GetComponent<Text>().text = String.Format("x{0}", Count.ToString());
+        try
+        {
+            this.transform.Find("CountPanel").gameObject.SetActive(Count != -1);
+            this.transform.Find("CountPanel").Find("CountText").GetComponent<Text>().text = String.Format("x{0}", Count.ToString());
+        }
+        catch { }
     }
 
     private void SetOnClickHandler()

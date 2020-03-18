@@ -45,7 +45,14 @@ namespace Abilities.FirstEdition
         {
             if (!alwaysUseAbility)
             {
-                AskToUseAbility(AlwaysUseByDefault, AssignStressAndFinishDecision, null, null, true);
+                AskToUseAbility(
+                    HostUpgrade.UpgradeInfo.Name,
+                    AlwaysUseByDefault,
+                    AssignStressAndFinishDecision,
+                    descriptionLong: "Do you want to receive 1 Stress Token to cause the defender to receive 1 Stress Token?",
+                    imageHolder: HostUpgrade,
+                    showAlwaysUseOption: true
+                );
             }
             else
             {
@@ -60,7 +67,7 @@ namespace Abilities.FirstEdition
 
         private void AssignStress(Action callback)
         {
-            Messages.ShowInfo(Name + " is used");
+            Messages.ShowInfo(Name + " is activated");
             Sounds.PlayShipSound("R2D2-Beeping-5");
 
             HostShip.Tokens.AssignToken(typeof(StressToken), delegate { AssignStressToDefender(callback); });

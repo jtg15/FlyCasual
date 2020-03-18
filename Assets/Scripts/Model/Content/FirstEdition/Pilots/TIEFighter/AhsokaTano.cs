@@ -58,7 +58,7 @@ namespace Abilities.FirstEdition
                     GetAiAbilityPriority,
                     HostShip.Owner.PlayerNo,
                     HostShip.PilotInfo.PilotName,
-                    "Choose a ship at range 1 to perform a free action.",
+                    "Choose a ship at range 1 to perform a free action",
                     HostShip
                 );
             }
@@ -90,11 +90,16 @@ namespace Abilities.FirstEdition
                 delegate {
                     var coordinatingShip = Selection.ThisShip;
                     Selection.ThisShip = TargetShip;
-                    Selection.ThisShip.AskPerformFreeAction(Selection.ThisShip.GetAvailableActions(), delegate
-                    {
-                        Selection.ThisShip = coordinatingShip;
-                        SelectShipSubPhase.FinishSelection();
-                    });
+                    Selection.ThisShip.AskPerformFreeAction(
+                        Selection.ThisShip.GetAvailableActions(), delegate
+                        {
+                            Selection.ThisShip = coordinatingShip;
+                            SelectShipSubPhase.FinishSelection();
+                        },
+                        HostShip.PilotInfo.PilotName,
+                        "You may perform 1 free action",
+                        HostShip
+                    );
                 }
             );
         }

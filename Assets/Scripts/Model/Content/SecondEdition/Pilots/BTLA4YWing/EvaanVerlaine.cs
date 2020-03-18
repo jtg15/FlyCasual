@@ -64,14 +64,14 @@ namespace Abilities.SecondEdition
                 GetAiAbilityPriority,
                 HostShip.Owner.PlayerNo,
                 HostShip.PilotInfo.PilotName,
-                "Choose a ship to increase it's agility value.",
+                "Choose a ship to increase it's agility value",
                 HostShip
             );
         }
 
         private bool FilterAbilityTargets(GenericShip ship)
         {
-            return FilterByTargetType(ship, new List<TargetTypes>() { TargetTypes.OtherFriendly, TargetTypes.This }) && FilterTargetsByRange(ship, 1, 1);
+            return FilterByTargetType(ship, new List<TargetTypes>() { TargetTypes.OtherFriendly, TargetTypes.This }) && FilterTargetsByRange(ship, 0, 1);
         }
 
         private int GetAiAbilityPriority(GenericShip ship)

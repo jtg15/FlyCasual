@@ -20,8 +20,8 @@ namespace Ship
 
                 ShipInfo.ActionIcons.AddActions(new ActionInfo(typeof(EvadeAction), ActionColor.Red));
 
-                DialInfo.RemoveManeuver(new ManeuverHolder(ManeuverSpeed.Speed1, ManeuverDirection.Forward, ManeuverBearing.Reverse));
-                DialInfo.AddManeuver(new ManeuverHolder(ManeuverSpeed.Speed2, ManeuverDirection.Forward, ManeuverBearing.Reverse), MovementComplexity.Complex);
+                DialInfo.RemoveManeuver(new ManeuverHolder(ManeuverSpeed.Speed1, ManeuverDirection.Forward, ManeuverBearing.ReverseStraight));
+                DialInfo.AddManeuver(new ManeuverHolder(ManeuverSpeed.Speed2, ManeuverDirection.Forward, ManeuverBearing.ReverseStraight), MovementComplexity.Complex);
 
                 DialInfo.AddManeuver(new ManeuverHolder(ManeuverSpeed.Speed1, ManeuverDirection.Left, ManeuverBearing.Bank), MovementComplexity.Normal);
                 DialInfo.AddManeuver(new ManeuverHolder(ManeuverSpeed.Speed1, ManeuverDirection.Right, ManeuverBearing.Bank), MovementComplexity.Normal);
@@ -33,8 +33,6 @@ namespace Ship
                 ShipAbilities.Add(new Abilities.SecondEdition.SpacetugAbility());
 
                 ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/6/64/Maneuver_quadrijet.png";
-
-                OldShipTypeName = "Quadjumper";
             }
         }
     }
@@ -44,6 +42,8 @@ namespace Abilities.SecondEdition
 {
     public class SpacetugAbility : GenericAbility
     {
+        public override string Name { get { return "Spacetug Tractor Array"; } }
+
         public override void ActivateAbility()
         {
             HostShip.OnGenerateActions += AddAction;
@@ -101,8 +101,6 @@ namespace SubPhases
 {
     public class SelectSpacetugTargetSubPhaseSE : SelectShipSubPhase
     {
-        public GenericAction HostAction { get; set; }
-
         public GenericShip SpacetugOwner;
 
         public override void Prepare()
@@ -157,7 +155,7 @@ namespace SubPhases
 
                 MovementTemplates.ReturnRangeRuler();
 
-                Messages.ShowInfo("Spacetug Tractor Array: Tractor Beam token is assigned to " + TargetShip.PilotInfo.PilotName);
+                Messages.ShowInfo("Spacetug Tractor Array: " + SpacetugOwner.PilotInfo.PilotName + " has assigned a Tractor Beam token to " + TargetShip.PilotInfo.PilotName);
 
                 TractorBeamToken token = new TractorBeamToken(TargetShip, SpacetugOwner.Owner);
 
@@ -183,7 +181,7 @@ namespace SubPhases
 
         private void AssignSecondTractorBeamToken()
         {
-            Messages.ShowInfo("Spacetug Tractor Array: Ship was in bullseye arc, second Tractor Beam token is assigned");
+            Messages.ShowInfo(TargetShip.PilotInfo.PilotName + " was in " + SpacetugOwner.PilotInfo.PilotName + "'s Bullseye arc: a second Tractor Beam token has been assigned");
 
             TractorBeamToken token = new TractorBeamToken(TargetShip, SpacetugOwner.Owner);
             TargetShip.Tokens.AssignToken(token, CallBack);

@@ -16,7 +16,7 @@ namespace UpgradesList.SecondEdition
             UpgradeInfo = new UpgradeCardInfo(
                 "Debris Gambit",
                 UpgradeType.Talent,
-                cost: 3,
+                cost: 4,
                 abilityType: typeof(Abilities.SecondEdition.DebrisGambit),
                 restriction: new BaseSizeRestriction(BaseSize.Small, BaseSize.Medium),
                 addAction: new ActionInfo(typeof(EvadeAction), ActionColor.Red),
@@ -40,11 +40,11 @@ namespace Abilities.SecondEdition
             HostShip.OnCheckActionComplexity -= CheckDecreaseComplexity;
         }
 
-        private void CheckDecreaseComplexity(ref GenericAction action)
+        private void CheckDecreaseComplexity(GenericAction action, ref ActionColor color)
         {
-            if (action is EvadeAction && action.IsRed)
+            if (action is EvadeAction && color == ActionColor.Red)
             {
-                if (IsNearObstacle()) action.IsRed = false;
+                if (IsNearObstacle()) color = ActionColor.White;
             }
         }
 
@@ -52,7 +52,7 @@ namespace Abilities.SecondEdition
         {
             if (HostShip.IsLandedOnObstacle)
             {
-                Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": Action is treated as white");
+                Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": The Evade action is treated as a white action");
                 return true;
             }
 
@@ -61,7 +61,7 @@ namespace Abilities.SecondEdition
                 ShipObstacleDistance shipObstacleDist = new ShipObstacleDistance(HostShip, obstacle);
                 if (shipObstacleDist.Range < 2)
                 {
-                    Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": Action is treated as white");
+                    Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": The Evade action is treated as a white action");
                     return true;
                 }
             }

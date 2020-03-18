@@ -48,7 +48,13 @@ namespace Abilities.FirstEdition
                 // is using the ability
                 Selection.ChangeActiveShip(HostShip);
                 // give user the option to use ability
-                AskToUseAbility(AlwaysUseByDefault, R5P9RegenShield);
+                AskToUseAbility(
+                    HostUpgrade.UpgradeInfo.Name,
+                    AlwaysUseByDefault,
+                    R5P9RegenShield,
+                    descriptionLong: "Do you want to spend 1 of your Focus Tokens to recover 1 shield?",
+                    imageHolder: HostUpgrade
+                );
             }
             else
             {
@@ -74,7 +80,7 @@ namespace Abilities.FirstEdition
             if (HostShip.TryRegenShields())
             {
                 Sounds.PlayShipSound("R2D2-Proud");
-                Messages.ShowInfo("R5-P9: Shield is restored");
+                Messages.ShowInfo("R5-P9 has restored 1 shield to " + HostShip.PilotInfo.PilotName);
             }
             SubPhases.DecisionSubPhase.ConfirmDecision();
         }

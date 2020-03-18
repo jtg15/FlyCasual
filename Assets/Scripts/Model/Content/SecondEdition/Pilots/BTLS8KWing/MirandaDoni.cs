@@ -13,7 +13,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Miranda Doni",
                     4,
-                    45,
+                    42,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.MirandaDoniAbility),
                     seImageNumber: 62
@@ -27,6 +27,14 @@ namespace Abilities.SecondEdition
 {
     public class MirandaDoniAbility : Abilities.FirstEdition.MirandaDoniAbility
     {
+        protected override void CheckConditions()
+        {
+            if (!IsAbilityUsed && Combat.ChosenWeapon.WeaponType == Ship.WeaponTypes.PrimaryWeapon)
+            {
+                RegisterAbilityTrigger(TriggerTypes.OnShotStart, StartQuestionSubphase);
+            }
+        }
+
         protected override void StartQuestionSubphase(object sender, System.EventArgs e)
         {
             MirandaDoniDecisionSubPhase selectMirandaDoniSubPhase = (MirandaDoniDecisionSubPhase)Phases.StartTemporarySubPhaseNew(
@@ -35,7 +43,9 @@ namespace Abilities.SecondEdition
                 Triggers.FinishTrigger
             );
 
-            selectMirandaDoniSubPhase.InfoText = "Use " + Name + "?";
+            selectMirandaDoniSubPhase.DescriptionShort = HostShip.PilotInfo.PilotName;
+            selectMirandaDoniSubPhase.DescriptionLong = "You may either spend 1 shield to roll 1 additional attack die or, if you are not shielded, you may roll 1 fewer attack die to recover 1 shield";
+            selectMirandaDoniSubPhase.ImageSource = HostShip;
 
             if (HostShip.State.ShieldsCurrent > 0)
             {

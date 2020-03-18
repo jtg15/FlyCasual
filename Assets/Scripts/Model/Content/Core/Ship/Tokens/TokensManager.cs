@@ -105,7 +105,7 @@ namespace Ship
             return (GenericTargetLockToken)AssignedTokens.Find(n => n.GetType().BaseType == typeof(GenericTargetLockToken) && (n as GenericTargetLockToken).Letter == letter);
         }
 
-        public List<char> GetTargetLockLetterPairsOn(GenericShip targetShip)
+        public List<char> GetTargetLockLetterPairsOn(ITargetLockable targetShip)
         {
             List<char> result = new List<char>();
 
@@ -115,7 +115,7 @@ namespace Ship
             {
                 char foundLetter = (blueToken as BlueTargetLockToken).Letter;
 
-                GenericToken redToken = targetShip.Tokens.GetToken(typeof(RedTargetLockToken), foundLetter);
+                GenericToken redToken = targetShip.GetAnotherToken(typeof(RedTargetLockToken), foundLetter);
                 if (redToken != null)
                 {
                     result.Add(blueToken.Letter);
@@ -199,21 +199,24 @@ namespace Ship
 
                 if (tokenToRemove.GetType().BaseType == typeof(GenericTargetLockToken))
                 {
-                    GenericShip otherTokenOwner = (tokenToRemove as GenericTargetLockToken).OtherTokenOwner;
+                    ITargetLockable otherTokenOwner = (tokenToRemove as GenericTargetLockToken).OtherTargetLockTokenOwner;
                     ActionsHolder.ReleaseTargetLockLetter((tokenToRemove as GenericTargetLockToken).Letter);
                     Type oppositeType = (tokenToRemove.GetType() == typeof(BlueTargetLockToken)) ? typeof(RedTargetLockToken) : typeof(BlueTargetLockToken);
 
                     char letter = (tokenToRemove as GenericTargetLockToken).Letter;
-                    GenericToken otherTargetLockToken = otherTokenOwner.Tokens.GetToken(oppositeType, letter);
+                    GenericToken otherTargetLockToken = otherTokenOwner.GetAnotherToken(oppositeType, letter);
                     if (otherTargetLockToken != null)
                     {
-                        otherTokenOwner.Tokens.GetAllTokens().Remove(otherTargetLockToken);
-                        otherTokenOwner.CallOnRemoveTokenEvent(otherTargetLockToken.GetType());
+                        otherTokenOwner.RemoveToken(otherTargetLockToken);
+                        if (otherTokenOwner is GenericShip)
+                        {
+                            (otherTokenOwner as GenericShip).CallOnRemoveTokenEvent(otherTargetLockToken);
+                        }
                     }
                 }
 
                 tokenToRemove.WhenRemoved();
-                Host.CallOnRemoveTokenEvent(tokenToRemove.GetType());
+                Host.CallOnRemoveTokenEvent(tokenToRemove);
             }
             Triggers.ResolveTriggers(TriggerTypes.OnTokenIsRemoved, callback);
         }
@@ -277,6 +280,14 @@ namespace Ship
             );
         }
 
+        public void TransferToken(Type tokenType, GenericShip targetShip, Action callback)
+        {
+            Host.Tokens.RemoveToken(
+                tokenType,
+                () => targetShip.Tokens.AssignToken(tokenType, callback)
+            );
+        }
+
         // CONDITIONS - don't trigger any abilities
 
         public void RemoveCondition(Type type)
@@ -305,11 +316,11 @@ namespace Ship
             GenericToken token = null;
             if (tokenType != typeof(TractorBeamToken))
             {
-                token = (GenericToken)Activator.CreateInstance(tokenType, Roster.AllShips.First().Value);
+                token = (GenericToken)Activator.CreateInstance(tokenType, Roster.AllUnits.First().Value);
             }
             else
             {
-                token = (GenericToken)Activator.CreateInstance(tokenType, Roster.AllShips.First().Value, Roster.Player1);
+                token = (GenericToken)Activator.CreateInstance(tokenType, Roster.AllUnits.First().Value, Roster.Player1);
             }
             return token.TokenColor;
         }

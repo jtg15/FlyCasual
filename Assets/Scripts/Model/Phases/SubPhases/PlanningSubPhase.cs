@@ -2,13 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Ship;
+using Remote;
+using System;
+using GameModes;
+using GameCommands;
 
 namespace SubPhases
 {
 
     public class PlanningSubPhase : GenericSubPhase
     {
-        public override List<GameCommandTypes> AllowedGameCommandTypes { get { return new List<GameCommandTypes>() { GameCommandTypes.AssignManeuver, GameCommandTypes.PressNext }; } }
+        public override List<GameCommandTypes> AllowedGameCommandTypes { get { return new List<GameCommandTypes>() { GameCommandTypes.PressNext, GameCommandTypes.SelectShipToAssignManeuver }; } }
 
         public override void Start()
         {
@@ -19,7 +23,7 @@ namespace SubPhases
         public override void Prepare()
         {
             RequiredPlayer = Phases.PlayerWithInitiative;
-            RequiredPilotSkill = PILOTSKILL_MIN - 1;
+            RequiredInitiative = PILOTSKILL_MIN - 1;
         }
 
         public override void Initialize()
@@ -40,7 +44,7 @@ namespace SubPhases
             }
 
             IsReadyForCommands = true;
-            Roster.GetPlayer(RequiredPlayer).AssignManeuver();
+            Roster.GetPlayer(RequiredPlayer).AssignManeuversStart();
         }
 
         public override void Next()
@@ -82,11 +86,18 @@ namespace SubPhases
             bool result = false;
             if ((ship.Owner.PlayerNo == RequiredPlayer) && (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(Players.HumanPlayer)))
             {
-                result = true;
+                if (!(ship is GenericRemote))
+                {
+                    result = true;
+                }
+                else
+                {
+                    Messages.ShowErrorToHuman("Remotes cannot be assigned a maneuver");
+                }
             }
             else
             {
-                Messages.ShowErrorToHuman("Ship cannot be selected: Wrong player");
+                Messages.ShowErrorToHuman(ship.PilotInfo.PilotName + " cannot be selected: it is owned by the wrong player");
             }
             return result;
         }
@@ -101,7 +112,10 @@ namespace SubPhases
 
         private bool FilterShipsToAssignManeuver(GenericShip ship)
         {
-            return ship.AssignedManeuver == null && ship.Owner.PlayerNo == RequiredPlayer && !RulesList.IonizationRule.IsIonized(ship);
+            return ship.AssignedManeuver == null
+                && ship.Owner.PlayerNo == RequiredPlayer
+                && !RulesList.IonizationRule.IsIonized(ship)
+                && !(ship is GenericRemote);
         }
 
         public override void NextButton()
@@ -112,17 +126,41 @@ namespace SubPhases
 
         public override void DoSelectThisShip(GenericShip ship, int mouseKeyIsPressed)
         {
+            if (ship is GenericRemote) return;
+
             if (!RulesList.IonizationRule.IsIonized(ship))
             {
-                UI.ShowDirectionMenu();
+                GameCommand command = GenerateSelectShipToAssignManeuver(ship.ShipId);
+                GameMode.CurrentGameMode.ExecuteCommand(command);
             }
             else
             {
-                Messages.ShowError("Ship is ionized: dial cannot be assigned");
+                Messages.ShowError("This ship is ionized. A maneuver cannot be assigned to it");
             }
             
         }
 
+        public static void CheckForFinish()
+        {
+            Roster.HighlightShipOff(Selection.ThisShip);
+
+            if (Roster.AllManuversAreAssigned(Phases.CurrentPhasePlayer))
+            {
+                UI.ShowNextButton();
+                UI.HighlightNextButton();
+            }
+        }
+
+        public static GameCommand GenerateSelectShipToAssignManeuver(int shipId)
+        {
+            JSONObject parameters = new JSONObject();
+            parameters.AddField("id", shipId.ToString());
+            return GameController.GenerateGameCommand(
+                GameCommandTypes.SelectShipToAssignManeuver,
+                Phases.CurrentSubPhase.GetType(),
+                parameters.ToString()
+            );
+        }
     }
 
 }

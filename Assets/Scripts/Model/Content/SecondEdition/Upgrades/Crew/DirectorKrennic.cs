@@ -17,7 +17,7 @@ namespace UpgradesList.SecondEdition
             UpgradeInfo = new UpgradeCardInfo(
                 "Director Krennic",
                 UpgradeType.Crew,
-                cost: 5,
+                cost: 4,
                 isLimited: true,
                 addAction: new ActionInfo(typeof(TargetLockAction)),
                 restriction: new FactionRestriction(Faction.Imperial),
@@ -42,7 +42,7 @@ namespace Abilities.SecondEdition
 
         protected override void AssignOptimizedPrototype()
         {
-            TargetShip.Tokens.AssignCondition(typeof(OptimizedPrototypeSE));
+            TargetShip.Tokens.AssignCondition(new OptimizedPrototypeSE(TargetShip) { SourceUpgrade = HostUpgrade });
             SelectShipSubPhase.FinishSelection();
         }
 
@@ -61,9 +61,11 @@ namespace Conditions
 {
     public class OptimizedPrototypeSE : GenericToken
     {
+        public GenericUpgrade SourceUpgrade;
+
         public OptimizedPrototypeSE(GenericShip host) : base(host)
         {
-            Name = "Optimized Prototype Condition";
+            Name = ImageName = "Optimized Prototype Condition";
             Temporary = false;
 
             Tooltip = "https://raw.githubusercontent.com/Sandrem/xwing-data2-test/master/images/conditions/optimized-prototype.png";
@@ -84,7 +86,8 @@ namespace Conditions
             GenericAction action = new ActionsList.SecondEdition.OptimizedPrototypeDiceModificationSE()
             {
                 HostShip = Host,
-                ImageUrl = Tooltip
+                ImageUrl = Tooltip,
+                Source = SourceUpgrade
             };
 
             Host.AddAvailableDiceModification(action);
@@ -126,7 +129,7 @@ namespace ActionsList
                 {
                     foreach (BlueTargetLockToken token in friendlyKrennicShip.Tokens.GetTokens<BlueTargetLockToken>('*'))
                     {
-                        if (token.OtherTokenOwner == Combat.Defender) return true;
+                        if (token.OtherTargetLockTokenOwner == Combat.Defender) return true;
                     }
                 }
                 return false;
@@ -164,8 +167,11 @@ namespace ActionsList
             {
                 var newSubPhase = Phases.StartTemporarySubPhaseNew<OptimizedPrototypeDecisionSubPhase>(Name, Triggers.FinishTrigger);
 
+                newSubPhase.DescriptionShort = "Director Krennic's Optimized Prototype";
+                newSubPhase.DescriptionLong = "Choose what effect to apply to the defender:";
+                newSubPhase.ImageSource = Source;
+
                 newSubPhase.RequiredPlayer = HostShip.Owner.PlayerNo;
-                newSubPhase.InfoText = "Choose what effect to apply to the defender:";
                 newSubPhase.ShowSkipButton = true;
                 newSubPhase.OnSkipButtonIsPressed = DontUseOptimizedPrototype;
 
@@ -209,30 +215,13 @@ namespace ActionsList
             {
                 DecisionSubPhase.ConfirmDecisionNoCallback();
                 Combat.DiceRollAttack.RemoveType(side);
-                DefenderSuffersDamage();
+                DefenderLosesShield();
             }
 
-            private void DefenderSuffersDamage()
+            private void DefenderLosesShield()
             {
-                Combat.Defender.AssignedDamageDiceroll.AddDice(DieSide.Success);
-
-                Triggers.RegisterTrigger(
-                    new Trigger()
-                    {
-                        Name = "Damage from Optimized Prototype",
-                        TriggerType = TriggerTypes.OnDamageIsDealt,
-                        TriggerOwner = Combat.Defender.Owner.PlayerNo,
-                        EventHandler = Combat.Defender.SufferDamage,
-                        EventArgs = new DamageSourceEventArgs()
-                        {
-                            Source = Combat.Attacker,
-                            DamageType = DamageTypes.CardAbility
-                        },
-                        Skippable = true
-                    }
-                );
-
-                Triggers.ResolveTriggers(TriggerTypes.OnDamageIsDealt, Triggers.FinishTrigger);
+                Combat.Defender.LoseShield();
+                Triggers.FinishTrigger();
             }
 
             private void DontUseOptimizedPrototype()

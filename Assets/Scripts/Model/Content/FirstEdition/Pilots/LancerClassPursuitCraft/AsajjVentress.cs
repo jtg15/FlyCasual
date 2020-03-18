@@ -60,7 +60,7 @@ namespace Abilities.FirstEdition
                 GetAiPriorityOfTarget,
                 HostShip.Owner.PlayerNo,
                 HostShip.PilotInfo.PilotName,
-                "Choose a ship inside your mobile firing arc to assign Stress token to it.",
+                "Choose a ship inside your mobile firing arc to assign Stress token to it",
                 HostShip
             );
         }
@@ -77,7 +77,7 @@ namespace Abilities.FirstEdition
             priority += (ship.Tokens.CountTokensByType(typeof(StressToken)) * 25);
             priority += (ship.State.Agility * 5);
 
-            if (ship.CanPerformActionsWhileStressed && ship.CanPerformRedManeuversWhileStressed) priority = 10;
+            if (ship.CallCheckCanPerformActionsWhileStressed() && ship.CanPerformRedManeuverWhileStressed()) priority = 10;
 
             return priority;
         }
@@ -93,13 +93,13 @@ namespace Abilities.FirstEdition
             ShotInfo shotInfo = new ShotInfo(HostShip, TargetShip, HostShip.PrimaryWeapons);
             if (shotInfo.InArcByType(ArcType.SingleTurret) && shotInfo.Range >= 1 && shotInfo.Range <= 2)
             {
-                Messages.ShowError(HostShip.PilotInfo.PilotName + " assigns Stress Token\nto " + TargetShip.PilotInfo.PilotName);
+                Messages.ShowInfo(HostShip.PilotInfo.PilotName + " assigns a Stress token\nto " + TargetShip.PilotInfo.PilotName);
                 TargetShip.Tokens.AssignToken(typeof(StressToken), SelectShipSubPhase.FinishSelection);
             }
             else
             {
-                if (!shotInfo.InArcByType(ArcType.SingleTurret)) Messages.ShowError("Target is not inside Mobile Arc");
-                else if (shotInfo.Range >= 3) Messages.ShowError("Target is outside range 2");
+                if (!shotInfo.InArcByType(ArcType.SingleTurret)) Messages.ShowError("The target is not inside " + HostShip.PilotInfo.PilotName + "'s Mobile Arc");
+                else if (shotInfo.Range >= 3) Messages.ShowError("The target is outside range 2");
             }
         }
 

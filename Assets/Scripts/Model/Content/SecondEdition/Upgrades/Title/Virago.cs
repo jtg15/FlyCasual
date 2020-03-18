@@ -1,4 +1,5 @@
-﻿using ActionsList;
+﻿using Actions;
+using ActionsList;
 using Ship;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace UpgradesList.SecondEdition
             UpgradeInfo = new UpgradeCardInfo(
                 "Virago",
                 UpgradeType.Title,
-                cost: 10,
+                cost: 8,
                 isLimited: true,
                 restriction: new ShipRestriction(typeof(Ship.FirstEdition.StarViper.StarViper)),
                 addSlot: new UpgradeSlot(UpgradeType.Modification),
@@ -51,27 +52,39 @@ namespace Abilities.SecondEdition
 
         private void AskUseAbility(object sender, EventArgs e)
         {
-            Messages.ShowInfo("Virago: You may spend 1 charge to perform a red boost action. There are " + HostUpgrade.State.Charges + " charges remaining.");
-            HostShip.BeforeFreeActionIsPerformed += RegisterSpendChargeTrigger;
+            HostShip.BeforeActionIsPerformed += RegisterSpendChargeTrigger;
+
             Selection.ChangeActiveShip(HostShip);
-            HostShip.AskPerformFreeAction(new BoostAction() { IsRed = true, CanBePerformedWhileStressed = false }, CleanUp);
+
+            HostShip.AskPerformFreeAction(
+                new BoostAction() { Color = ActionColor.Red, CanBePerformedWhileStressed = false },
+                CleanUp,
+                HostUpgrade.UpgradeInfo.Name,
+                "During the End Phase, you may spend 1 Charge to perform a red Boost action",
+                HostUpgrade
+            );
         }
 
-        private void RegisterSpendChargeTrigger(GenericAction action)
+        private void RegisterSpendChargeTrigger(GenericAction action, ref bool isFreeAction)
         {
-            HostShip.BeforeFreeActionIsPerformed -= RegisterSpendChargeTrigger;
-            RegisterAbilityTrigger(
-                TriggerTypes.OnFreeAction,
-                delegate {
-                    HostUpgrade.State.SpendCharge();
-                    Triggers.FinishTrigger();
-                }
-            );
+            if (action is BoostAction && isFreeAction)
+            {
+                HostShip.BeforeActionIsPerformed -= RegisterSpendChargeTrigger;
+
+                RegisterAbilityTrigger(
+                    TriggerTypes.BeforeActionIsPerformed,
+                    delegate {
+                        HostUpgrade.State.SpendCharge();
+                        Triggers.FinishTrigger();
+                    }
+                );
+            }
         }
 
         private void CleanUp()
         {
-            HostShip.BeforeFreeActionIsPerformed -= RegisterSpendChargeTrigger;
+            HostShip.BeforeActionIsPerformed -= RegisterSpendChargeTrigger;
+
             Triggers.FinishTrigger();
         }
     }

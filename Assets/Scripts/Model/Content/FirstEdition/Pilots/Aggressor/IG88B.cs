@@ -70,18 +70,20 @@ namespace Abilities.FirstEdition
         {
             if (!HostShip.IsCannotAttackSecondTime)
             {
-                Combat.StartAdditionalAttack(
+                HostShip.IsCannotAttackSecondTime = true;
+
+                Combat.StartSelectAttackTarget(
                     HostShip,
                     FinishAdditionalAttack,
                     IsCannonShot,
                     "IG-88B",
-                    "You may perform a cannon attack.",
+                    "You may perform a cannon attack",
                     HostShip
                 );
             }
             else
             {
-                Messages.ShowErrorToHuman(string.Format("{0} cannot attack one more time", HostShip.PilotInfo.PilotName));
+                Messages.ShowErrorToHuman(string.Format("{0} cannot attack another time", HostShip.PilotInfo.PilotName));
                 Triggers.FinishTrigger();
             }
         }
@@ -90,6 +92,9 @@ namespace Abilities.FirstEdition
         {
             // If attack is skipped, set this flag, otherwise regular attack can be performed second time
             Selection.ThisShip.IsAttackPerformed = true;
+
+            //if bonus attack was skipped, allow bonus attacks again
+            if (Selection.ThisShip.IsAttackSkipped) Selection.ThisShip.IsCannotAttackSecondTime = false;
 
             Triggers.FinishTrigger();
         }
@@ -105,7 +110,7 @@ namespace Abilities.FirstEdition
             }
             else
             {
-                if (!isSilent) Messages.ShowError("Attack must be performed from Cannon");
+                if (!isSilent) Messages.ShowError("This attack must be performed using a Cannon");
             }
 
             return result;

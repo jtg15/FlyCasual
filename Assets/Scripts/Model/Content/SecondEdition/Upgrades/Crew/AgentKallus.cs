@@ -15,7 +15,7 @@ namespace UpgradesList.SecondEdition
             UpgradeInfo = new UpgradeCardInfo(
                 "Agent Kallus",
                 UpgradeType.Crew,
-                cost: 6,
+                cost: 5,
                 isLimited: true,
                 restriction: new FactionRestriction(Faction.Imperial),
                 abilityType: typeof(Abilities.SecondEdition.AgentKallusAbility),
@@ -28,13 +28,23 @@ namespace UpgradesList.SecondEdition
 namespace Abilities.SecondEdition
 {
     public class AgentKallusAbility : FirstEdition.AgentKallusAbility
-    {        
+    {
+        public override void ActivateAbility()
+        {
+            Phases.Events.OnSetupEnd += RegisterAgentKallusAbility;
+        }
+
+        public override void DeactivateAbility()
+        {
+            Phases.Events.OnSetupEnd -= RegisterAgentKallusAbility;
+        }
+
         protected override void SelectTarget(GenericShip targetShip)
         {
-            Messages.ShowInfo("Agent Kallus: " + targetShip.PilotInfo.PilotName + " (" + targetShip.ShipId + ") is selected");
+            Messages.ShowInfo("Agent Kallus is hunting " + targetShip.PilotInfo.PilotName + " (" + targetShip.ShipId + ")");
 
             // The difference with First Edition is that we keep track of the target with a condition token
-            targetShip.Tokens.AssignCondition(typeof(Conditions.HuntedCondition));
+            targetShip.Tokens.AssignCondition( new HuntedCondition(targetShip) { SourceUpgrade = HostUpgrade } );
 
             HostShip.OnGenerateDiceModifications += AddAgentKallusDiceModification;
 
@@ -82,9 +92,11 @@ namespace Conditions
     /// </summary>
     public class HuntedCondition : GenericToken
     {
+        public GenericUpgrade SourceUpgrade;
+
         public HuntedCondition(GenericShip host) : base(host)
         {
-            Name = "Hunted Condition";
+            Name = ImageName = "Hunted Condition";
             Temporary = false;
 
             Tooltip = "https://raw.githubusercontent.com/Sandrem/xwing-data2-test/master/images/conditions/hunted.png";
@@ -135,6 +147,10 @@ namespace Conditions
 
             HuntedDecisionSubPhase selectAllyDecisionSubPhase = Phases.StartTemporarySubPhaseNew<HuntedDecisionSubPhase>(Name, Triggers.FinishTrigger);
 
+            selectAllyDecisionSubPhase.DescriptionShort = "Agent Kallus";
+            selectAllyDecisionSubPhase.DescriptionLong = "Assign the Haunted condition to 1 enemy ship";
+            selectAllyDecisionSubPhase.ImageSource = SourceUpgrade;
+
             foreach (var friendlyShip in otherFriendlies)
             {
                 var friendly = friendlyShip;
@@ -147,7 +163,7 @@ namespace Conditions
                 );
             }
 
-            selectAllyDecisionSubPhase.InfoText = "Hunted: Select another friendly ship";
+            selectAllyDecisionSubPhase.DescriptionShort = "Hunted: Select another friendly ship";
 
             GenericShip leastWorthAlly = otherFriendlies                
                 .OrderBy(ally => ally.State.Initiative)

@@ -38,7 +38,7 @@ namespace Abilities.FirstEdition
             Phases.Events.OnRoundEnd -= ClearAbility;
         }
 
-        private void CheckConditions()
+        protected virtual void CheckConditions()
         {
             if (!IsAbilityUsed)
             {
@@ -54,7 +54,9 @@ namespace Abilities.FirstEdition
                 Triggers.FinishTrigger
             );
 
-            selectMirandaDoniSubPhase.InfoText = "Use " + Name + "?";
+            selectMirandaDoniSubPhase.DescriptionShort = "Miranda Doni";
+            selectMirandaDoniSubPhase.DescriptionLong = "How do you want to use ability?";
+            selectMirandaDoniSubPhase.ImageSource = HostShip;
 
             if (HostShip.State.ShieldsCurrent > 0)
             {
@@ -99,7 +101,7 @@ namespace Abilities.FirstEdition
             count++;
             HostShip.LoseShield();
 
-            Messages.ShowInfo("Miranda Doni spends shield to roll extra die");
+            Messages.ShowInfo("Miranda Doni spends 1 shield to gain +1 attack die");
 
             HostShip.AfterGotNumberOfAttackDice -= RollExtraDice;
         }
@@ -117,7 +119,7 @@ namespace Abilities.FirstEdition
             count--;
             HostShip.TryRegenShields();
 
-            Messages.ShowInfo("Miranda Doni rolls 1 fewer die to recover 1 shield");
+            Messages.ShowInfo("Miranda Doni rolls 1 fewer defense die to recover 1 shield");
 
             HostShip.AfterGotNumberOfAttackDice -= RegenerateShield;
         }

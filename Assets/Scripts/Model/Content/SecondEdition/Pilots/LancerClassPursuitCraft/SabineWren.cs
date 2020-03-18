@@ -11,12 +11,14 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Sabine Wren",
                     3,
-                    64,
+                    61,
                     isLimited: true,
                     abilityType: typeof(Abilities.FirstEdition.SabineWrenLancerPilotAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
                     seImageNumber: 220
                 );
+
+                PilotNameCanonical = "sabinewren-lancerclasspursuitcraft";
             }
         }
     }

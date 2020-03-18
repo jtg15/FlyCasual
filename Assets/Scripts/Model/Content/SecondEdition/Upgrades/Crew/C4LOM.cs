@@ -54,6 +54,9 @@ namespace Abilities.SecondEdition
                 Triggers.FinishTrigger);
             phase.TargetShip = Combat.Defender;
             phase.HostShip = HostShip;
+            phase.DescriptionShort = "4-LOM";
+            phase.DescriptionLong = "Name a green token the defender can not spend";
+            phase.ImageSource = HostUpgrade;
             phase.Start();            
         }
 
@@ -66,8 +69,6 @@ namespace Abilities.SecondEdition
 
             public override void PrepareDecision(Action callBack)
             {
-                InfoText = "4-LOM: Name a green token the defender can not spend";
-
                 DecisionViewType = DecisionViewTypes.TextButtons;
 
                 AddDecision("Calculate", delegate { RestrictTokens("Calculate", typeof(Tokens.CalculateToken)); });
@@ -92,7 +93,7 @@ namespace Abilities.SecondEdition
             {
                 if (action.TokensSpend.Any(t => NamedTokenTypes.Contains(t)))
                 {
-                    Messages.ShowErrorToHuman("4-LOM: Cannot spend " + NamedToken);
+                    Messages.ShowErrorToHuman("4-LOM: The target cannot spend " + NamedToken + "s");
                     canBeUsed = false;
                 }
             }

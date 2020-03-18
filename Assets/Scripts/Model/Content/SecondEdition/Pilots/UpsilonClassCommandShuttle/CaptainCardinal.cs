@@ -14,7 +14,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Captain Cardinal",
                     4,
-                    64,
+                    62,
                     isLimited: true,
                     charges: 2,
                     abilityType: typeof(Abilities.SecondEdition.CaptainCardinalAbility)
@@ -42,14 +42,14 @@ namespace Abilities.SecondEdition
                 isGlobal: true
             );
 
-            GenericShip.OnDestroyedGlobal += CheckRemoveCharge;
+            GenericShip.OnShipIsDestroyedGlobal += CheckRemoveCharge;
         }
 
         public override void DeactivateAbility()
         {
             RemoveDiceModification();
 
-            GenericShip.OnDestroyedGlobal -= CheckRemoveCharge;
+            GenericShip.OnShipIsDestroyedGlobal -= CheckRemoveCharge;
         }
 
         private bool IsDiceModificationAvailable()
@@ -82,7 +82,7 @@ namespace Abilities.SecondEdition
                 DistanceInfo distInfo = new DistanceInfo(HostShip, destroyedShip);
                 if (distInfo.Range < 4)
                 {
-                    Messages.ShowError(HostShip.PilotInfo.PilotName + ": Charge is lost");
+                    Messages.ShowInfo(HostShip.PilotInfo.PilotName + " has lost a charge token");
                     HostShip.LoseCharge();
                 }
             }

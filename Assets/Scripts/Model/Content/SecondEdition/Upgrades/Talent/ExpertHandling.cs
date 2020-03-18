@@ -13,7 +13,7 @@ namespace UpgradesList.SecondEdition
             UpgradeInfo = new UpgradeCardInfo(
                 "Expert Handling",
                 UpgradeType.Talent,
-                cost: 2,
+                cost: 4,
                 restriction: new ActionBarRestriction(typeof(BarrelRollAction), ActionColor.Red),
                 addAction: new ActionInfo(typeof(BarrelRollAction)),
                 seImageNumber: 5
@@ -25,8 +25,8 @@ namespace UpgradesList.SecondEdition
             Dictionary<BaseSize, int> sizeToCost = new Dictionary<BaseSize, int>()
             {
                 {BaseSize.Small, 2},
-                {BaseSize.Medium, 4},
-                {BaseSize.Large, 6},
+                {BaseSize.Medium, 3},
+                {BaseSize.Large, 4},
             };
 
             UpgradeInfo.Cost = sizeToCost[ship.ShipInfo.BaseSize];

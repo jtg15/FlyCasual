@@ -78,20 +78,7 @@ public class ShipMovementScript : MonoBehaviour {
 
         Selection.ThisShip.SetAssignedManeuver(MovementFromString(maneuverCode));
 
-        if (Phases.CurrentSubPhase.GetType() == typeof(PlanningSubPhase))
-        {
-            Roster.HighlightShipOff(Selection.ThisShip);
-
-            if (Roster.AllManuversAreAssigned(Phases.CurrentPhasePlayer))
-            {
-                UI.ShowNextButton();
-                UI.HighlightNextButton();
-            }
-        }
-        else
-        {
-            Triggers.FinishTrigger();
-        }
+        DirectionsMenu.FinishManeuverSelections();
     }
 
     public static void AssignManeuverSimple(int shipId, string maneuverCode)
@@ -136,7 +123,7 @@ public class ShipMovementScript : MonoBehaviour {
         {
             result = new Movement.StationaryMovement(movementStruct.SpeedInt, movementStruct.Direction, movementStruct.Bearing, movementStruct.ColorComplexity);
         }
-        else if (movementStruct.Bearing == Movement.ManeuverBearing.Reverse)
+        else if (movementStruct.Bearing == Movement.ManeuverBearing.ReverseStraight)
         {
             if (movementStruct.Direction == Movement.ManeuverDirection.Forward)
             {
@@ -187,11 +174,12 @@ public class ShipMovementScript : MonoBehaviour {
     private static void RevealManeuver()
     {
         Selection.ThisShip.CallManeuverIsRevealed(
-            delegate { ShipMovementScript.LaunchMovement(FinishMovementAndStartActionDecision); }
+            delegate { ShipMovementScript.LaunchMovement(FinishMovementAndStartActionDecision); },
+            FinishMovementAndStartActionDecision
         );
     }
 
-    private static void FinishMovementAndStartActionDecision()
+    public static void FinishMovementAndStartActionDecision()
     {
         GenericSubPhase actionSubPhase = new ActionSubPhase();
         actionSubPhase.PreviousSubPhase = Phases.CurrentSubPhase;

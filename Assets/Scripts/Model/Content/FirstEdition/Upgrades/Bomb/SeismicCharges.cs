@@ -15,7 +15,7 @@ namespace UpgradesList.FirstEdition
         {
             UpgradeInfo = new UpgradeCardInfo(
                 "Seismic Charges",
-                type: UpgradeType.Bomb,
+                type: UpgradeType.Device,
                 cost: 2
             );
 
@@ -35,15 +35,15 @@ namespace UpgradesList.FirstEdition
             ship.Damage.TryResolveDamage(1, seismicDamage, callBack);
         }
 
-        public override void PlayDetonationAnimSound(GameObject bombObject, Action callBack)
+        public override void PlayDetonationAnimSound(GenericDeviceGameObject bombObject, Action callBack)
         {
-            BombsManager.CurrentBomb = this;
+            BombsManager.CurrentDevice = this;
             bombObject.transform.Find("Explosion/Explosion").GetComponent<ParticleSystem>().Play();
 
             GameManagerScript.Wait(1, delegate { PlayDefferedSound(bombObject, callBack); });
         }
 
-        private void PlayDefferedSound(GameObject bombObject, Action callBack)
+        private void PlayDefferedSound(GenericDeviceGameObject bombObject, Action callBack)
         {
             Sounds.PlayBombSound(bombObject, "SeismicBomb");
             bombObject.transform.Find("Explosion/Ring").GetComponent<ParticleSystem>().Play();

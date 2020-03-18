@@ -6,6 +6,7 @@ using Actions;
 using Arcs;
 using Upgrade;
 using Ship;
+using System;
 
 namespace Ship
 {
@@ -17,7 +18,7 @@ namespace Ship
             {
                 ShipInfo.ShipName = "TIE Advanced x1";
 
-                ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.System);
+                ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.Sensor);
 
                 ShipInfo.ActionIcons.RemoveActions(typeof(EvadeAction));
                 ShipInfo.ActionIcons.AddLinkedAction(new LinkedActionInfo(typeof(FocusAction), typeof(BarrelRollAction)));
@@ -33,8 +34,6 @@ namespace Ship
                 DialInfo.AddManeuver(new ManeuverHolder(ManeuverSpeed.Speed3, ManeuverDirection.Right, ManeuverBearing.TallonRoll), MovementComplexity.Complex);
 
                 ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/0/08/Maneuver_tie_advanced_x1.png";
-
-                OldShipTypeName = "TIE Advanced";
             }
         }
     }
@@ -45,9 +44,12 @@ namespace Abilities.SecondEdition
     //While you perform a primary attack against a defender you have locked, roll 1 additional attack die and change 1 hit result to a critical hit result.
     public class AdvancedTargetingComputer : GenericAbility
     {
+        public override string Name { get { return "Advanced Targeting Computer"; } }
+
         public override void ActivateAbility()
         {
             HostShip.AfterGotNumberOfAttackDice += CheckAbility;
+            HostShip.Ai.OnGetActionPriority += IncreaseAILockPriority;
 
             AddDiceModification(
                 "Advanced Targeting Computer",
@@ -63,12 +65,18 @@ namespace Abilities.SecondEdition
         public override void DeactivateAbility()
         {
             HostShip.AfterGotNumberOfAttackDice -= CheckAbility;
+            HostShip.Ai.OnGetActionPriority -= IncreaseAILockPriority;
             RemoveDiceModification();
         }
 
         private int GetAiPriority()
         {
             return 20;
+        }
+
+        private void IncreaseAILockPriority(GenericAction action, ref int priority)
+        {
+            if (action is TargetLockAction && TargetLockAction.HasValidLockTargetsAndNoLockOnShipInRange(HostShip)) priority = 55;
         }
 
         private bool IsAvailable()
@@ -82,7 +90,7 @@ namespace Abilities.SecondEdition
         {
             if (IsAvailable())
             {
-                Messages.ShowInfo("Advanced Targeting Computer: +1 attack die");
+                Messages.ShowInfo(Combat.Attacker.PilotInfo.PilotName + "'s target lock and Advanced Targeting Computer grants them +1 attack die");
                 value++;
             }
         }
@@ -92,7 +100,7 @@ namespace Abilities.SecondEdition
             HostShip.OnImmediatelyAfterRolling -= ModifyDice;
             if (diceroll.Change(DieSide.Success, DieSide.Crit, 1) > 0)
             {
-                Messages.ShowInfo("Advanced Targeting Computer: 1 hit changed to crit");
+                Messages.ShowInfo("Advanced Targeting Computer converts one Hit to a Critical Hit");
             }
         }
     }

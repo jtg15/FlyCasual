@@ -2,22 +2,36 @@
 using UnityEngine;
 using Ship;
 using System;
+using System.Collections.Generic;
 using Tokens;
 
 namespace UpgradesList.SecondEdition
 {
-    public class R2Astromech : GenericUpgrade
+    public class R2Astromech : GenericUpgrade, IVariableCost
     {
         public R2Astromech() : base()
         {
             UpgradeInfo = new UpgradeCardInfo(
                 "R2 Astromech",
                 UpgradeType.Astromech,
-                cost: 4,
+                cost: 3,
                 abilityType: typeof(Abilities.SecondEdition.R2AstromechAbility),
                 charges: 2,
                 seImageNumber: 53
             );
+        }
+
+        public void UpdateCost(GenericShip ship)
+        {
+            Dictionary<int, int> agilityToCost = new Dictionary<int, int>()
+            {
+                {0, 3},
+                {1, 5},
+                {2, 7},
+                {3, 9}
+            };
+
+            UpgradeInfo.Cost = agilityToCost[ship.ShipInfo.Agility];
         }
     }
 }
@@ -47,7 +61,13 @@ namespace Abilities.SecondEdition
 
         private void AskUseAbility(object sender, EventArgs e)
         {
-            AskToUseAbility(NeverUseByDefault, RegenShield, null, null, false, HostName + ": Spend 1 charge and gain 1 disarm token to recover 1 shield?");
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                NeverUseByDefault,
+                RegenShield,
+                descriptionLong: "Do you want to spend 1 Charge and gain 1 Disarm Token to recover 1 shield?",
+                imageHolder: HostUpgrade
+            );
         }
 
         private void RegenShield(object sender, EventArgs e)
@@ -58,7 +78,7 @@ namespace Abilities.SecondEdition
                 if (HostShip.TryRegenShields())
                 {
                     Sounds.PlayShipSound("R2D2-Proud");
-                    Messages.ShowInfo(HostName + ": Shield is restored");
+                    Messages.ShowInfo(HostName + " causes " + HostShip.PilotInfo.PilotName + " to recover 1 shield and gain 1 disarm token");
                 }
                 Triggers.FinishTrigger();
             });

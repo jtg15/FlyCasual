@@ -14,7 +14,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Countess Ryad",
                     4,
-                    84,
+                    82,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.CountessRyadAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -45,7 +45,9 @@ namespace Abilities.SecondEdition
         protected override void RegisterAskChangeManeuver(GenericShip ship)
         {
             //I have assumed that you can not use this ability if you execute a red maneuver
-            if (HostShip.AssignedManeuver.ColorComplexity != MovementComplexity.Complex && HostShip.AssignedManeuver.Bearing == ManeuverBearing.Straight)
+            if (HostShip.AssignedManeuver.ColorComplexity != MovementComplexity.Complex
+                && HostShip.AssignedManeuver.Bearing == ManeuverBearing.Straight
+                && !HostShip.AssignedManeuver.IsIonManeuver)
             {
                 RegisterAbilityTrigger(TriggerTypes.BeforeMovementIsExecuted, AskChangeManeuver);
             }

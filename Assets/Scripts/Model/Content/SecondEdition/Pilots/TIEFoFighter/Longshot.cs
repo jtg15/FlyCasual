@@ -12,7 +12,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "\"Longshot\"",
                     3,
-                    33,
+                    31,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.LongshotAbility),
                     extraUpgradeIcon: UpgradeType.Talent //,
@@ -44,7 +44,7 @@ namespace Abilities.SecondEdition
             ShotInfo shotInformation = new ShotInfo(Combat.Attacker, Combat.Defender, Combat.ChosenWeapon);
             if (shotInformation.Range == 3)
             {
-                Messages.ShowInfo("\"Longshot\": +1 attack die");
+                Messages.ShowInfo("\"Longshot\" is attacking at range 3 and gains +1 attack die");
                 result++;
             }
         }

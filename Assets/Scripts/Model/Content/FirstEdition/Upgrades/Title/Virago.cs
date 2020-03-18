@@ -18,7 +18,7 @@ namespace UpgradesList.FirstEdition
                 restriction: new ShipRestriction(typeof(Ship.FirstEdition.StarViper.StarViper)),
                 addSlots: new List<UpgradeSlot>()
                 {
-                    new UpgradeSlot(UpgradeType.System),
+                    new UpgradeSlot(UpgradeType.Sensor),
                     new UpgradeSlot(UpgradeType.Illicit)
                 }
             );
@@ -32,7 +32,7 @@ namespace UpgradesList.FirstEdition
         public override bool IsAllowedForSquadBuilderPostCheck(SquadList squadList)
         {
             bool result = HostShip.PilotInfo.Initiative > 3;
-            if (!result) Messages.ShowError("You cannot equip \"Virago\" if pilot's skill is \"3\" or lower");
+            if (!result) Messages.ShowError("You cannot equip \"Virago\" if the pilot's skill is \"3\" or lower");
             return result;
         }
     }

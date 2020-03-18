@@ -7,6 +7,7 @@ using System;
 using System.Linq;
 using Players;
 using UnityEngine.UI;
+using ActionsList;
 
 namespace SubPhases
 {
@@ -22,24 +23,22 @@ namespace SubPhases
         public override List<GameCommandTypes> AllowedGameCommandTypes { get { return new List<GameCommandTypes>() { GameCommandTypes.SelectShip, GameCommandTypes.PressSkip }; } }
 
         protected List<TargetTypes> targetsAllowed = new List<TargetTypes>();
-        protected int minRange = 1;
+        protected int minRange = 0;
         protected int maxRange = 3;
 
         public bool CanMeasureRangeBeforeSelection = true;
 
         protected Action finishAction;
-        public Func<GenericShip, bool> FilterTargets;
+        public Func<GenericShip, bool> FilterShipTargets { get; set; }
         public Func<GenericShip, int> GetAiPriority;
 
         public bool IsInitializationFinished;
 
-        public GenericShip TargetShip;
-
-        public string AbilityName;
-        public string Description;
-        public IImageHolder ImageSource;
+        public virtual GenericShip TargetShip { get; set; }
 
         public bool ShowSkipButton = true;
+
+        public GenericAction HostAction { get; set; }
 
         public override void Start()
         {
@@ -57,6 +56,8 @@ namespace SubPhases
             // If not skipped
             if (Phases.CurrentSubPhase == this)
             {
+                CameraScript.RestoreCamera();
+
                 IsReadyForCommands = true;
                 Roster.GetPlayer(RequiredPlayer).SelectShipForAbility();
             }
@@ -69,7 +70,7 @@ namespace SubPhases
 
         public void PrepareByParameters(Action selectTargetAction, Func<GenericShip, bool> filterTargets, Func<GenericShip, int> getAiPriority, PlayerNo subphaseOwnerPlayerNo, bool showSkipButton, string abilityName, string description, IImageHolder imageSource = null)
         {
-            FilterTargets = filterTargets;
+            FilterShipTargets = filterTargets;
             GetAiPriority = getAiPriority;
             finishAction = selectTargetAction;
             RequiredPlayer = subphaseOwnerPlayerNo;
@@ -81,8 +82,8 @@ namespace SubPhases
             {
                 UI.HideSkipButton();
             }
-            AbilityName = abilityName;
-            Description = description;
+            DescriptionShort = abilityName;
+            DescriptionLong = description;
             ImageSource = imageSource;
         }
 
@@ -93,14 +94,14 @@ namespace SubPhases
 
         public void HighlightShipsToSelect()
         {
-            ShowSubphaseDescription(AbilityName, Description, ImageSource);
-            Roster.HighlightShipsFiltered(FilterTargets);
+            ShowSubphaseDescription(DescriptionShort, DescriptionLong, ImageSource);
+            Roster.HighlightShipsFiltered(FilterShipTargets);
             IsInitializationFinished = true;
         }
 
         public void AiSelectPrioritizedTarget()
         {
-            List<GenericShip> filteredShips = Roster.AllShips.Values.Where(n => FilterTargets(n)).ToList();
+            List<GenericShip> filteredShips = Roster.AllShips.Values.Where(n => FilterShipTargets(n)).ToList();
             if (filteredShips == null || filteredShips.Count == 0)
             {
                 SkipButton();
@@ -149,7 +150,7 @@ namespace SubPhases
 
             if (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(HumanPlayer))
             {
-                if (FilterTargets(ship))
+                if (FilterShipTargets(ship))
                 {
                     if (ship == Selection.ThisShip)
                     {
@@ -169,15 +170,15 @@ namespace SubPhases
                             }
                             else
                             {
-                                Messages.ShowError("Cannot measure range before selection");
+                                Messages.ShowError("You cannot measure range before selecting another ship");
                             }
                         }
                     }
                 }
                 else
                 {
-                    Messages.ShowErrorToHuman("This friendly ship cannot be selected");
-                    CancelShipSelection();
+                    Messages.ShowErrorToHuman("You cannot select this friendly ship");
+                    Selection.ThisShip.CallActionTargetIsWrong(HostAction, ship, CancelShipSelection);
                 }
             }
             return result;
@@ -191,14 +192,14 @@ namespace SubPhases
             {
                 if (mouseKeyIsPressed == 1)
                 {
-                    if (FilterTargets(anotherShip))
+                    if (FilterShipTargets(anotherShip))
                     {
                         SendSelectShipCommand(anotherShip);
                     }
                     else
                     {
-                        Messages.ShowErrorToHuman("This enemy ship cannot be selected");
-                        CancelShipSelection();
+                        Messages.ShowErrorToHuman("You cannot select this enemy ship");
+                        Selection.ThisShip.CallActionTargetIsWrong(HostAction, anotherShip, CancelShipSelection);
                     }
                 }
                 else if (mouseKeyIsPressed == 2)
@@ -209,7 +210,7 @@ namespace SubPhases
                     }
                     else
                     {
-                        Messages.ShowError("Cannot measure range before selection");
+                        Messages.ShowError("You cannot measure range before selecting another ship");
                     }
                 }
             }
@@ -223,13 +224,13 @@ namespace SubPhases
 
         private void TryToSelectThisShip()
         {
-            if (FilterTargets(Selection.ThisShip))
+            if (FilterShipTargets(Selection.ThisShip))
             {
                 SendSelectShipCommand(Selection.ThisShip);
             }
             else
             {
-                Messages.ShowErrorToHuman("Another ship should be selected");
+                Messages.ShowErrorToHuman("Please select a different ship");
                 CancelShipSelection();
             }
         }
@@ -314,7 +315,7 @@ namespace SubPhases
         {
             base.Resume();
 
-            ShowSubphaseDescription(AbilityName, Description, ImageSource);
+            ShowSubphaseDescription(DescriptionShort, DescriptionLong, ImageSource);
         }
 
     }

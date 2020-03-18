@@ -60,7 +60,7 @@ namespace Ship
         {
             critCard.DiscardEffect();
 
-            Messages.ShowInfo("Critical damage card \"" + critCard.Name + "\" is flipped facedown");
+            Messages.ShowInfo("The critical damage card \"" + critCard.Name + "\" has been flipped face-down");
         }
 
         public void DealDrawnCard(Action callback)
@@ -81,12 +81,40 @@ namespace Ship
 
         public bool HasFacedownCards { get { return DamageCards.Any(n => !n.IsFaceup); } }
 
+        public bool HasFaceupCards { get { return DamageCards.Any(n => n.IsFaceup); } }
+
         public void ExposeRandomFacedownCard(Action callback)
         {
-            int randomIndex = UnityEngine.Random.Range(0, DamageCards.Count);
-            GenericDamageCard randomCard = DamageCards[randomIndex];
+            List<GenericDamageCard> faceDownCards = GetFacedownCards();
 
-            randomCard.Expose(callback);
+            if (faceDownCards.Count > 0)
+            {
+                int randomIndex = UnityEngine.Random.Range(0, faceDownCards.Count);
+                GenericDamageCard randomCard = faceDownCards[randomIndex];
+
+                Host.CallSelectDamageCardToExpose(randomIndex, ExposeFacedownCardByIndex, callback);
+
+            }
+            else
+            {
+                Messages.ShowInfo("No cards to expose");
+                callback();
+            }
+        }
+
+        private void ExposeFacedownCardByIndex(int index, Action callback, bool isOverriden = false)
+        {
+            if (!isOverriden)
+            {
+                List<GenericDamageCard> faceDownCards = GetFacedownCards();
+                GenericDamageCard randomCard = faceDownCards[index];
+
+                randomCard.Expose(callback);
+            }
+            else
+            {
+                callback();
+            }
         }
 
         // EXTRA

@@ -14,7 +14,7 @@ namespace SubPhases
             base.Start();
 
             Name = "Action SubPhase";
-            RequiredPilotSkill = PreviousSubPhase.RequiredPilotSkill;
+            RequiredInitiative = PreviousSubPhase.RequiredInitiative;
             RequiredPlayer = PreviousSubPhase.RequiredPlayer;
             CanBePaused = true;
             UpdateHelpInfo();
@@ -22,6 +22,7 @@ namespace SubPhases
 
         public override void Initialize()
         {
+            Selection.ThisShip.CallPerformActionStepStart();
             Phases.Events.CallBeforeActionSubPhaseTrigger();
             var ship = Selection.ThisShip;
 
@@ -50,9 +51,11 @@ namespace SubPhases
             Phases.StartTemporarySubPhaseOld(
                 "Action Decision",
                 typeof(ActionDecisonSubPhase),
-                    (Action)delegate {
-                        ActionsHolder.TakeActionFinish(
-                        delegate { ActionsHolder.EndActionDecisionSubhase(Finish); }
+                (Action)delegate {
+                    ActionsHolder.TakeActionFinish(
+                        delegate {
+                            ActionsHolder.EndActionDecisionSubhase(Finish);
+                        }
                     ); 
                 }
             );
@@ -76,7 +79,7 @@ namespace SubPhases
             GenericSubPhase activationSubPhase = new ActivationSubPhase();
             Phases.CurrentSubPhase = activationSubPhase;
             Phases.CurrentSubPhase.Start();
-            Phases.CurrentSubPhase.RequiredPilotSkill = RequiredPilotSkill;
+            Phases.CurrentSubPhase.RequiredInitiative = RequiredInitiative;
             Phases.CurrentSubPhase.RequiredPlayer = RequiredPlayer;
 
             Phases.CurrentSubPhase.Next();
@@ -85,7 +88,7 @@ namespace SubPhases
         public override bool ThisShipCanBeSelected(Ship.GenericShip ship, int mouseKeyIsPressed)
         {
             bool result = false;
-            Messages.ShowErrorToHuman("Ship cannot be selected: Perform action first");
+            Messages.ShowErrorToHuman(ship.PilotName + " cannot be selected, perform an action first");
             return result;
         }
 
@@ -102,7 +105,9 @@ namespace SubPhases
 
         public override void PrepareDecision(System.Action callBack)
         {
-            InfoText = "Select action";
+            decisions.Clear();
+            DescriptionShort = "Perform Action step";
+
             ShowSkipButton = true;
             DefaultDecisionName = "Focus";
 
@@ -117,7 +122,7 @@ namespace SubPhases
             {
                 if (!DecisionWasPreparedAndShown)
                 {
-                    Messages.ShowErrorToHuman("Cannot perform any actions");
+                    Messages.ShowErrorToHuman("This ship cannot perform any actions");
                     ActionsHolder.CurrentAction = null;
                     CallBack();
                 }
@@ -143,22 +148,52 @@ namespace SubPhases
                     {
                         addedDecision = true;
                         string linkedActionName = linkedAction.Name;
-                        if (linkedAction.IsRed) linkedActionName = "<color=red>" + linkedActionName + "</color>";
+                        switch (linkedAction.Color)
+                        {
+                            case Actions.ActionColor.Red:
+                                linkedActionName = "<color=red>" + linkedActionName + "</color>";
+                                break;
+                            case Actions.ActionColor.Purple:
+                                linkedActionName = "<color=purple>" + linkedActionName + "</purple>";
+                                break;
+                            default:
+                                break;
+                        }
                         string decisionName = action.Name + " > " + linkedActionName;
 
-                        AddDecision(decisionName, delegate {
-                            ActionWasPerformed = true;
-                            ActionsHolder.TakeActionStart(action);
-                        }, action.ImageUrl, -1, action.IsRed);
+                        AddDecision(
+                            decisionName,
+                            delegate {
+                                ActionWasPerformed = true;
+                                Selection.ThisShip.CallBeforeActionIsPerformed(
+                                    (GenericAction)action,
+                                    (Action)delegate { ActionsHolder.TakeActionStart((GenericAction)action); },
+                                    isFree: false
+                                );
+                            },
+                            action.ImageUrl,
+                            -1,
+                            action.Color
+                        );
                     }
                 }
 
-                if(!addedDecision)
+                if (!addedDecision)
                 {
-                    AddDecision(action.Name, delegate {
-                        ActionWasPerformed = true;
-                        ActionsHolder.TakeActionStart(action);
-                    }, action.ImageUrl, -1, action.IsRed);
+                    AddDecision(
+                        action.Name,
+                        delegate {
+                            ActionWasPerformed = true;
+                            Selection.ThisShip.CallBeforeActionIsPerformed(
+                                (GenericAction)action,
+                                (Action)delegate { ActionsHolder.TakeActionStart((GenericAction)action); },
+                                isFree: false
+                            );
+                        },
+                        action.ImageUrl,
+                        -1,
+                        action.Color
+                    );
                 }
             }
         }
@@ -189,7 +224,7 @@ namespace SubPhases
 
         public override void PrepareDecision(System.Action callBack)
         {
-            InfoText = "Select free action";
+            DescriptionShort = DescriptionShort ?? "Select free action";
             DefaultDecisionName = "Focus";
 
             List<GenericAction> availableActions = Selection.ThisShip.GetAvailableFreeActions();
@@ -201,7 +236,7 @@ namespace SubPhases
             }
             else
             {
-                Messages.ShowErrorToHuman("Cannot perform any free actions");
+                Messages.ShowErrorToHuman(Selection.ThisShip.PilotInfo.PilotName + " cannot perform any free actions");
                 Selection.ThisShip.IsFreeActionSkipped = true;
                 ActionsHolder.CurrentAction = null;
                 CallBack();
@@ -226,21 +261,32 @@ namespace SubPhases
                     {
                         addedDecision = true;
                         string linkedActionName = linkedAction.Name;
-                        if (linkedAction.IsRed) linkedActionName = "<color=red>" + linkedActionName + "</color>";
+                        switch (linkedAction.Color)
+                        {
+                            case Actions.ActionColor.Red:
+                                linkedActionName = "<color=red>" + linkedActionName + "</color>";
+                                break;
+                            case Actions.ActionColor.Purple:
+                                linkedActionName = "<color=purple>" + linkedActionName + "</purple>";
+                                break;
+                            default:
+                                break;
+                        }
                         string decisionName = action.Name + " > " + linkedActionName;
 
                         AddDecision(
                             decisionName,
                             delegate {
                                 ActionWasPerformed = true;
-                                Selection.ThisShip.CallBeforeFreeActionIsPerformed(
+                                Selection.ThisShip.CallBeforeActionIsPerformed(
                                     (GenericAction)action,
-                                    (Action)delegate { ActionsHolder.TakeActionStart((GenericAction)action); }
+                                    (Action)delegate { ActionsHolder.TakeActionStart((GenericAction)action); },
+                                    isFree: true
                                 );
                             },
                             action.ImageUrl,
                             -1,
-                            action.IsRed
+                            action.Color
                         );
                     }
                 }
@@ -251,14 +297,15 @@ namespace SubPhases
                         action.Name,
                         delegate {
                             ActionWasPerformed = true;
-                            Selection.ThisShip.CallBeforeFreeActionIsPerformed(
+                            Selection.ThisShip.CallBeforeActionIsPerformed(
                                 (GenericAction)action,
-                                (Action)delegate { ActionsHolder.TakeActionStart((GenericAction)action); }
+                                (Action)delegate { ActionsHolder.TakeActionStart((GenericAction)action); },
+                                isFree: true
                             );
                         },
                         action.ImageUrl,
                         -1,
-                        action.IsRed
+                        action.Color
                     );
                 }
             }

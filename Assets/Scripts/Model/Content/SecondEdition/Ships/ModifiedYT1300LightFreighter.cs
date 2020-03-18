@@ -20,7 +20,7 @@ namespace Ship.SecondEdition.ModifiedYT1300LightFreighter
 
             ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.Missile);
             ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.Gunner);
-            ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.Illicit);
+            ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.Modification);
 
             ShipInfo.ActionIcons.AddActions(new ActionInfo(typeof(RotateArcAction)));
             ShipInfo.ActionIcons.AddActions(new ActionInfo(typeof(BoostAction), ActionColor.Red));
@@ -32,6 +32,7 @@ namespace Ship.SecondEdition.ModifiedYT1300LightFreighter
             DialInfo.ChangeManeuverComplexity(new ManeuverHolder(ManeuverSpeed.Speed2, ManeuverDirection.Left, ManeuverBearing.Bank), MovementComplexity.Easy);
             DialInfo.ChangeManeuverComplexity(new ManeuverHolder(ManeuverSpeed.Speed2, ManeuverDirection.Right, ManeuverBearing.Bank), MovementComplexity.Easy);
             DialInfo.AddManeuver(new ManeuverHolder(ManeuverSpeed.Speed3, ManeuverDirection.Left, ManeuverBearing.Turn), MovementComplexity.Normal);
+            DialInfo.ChangeManeuverComplexity(new ManeuverHolder(ManeuverSpeed.Speed3, ManeuverDirection.Forward, ManeuverBearing.Straight), MovementComplexity.Easy);
             DialInfo.AddManeuver(new ManeuverHolder(ManeuverSpeed.Speed3, ManeuverDirection.Right, ManeuverBearing.Turn), MovementComplexity.Normal);
             DialInfo.RemoveManeuver(new ManeuverHolder(ManeuverSpeed.Speed3, ManeuverDirection.Forward, ManeuverBearing.KoiogranTurn));
             DialInfo.AddManeuver(new ManeuverHolder(ManeuverSpeed.Speed3, ManeuverDirection.Left, ManeuverBearing.SegnorsLoop), MovementComplexity.Complex);
@@ -40,8 +41,6 @@ namespace Ship.SecondEdition.ModifiedYT1300LightFreighter
             IconicPilots[Faction.Rebel] = typeof(HanSolo);
 
             ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/3/3f/Maneuver_modified_yt-1300.png";
-
-            OldShipTypeName = "YT-1300";
         }
     }
 }

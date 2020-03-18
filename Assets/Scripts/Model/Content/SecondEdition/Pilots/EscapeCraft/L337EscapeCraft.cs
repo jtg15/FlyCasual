@@ -21,7 +21,11 @@ namespace Ship
                     seImageNumber: 228
                 );
 
+                PilotNameCanonical = "l337-escapecraft";
+
                 ShipInfo.ActionIcons.SwitchToDroidActions();
+
+                ShipAbilities.Add(new Abilities.SecondEdition.CoPilotAbility());
             }
         }
     }

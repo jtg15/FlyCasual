@@ -20,6 +20,8 @@ namespace Ship
                 ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.Configuration);
                 ShipInfo.UpgradeIcons.Upgrades.Remove(UpgradeType.Torpedo);
 
+                DefaultUpgrades.Add(typeof(UpgradesList.SecondEdition.IntegratedSFoilsOpen));
+
                 ShipInfo.DefaultShipFaction = Faction.Resistance;
                 ShipInfo.FactionsAll = new List<Faction>() { Faction.Resistance };
 
@@ -30,7 +32,7 @@ namespace Ship
 
                 ShipAbilities.Add(new Abilities.FirstEdition.HardPointAbility());
 
-                // ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/c/cf/Maneuver_t-65_x-wing.png";
+                ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/b/bc/Maneuver_t-70_x-wing.png";
             }
         }
     }

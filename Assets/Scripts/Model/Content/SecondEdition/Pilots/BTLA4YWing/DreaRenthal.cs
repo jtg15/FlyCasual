@@ -15,7 +15,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Drea Renthal",
                     4,
-                    42,
+                    49,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.DreaRenthalAbility),
                     extraUpgradeIcons: new List<UpgradeType>() { UpgradeType.Talent, UpgradeType.Illicit },
@@ -39,12 +39,12 @@ namespace Abilities.SecondEdition
 
         public override void DeactivateAbility()
         {
-            GenericShip.OnGenerateDiceModificationsGlobal += AddDreaRenthalAbility;
+            GenericShip.OnGenerateDiceModificationsGlobal -= AddDreaRenthalAbility;
         }
 
         private void AddDreaRenthalAbility(GenericShip ship)
         {
-            Combat.Attacker.AddAvailableDiceModification(new DiceModificationAction() { HostShip = this.HostShip });
+            Combat.Attacker.AddAvailableDiceModification(new DiceModificationAction() { HostShip = Roster.GetShipById("ShipId:" + this.HostShip.ShipId) });
         }
 
         private class DiceModificationAction : ActionsList.GenericAction

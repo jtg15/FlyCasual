@@ -62,7 +62,7 @@ namespace Abilities.FirstEdition
                     GetAiAbilityPriority,
                     HostShip.Owner.PlayerNo,
                     HostShip.PilotInfo.PilotName,
-                    "Choose a ship to remove 1 focus or evade token from it and assign this token to yourself.",
+                    "Choose a ship to remove 1 focus or evade token from it and assign this token to yourself",
                     HostShip
                 );
             }
@@ -209,7 +209,9 @@ namespace Abilities.FirstEdition
                     callback
                 );
 
-                whichToken.InfoText = "Take which type of Token?";
+                whichToken.DescriptionShort = "Palog Godalhi";
+                whichToken.DescriptionLong = "Take which type of Token?";
+                whichToken.ImageSource = HostShip;
 
                 whichToken.RequiredPlayer = HostShip.Owner.PlayerNo;
 

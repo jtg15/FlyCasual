@@ -58,7 +58,7 @@ namespace Conditions
 
         public WedgeAntillesCondition(GenericShip host, GenericShip source) : base(host)
         {
-            Name = "Debuff Token";
+            Name = ImageName = "Debuff Token";
             TooltipType = source.GetType();
             Temporary = false;
         }
@@ -69,7 +69,7 @@ namespace Conditions
             {
                 AgilityWasDecreased = true;
 
-                Messages.ShowError("Wedge Antilles: Agility is decreased");
+                Messages.ShowInfo("Wedge Antilles: The defender's agility has been decreased by 1");
                 Host.ChangeAgilityBy(-1);
             }
 
@@ -85,7 +85,7 @@ namespace Conditions
         {
             if (AgilityWasDecreased)
             {
-                Messages.ShowInfo("Agility is restored");
+                Messages.ShowInfo("Wedge Antilles: The defender's agility has been restored");
                 Host.ChangeAgilityBy(+1);
             }
 

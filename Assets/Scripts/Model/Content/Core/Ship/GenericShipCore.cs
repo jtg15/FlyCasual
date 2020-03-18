@@ -6,6 +6,7 @@ using Abilities;
 using System;
 using Editions;
 using Upgrade;
+using Players;
 
 namespace Ship
 {
@@ -23,6 +24,8 @@ namespace Ship
         public PilotCardInfo PilotInfo;
         public ShipDialInfo DialInfo;
         public ShipModelInfo ModelInfo;
+
+        public CustomizedAi Ai;
 
         public Faction Faction { get { return (PilotInfo.Faction != Faction.None) ? PilotInfo.Faction : ShipInfo.DefaultShipFaction; } }
 
@@ -43,11 +46,10 @@ namespace Ship
 
         public ShipStateInfo State;
 
-        public int ShipId { get; private set; }
-        public Players.GenericPlayer Owner { get; private set; }
+        public int ShipId { get; protected set; }
+        public GenericPlayer Owner { get; protected set; }
 
         public string PilotName { get; set; }
-        public string PilotNameShort { get; protected set; }
 
         public int TargetLockMinRange { get; protected set; }
         public int TargetLockMaxRange { get; protected set; }
@@ -67,6 +69,7 @@ namespace Ship
 
         public ShipUpgradeBar UpgradeBar { get; protected set; }
         public ShipActionBar ActionBar { get; protected set; }
+        public List<Type> DefaultUpgrades { get; protected set; }
 
         public TokensManager Tokens { get; protected set; }
 
@@ -85,20 +88,7 @@ namespace Ship
         private string shipTypeCanonical;
         public string ShipTypeCanonical
         {
-            get
-            {
-                if (!string.IsNullOrEmpty(shipTypeCanonical)) return shipTypeCanonical;
-
-                if (string.IsNullOrEmpty(OldShipTypeName))
-                {
-                    return Tools.Canonicalize(ShipInfo.ShipName);
-                }
-                else
-                {
-                    return Tools.Canonicalize(OldShipTypeName);
-                }
-            }
-            set { shipTypeCanonical = value; }
+            get { return Tools.Canonicalize(ShipInfo.ShipName); }
         }
 
         public List<GenericAbility> PilotAbilities = new List<GenericAbility>();
@@ -112,16 +102,17 @@ namespace Ship
             UpgradeBar = new ShipUpgradeBar(this);
             Tokens = new TokensManager(this);
             ActionBar = new ShipActionBar(this);
+            Ai = new CustomizedAi(this);
+            DefaultUpgrades = new List<Type>();
 
             TargetLockMinRange = 0;
             TargetLockMaxRange = 3;
         }
 
-        public void InitializeGenericShip(Players.PlayerNo playerNo, int shipId, Vector3 position)
+        public void InitializeGenericShip(PlayerNo playerNo, int shipId, Vector3 position)
         {
             Owner = Roster.GetPlayer(playerNo);
             ShipId = shipId;
-
             StartingPosition = position;
 
             InitializeShip();
@@ -132,8 +123,15 @@ namespace Ship
 
             InitializeShipModel();
 
+            InitializeRosterPanel();
+        }
+
+        protected void InitializeRosterPanel()
+        {
             InfoPanel = Roster.CreateRosterInfo(this);
             Roster.UpdateUpgradesPanel(this, this.InfoPanel);
+            Roster.SubscribeSelectionByInfoPanel(this.InfoPanel.transform.Find("ShipInfo").gameObject);
+            Roster.SubscribeUpgradesPanel(this, this.InfoPanel);
         }
 
         public virtual void InitializeUpgrades()
@@ -144,7 +142,7 @@ namespace Ship
             }
         }
 
-        private void InitializeState()
+        public void InitializeState()
         {
             State = new ShipStateInfo(this);
 
@@ -162,9 +160,13 @@ namespace Ship
             State.MaxCharges = PilotInfo.Charges;
             State.RegensCharges = PilotInfo.RegensCharges;
 
-            foreach (var maneuver in DialInfo.PrintedDial)
+            Maneuvers = new Dictionary<string, Movement.MovementComplexity>();
+            if (DialInfo != null)
             {
-                Maneuvers.Add(maneuver.Key.ToString(), maneuver.Value);
+                foreach (var maneuver in DialInfo.PrintedDial)
+                {
+                    Maneuvers.Add(maneuver.Key.ToString(), maneuver.Value);
+                }
             }
         }
 
@@ -186,11 +188,17 @@ namespace Ship
             CreateModel(StartingPosition);
             InitializeSectors();
             InitializeShipBaseArc();
+            SetId();
+            SetShipInsertImage();
+            SetShipSkin(GetModelTransform(), GetSkinTexture());
+        }
 
+        protected void SetId()
+        {
             SetTagOfChildrenRecursive(Model.transform, "ShipId:" + ShipId.ToString());
 
-            SetShipInsertImage();
-            SetShipSkin();
+            SetIdMarker();
+            SetSpotlightMask();
         }
 
         public void InitializeSectors()
@@ -206,7 +214,7 @@ namespace Ship
                 switch (arc.ArcType)
                 {
                     case ArcType.Front:
-                        ArcsInfo.Arcs.Add(new ArcPrimary(ShipBase));
+                        ArcsInfo.Arcs.Add(new ArcFront(ShipBase));
                         break;
                     case ArcType.Rear:
                         ArcsInfo.Arcs.Add(new ArcRear(ShipBase));
@@ -290,7 +298,7 @@ namespace Ship
             }
         }
 
-        private void ActivatePilotAbilities()
+        protected void ActivatePilotAbilities()
         {
             if (PilotInfo.AbilityType != null) PilotAbilities.Add((GenericAbility)Activator.CreateInstance(PilotInfo.AbilityType));
 
@@ -311,13 +319,18 @@ namespace Ship
             {
                 UpgradeBar.AddSlot(slot);
             }
+            
+            if (DebugManager.FreeMode)
+            {
+                UpgradeBar.AddSlot(UpgradeType.Omni);
+            }
         }
 
         // STAT MODIFICATIONS
 
         public void ChangeFirepowerBy(int value)
         {
-            State.Firepower += value;
+            if (State != null) State.Firepower += value;
             if (AfterStatsAreChanged != null) AfterStatsAreChanged(this);
         }
 
@@ -329,13 +342,13 @@ namespace Ship
 
         public void ChangeMaxHullBy(int value)
         {
-            State.HullMax += value;
+            if (State != null) State.HullMax += value;
             if (AfterStatsAreChanged != null) AfterStatsAreChanged(this);
         }
 
         public void ChangeShieldBy(int value)
         {
-            State.ShieldsCurrent += value;
+            if (State != null) State.ShieldsCurrent += value;
             if (AfterStatsAreChanged != null) AfterStatsAreChanged(this);
         }
 
@@ -387,6 +400,32 @@ namespace Ship
             State.Charges = State.MaxCharges;
         }
 
+        public bool CanEquipForceAlignedCard(ForceAlignment alignment)
+        {
+            var result = false;
+
+            switch (alignment)
+            {
+                case ForceAlignment.Light:
+                    result = Faction == Faction.Republic ||
+                             Faction == Faction.Rebel ||
+                             Faction == Faction.Resistance;
+                    break;
+                case ForceAlignment.Dark:
+                    result = Faction == Faction.Separatists ||
+                             Faction == Faction.Imperial ||
+                             Faction == Faction.FirstOrder ||
+                             Faction == Faction.Scum;
+                    break;
+                default:
+                    result = true;
+                    break;
+            }
+
+            OnForceAlignmentEquipCheck?.Invoke(alignment, ref result);
+
+            return result;
+        }
     }
 
 }

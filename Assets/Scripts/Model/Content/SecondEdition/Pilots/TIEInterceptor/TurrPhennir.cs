@@ -13,7 +13,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Turr Phennir",
                     4,
-                    44,
+                    42,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.TurrPhennirAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -39,7 +39,11 @@ namespace Abilities.SecondEdition
                     new ActionsList.BoostAction() { CanBePerformedWhileStressed = true },
                     new ActionsList.BarrelRollAction() { CanBePerformedWhileStressed = true }
                 },
-                Triggers.FinishTrigger);
+                Triggers.FinishTrigger,
+                HostShip.PilotInfo.PilotName,
+                "After you perform an attack, you may perform a Barrel Roll or Boost action, even if you are stressed",
+                HostShip
+            );
         }
     }
 }

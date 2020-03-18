@@ -17,6 +17,7 @@ public class UI : MonoBehaviour {
     private static float lastLogTextStep = -20;
 
     private int minimapSize = 256;
+    private bool IsStatBlockVisible;
 
     public static bool ShowShipIds;
 
@@ -71,11 +72,6 @@ public class UI : MonoBehaviour {
         GameObject.Find("UI").transform.Find("ContextMenuPanel").gameObject.SetActive(false);
     }
 
-    public static void ShowDirectionMenu()
-    {
-        DirectionsMenu.Show(GameMode.CurrentGameMode.AssignManeuver);
-    }
-
     public static void HideDirectionMenu()
     {
         DirectionsMenu.Hide();
@@ -84,13 +80,6 @@ public class UI : MonoBehaviour {
     public static void HideTemporaryMenus()
     {
         HideContextMenu();
-        if (Phases.CurrentSubPhase != null)
-        {
-            if (Phases.CurrentSubPhase.GetType() == typeof(SubPhases.PlanningSubPhase) && !SwarmManager.IsActive)
-            {
-                HideDirectionMenu();
-            }
-        }
     }
 
     //TODO: use in static generic UI class
@@ -110,6 +99,10 @@ public class UI : MonoBehaviour {
         GameObject gameResultsPanel = GameObject.Find("UI").transform.Find("GameResultsPanel").gameObject;
         gameResultsPanel.transform.Find("Panel").transform.Find("Congratulations").GetComponent<Text>().text = results;
         gameResultsPanel.transform.Find("Panel").Find("Restart").gameObject.SetActive(!(GameMode.CurrentGameMode is NetworkGame));
+
+        RectTransform rectTransform = gameResultsPanel.transform.Find("Panel").GetComponent<RectTransform>();
+        rectTransform.sizeDelta = new Vector2(rectTransform.sizeDelta.x, 350);
+
         gameResultsPanel.SetActive(true);
     }
 
@@ -117,6 +110,10 @@ public class UI : MonoBehaviour {
     {
         GameObject gameResultsPanel = GameObject.Find("UI").transform.Find("GameResultsPanel").gameObject;
         gameResultsPanel.transform.Find("Panel").Find("Restart").gameObject.SetActive(!(GameMode.CurrentGameMode is NetworkGame));
+
+        RectTransform rectTransform = gameResultsPanel.transform.Find("Panel").GetComponent<RectTransform>();
+        rectTransform.sizeDelta = new Vector2(rectTransform.sizeDelta.x, 170);
+
         gameResultsPanel.SetActive(!gameResultsPanel.activeSelf);
     }
 
@@ -169,6 +166,14 @@ public class UI : MonoBehaviour {
     public void ToggleViewMode()
     {
         CameraScript.ToggleMode();
+    }
+
+    public void ToggleStatsView()
+    {
+        RectTransform statsGoRect = GameObject.Find("UI").transform.Find("StatsHolder").gameObject.GetComponent<RectTransform>();
+        int modifier = (IsStatBlockVisible) ? -1 : +1;
+        IsStatBlockVisible = !IsStatBlockVisible;
+        statsGoRect.localPosition += new Vector3(0, modifier * 525, 0);
     }
 
     public static void AddTestLogEntry(string text)

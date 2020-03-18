@@ -58,23 +58,23 @@ namespace Abilities.FirstEdition
         {
             if (!HostShip.IsCannotAttackSecondTime)
             {
-                HostShip.IsCannotAttackSecondTime = true;
-
                 HostShip.OnGenerateDiceModifications += AddLukeSkywalkerCrewAbility;
                 Phases.Events.OnCombatPhaseEnd_NoTriggers += RemoveLukeSkywalkerCrewAbility;
 
-                Combat.StartAdditionalAttack(
+                HostShip.IsCannotAttackSecondTime = true;
+
+                Combat.StartSelectAttackTarget(
                     HostShip,
                     FinishAdditionalAttack,
                     IsPrimaryWeaponShot,
                     HostUpgrade.UpgradeInfo.Name,
-                    "You may perform a primary weapon attack.",
+                    "You may perform a primary weapon attack",
                     HostUpgrade
                 );
             }
             else
             {
-                Messages.ShowErrorToHuman(string.Format("{0} cannot attack one more time", HostShip.PilotInfo.PilotName));
+                Messages.ShowErrorToHuman(string.Format("{0} cannot attack an additional time", HostShip.PilotInfo.PilotName));
                 Triggers.FinishTrigger();
             }
         }
@@ -83,6 +83,9 @@ namespace Abilities.FirstEdition
         {
             // If attack is skipped, set this flag, otherwise regular attack can be performed second time
             HostShip.IsAttackPerformed = true;
+
+            //if bonus attack was skipped, allow bonus attacks again
+            if (HostShip.IsAttackSkipped) HostShip.IsCannotAttackSecondTime = false;
 
             Triggers.FinishTrigger();
         }
@@ -97,7 +100,7 @@ namespace Abilities.FirstEdition
             }
             else
             {
-                if (!isSilent) Messages.ShowError("Attack must be performed from primary weapon");
+                if (!isSilent) Messages.ShowError("This attack must be performed using the ship's primary weapon");
             }
 
             return result;

@@ -8,6 +8,7 @@ using Ship;
 using Abilities.SecondEdition;
 using System.Linq;
 using Arcs;
+using UnityEngine;
 
 namespace Ship
 {
@@ -18,7 +19,12 @@ namespace Ship
             public RZ2AWing() : base()
             {
                 ShipInfo.ShipName = "RZ-2 A-wing";
-                ModelInfo = new ShipModelInfo("RZ-2 A-wing", "Blue");
+                ModelInfo = new ShipModelInfo(
+                    "RZ-2 A-wing",
+                    "Blue",
+                    new Vector3(-3.76f, 7.87f, 5.55f),
+                    1f
+                );
 
                 ShipInfo.ArcInfo = new ShipArcsInfo(ArcType.SingleTurret, 2);
 
@@ -41,7 +47,7 @@ namespace Ship
 
                 IconicPilots[Faction.Resistance] = typeof(TallissanLintra);
 
-                // ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/b/b4/Maneuver_a-wing.png";
+                ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/3/36/Maneuver_rz-2_a-wing.png";
                 HotacManeuverTable = new AI.RZ2AWingTable();
             }
         }
@@ -53,6 +59,8 @@ namespace Abilities.SecondEdition
     //After you perform an action, you may perform a red boost action.
     public class VectoredThrustersRZ2 : GenericAbility
     {
+        public override string Name { get { return "Refined Gyrostabilizers"; } }
+
         public override void ActivateAbility()
         {
             HostShip.OnActionIsPerformed += CheckConditions;
@@ -85,15 +93,15 @@ namespace Abilities.SecondEdition
 
         private void AskPerformPerositionAction(object sender, System.EventArgs e)
         {
-            Messages.ShowInfoToHuman("Vectored Thrusters: you may perform a red boost or a red rotate arc action");
-
             HostShip.AskPerformFreeAction(
                 new List<GenericAction>()
                     {
-                        new BoostAction() { IsRed = true },
-                        new RotateArcAction() { IsRed = true }
+                        new BoostAction() { Color = ActionColor.Red },
+                        new RotateArcAction() { Color = ActionColor.Red }
                     },
-                Triggers.FinishTrigger
+                Triggers.FinishTrigger,
+                descriptionShort: Name,
+                descriptionLong: "After you perform an action, you may perform a red Boost or a red Rotate Arc action"
             );
         }
     }

@@ -19,7 +19,7 @@ namespace UpgradesList.FirstEdition
                 cost: 2,
                 isLimited: true,
                 restriction: new FactionRestriction(Faction.Rebel),
-                addSlot: new UpgradeSlot(UpgradeType.Bomb),
+                addSlot: new UpgradeSlot(UpgradeType.Device),
                 abilityType: typeof(Abilities.FirstEdition.SabineWrenCrewAbility)
             );
 
@@ -32,7 +32,7 @@ namespace Abilities.FirstEdition
 {
     public class SabineWrenCrewAbility : GenericAbility
     {
-        private GameObject detonatedBombObject;
+        private GenericDeviceGameObject detonatedBombObject;
 
         public override void ActivateAbility()
         {
@@ -46,7 +46,7 @@ namespace Abilities.FirstEdition
             Phases.Events.OnRoundEnd -= ClearIsAbilityUsedFlag;
         }
 
-        private void CheckAbility(GenericBomb bomb, GameObject bombObject)
+        private void CheckAbility(GenericBomb bomb, GenericDeviceGameObject bombObject)
         {
             if (!IsAbilityUsed && IsBombFriendly(bomb) && IsAtLeastOneEnemyInRange(bomb, bombObject))
             {
@@ -63,7 +63,7 @@ namespace Abilities.FirstEdition
             return bomb.HostShip.Owner.PlayerNo == HostShip.Owner.PlayerNo;
         }
 
-        private bool IsAtLeastOneEnemyInRange(GenericBomb bomb, GameObject bombObject)
+        private bool IsAtLeastOneEnemyInRange(GenericBomb bomb, GenericDeviceGameObject bombObject)
         {
             List<GenericShip> shipsInRange = BombsManager.GetShipsInRange(bombObject);
 
@@ -87,13 +87,13 @@ namespace Abilities.FirstEdition
                     GetAiPriorityForDealDamage,
                     HostShip.Owner.PlayerNo,
                     HostUpgrade.UpgradeInfo.Name,
-                    "Choose enemy ship at range 1 of detonated bomb token.\nThat ship suffers 1 damage.",
+                    "Choose enemy ship at range 1 of detonated bomb token,\nthat ship suffers 1 damage",
                     HostUpgrade
                 );
             }
             else
             {
-                Messages.ShowErrorToHuman("Ability of Sabine Wren was already used!");
+                Messages.ShowErrorToHuman("Sabine Wren's ability has already been used!");
                 Triggers.FinishTrigger();
             }
         }

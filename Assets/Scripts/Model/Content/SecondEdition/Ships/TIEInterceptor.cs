@@ -4,6 +4,7 @@ using Movement;
 using ActionsList;
 using Upgrade;
 using Ship;
+using Actions;
 
 namespace Ship
 {
@@ -36,6 +37,8 @@ namespace Abilities.SecondEdition
     //After you perform an action, you may perform a red boost / red barrel roll action.
     public class AutoThrustersAbility : GenericAbility
     {
+        public override string Name { get { return "Autothrusters"; } }
+
         public override void ActivateAbility()
         {
             HostShip.OnActionIsPerformed += CheckConditions;
@@ -60,23 +63,16 @@ namespace Abilities.SecondEdition
 
         private void AskPerformPerositionAction(object sender, System.EventArgs e)
         {
-            //if (!HostShip.IsStressed)
-            //{
-                Messages.ShowInfoToHuman("AutoThrusters: you may perform a red action");
-
-                HostShip.AskPerformFreeAction(
-                    new List<GenericAction>()
-                    {
-                        new BoostAction() { IsRed = true },
-                        new BarrelRollAction() { IsRed = true }
-                    },
-                    Triggers.FinishTrigger
-                );
-            //}
-            //else
-            //{
-            //    Triggers.FinishTrigger();
-            //}
+            HostShip.AskPerformFreeAction(
+                new List<GenericAction>()
+                {
+                    new BoostAction() { Color = ActionColor.Red },
+                    new BarrelRollAction() { Color = ActionColor.Red }
+                },
+                Triggers.FinishTrigger,
+                descriptionShort: Name,
+                descriptionLong: "After you perform an action, you may perform a red Barrel Roll or red Boost action"
+            );
         }
     }
 }

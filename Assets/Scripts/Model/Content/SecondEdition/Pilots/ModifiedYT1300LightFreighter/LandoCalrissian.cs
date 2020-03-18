@@ -16,12 +16,14 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Lando Calrissian",
                     5,
-                    80,
+                    79,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.LandoCalrissianRebelPilotAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
                     seImageNumber: 70
                 );
+
+                PilotNameCanonical = "landocalrissian-modifiedyt1300lightfreighter";
             }
         }
     }
@@ -72,7 +74,11 @@ namespace Abilities.SecondEdition
                     Selection.ThisShip = HostShip;
                     Phases.CurrentSubPhase.Resume();
                     Triggers.FinishTrigger();
-                });
+                },
+                HostShip.PilotInfo.PilotName,
+                "You may perform an action",
+                HostShip
+            );
         }
     }
 }

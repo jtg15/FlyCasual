@@ -47,7 +47,14 @@ namespace Abilities.FirstEdition
         {
             if (HostShip.Tokens.HasToken(typeof(Tokens.StressToken)))
             {
-                this.AskToUseAbility(AlwaysUseByDefault, UseBraylenStrammAbility, DontUseBraylenStrammAbility);
+                AskToUseAbility(
+                    HostShip.PilotInfo.PilotName,
+                    AlwaysUseByDefault,
+                    UseBraylenStrammAbility,
+                    DontUseBraylenStrammAbility,
+                    descriptionLong: "Do you want to roll 1 attack die? (On a \"hit\" or \"crit\" result, remove 1 stress token)",
+                    imageHolder: HostShip
+                );
             }
             else
             {

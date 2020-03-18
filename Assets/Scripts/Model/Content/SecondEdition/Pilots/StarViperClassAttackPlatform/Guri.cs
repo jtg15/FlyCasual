@@ -1,5 +1,6 @@
 ﻿using Actions;
 using ActionsList;
+using UnityEngine;
 using Upgrade;
 
 namespace Ship
@@ -13,15 +14,26 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Guri",
                     5,
-                    63,
+                    64,
                     isLimited: true,
-                    abilityType: typeof(Abilities.FirstEdition.GuriAbility),
+                    abilityType: typeof(Abilities.SecondEdition.GuriAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
                     seImageNumber: 178
                 );
 
                 ShipInfo.ActionIcons.SwitchToDroidActions();
             }
+        }
+    }
+}
+
+namespace Abilities.SecondEdition
+{
+    public class GuriAbility : Abilities.FirstEdition.GuriAbility
+    {
+        protected override Vector2 AbilityRange
+        {
+            get { return new Vector2(0, 1); }
         }
     }
 }

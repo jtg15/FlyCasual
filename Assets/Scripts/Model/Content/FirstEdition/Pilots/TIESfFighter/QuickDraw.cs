@@ -40,7 +40,7 @@ namespace Abilities.FirstEdition
         public override void DeactivateAbility()
         {
             HostShip.OnShieldLost -= CheckAbility;
-            Phases.Events.OnRoundEnd -= ClearIsAbilityUsedFlag;
+            Phases.Events.OnCombatPhaseEnd_NoTriggers -= ClearIsAbilityUsedFlag;
         }
 
         private void CheckAbility()
@@ -63,13 +63,13 @@ namespace Abilities.FirstEdition
             }
             else
             {
-                Combat.Attacker.OnCombatCheckExtraAttack += StartCounterAttack;
+                Combat.Attacker.OnCombatDeactivation += StartCounterAttack;
             }
         }
 
         private void StartCounterAttack(GenericShip ship)
         {
-            ship.OnCombatCheckExtraAttack -= StartCounterAttack;
+            ship.OnCombatDeactivation -= StartCounterAttack;
 
             RegisterAbilityTrigger(TriggerTypes.OnCombatCheckExtraAttack, RegisterCombat);
         }
@@ -78,30 +78,25 @@ namespace Abilities.FirstEdition
         {
             if (IsAbilityCanBeUsed())
             {
-                // Temporary fix
-                if (HostShip.IsDestroyed)
-                {
-                    Triggers.FinishTrigger();
-                    return;
-                }
-
                 // Save his "is already attacked" flag
                 performedRegularAttack = HostShip.IsAttackPerformed;
 
                 HostShip.OnAttackStartAsAttacker += MarkAbilityAsUsed;
 
-                Combat.StartAdditionalAttack(
+                HostShip.IsCannotAttackSecondTime = true;
+
+                Combat.StartSelectAttackTarget(
                     HostShip,
                     AfterExtraAttackSubPhase,
                     IsPrimaryWeaponAttack,
                     HostShip.PilotInfo.PilotName,
-                    "You may perform a primary weapon attack.",
+                    "You may perform a primary weapon attack",
                     HostShip
                 );
             }
             else
             {
-                Messages.ShowErrorToHuman(string.Format("{0} cannot attack one more time", HostShip.PilotInfo.PilotName));
+                Messages.ShowErrorToHuman(string.Format("{0} cannot attack an additional time", HostShip.PilotInfo.PilotName));
                 Triggers.FinishTrigger();
             }
         }
@@ -116,7 +111,7 @@ namespace Abilities.FirstEdition
             }
             else
             {
-                if (!isSilent) Messages.ShowError("Attack must be performed using primary weapon");
+                if (!isSilent) Messages.ShowError("This attack must be performed using your primary weapon");
             }
 
             return result;
@@ -129,6 +124,9 @@ namespace Abilities.FirstEdition
 
             // Set IsAbilityUsed only after attack that was successfully started
             HostShip.OnAttackStartAsAttacker -= MarkAbilityAsUsed;
+
+            //if bonus attack was skipped, allow bonus attacks again
+            if (HostShip.IsAttackSkipped) HostShip.IsCannotAttackSecondTime = false;
 
             Triggers.FinishTrigger();
         }

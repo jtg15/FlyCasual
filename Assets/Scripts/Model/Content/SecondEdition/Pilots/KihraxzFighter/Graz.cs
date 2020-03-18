@@ -14,7 +14,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Graz",
                     4,
-                    47,
+                    46,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.GrazAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -60,14 +60,14 @@ namespace Abilities.SecondEdition
         private void RollExtraDefenseDice(ref int count)
         {
             count++;
-            Messages.ShowInfo("Graz is behind the combatant. Roll an additional die.");
+            Messages.ShowInfo("Graz is behind the combatant and gains +1 defense die");
             HostShip.AfterGotNumberOfDefenceDice -= RollExtraDefenseDice;
         }
 
         private void RollExtraAttackDice(ref int count)
         {
             count++;
-            Messages.ShowInfo("Graz is behind the combatant. Roll an additional die.");
+            Messages.ShowInfo("Graz is behind the combatant and gains +1 attack die");
             HostShip.AfterGotNumberOfAttackDice -= RollExtraAttackDice;
         }
     }

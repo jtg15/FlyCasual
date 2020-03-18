@@ -52,8 +52,6 @@ namespace SubPhases
 
     public class JamTargetSubPhase : SelectShipSubPhase
     {
-        public GenericAction HostAction { get; set; }
-
         public override void Prepare()
         {
             PrepareByParameters(
@@ -91,23 +89,28 @@ namespace SubPhases
         {
             if (Edition.Current is Editions.SecondEdition && (ship.Tokens.HasToken(typeof(ReinforceAftToken)) || ship.Tokens.HasToken(typeof(ReinforceForeToken)))) return 110;
             if (ship.Tokens.HasToken(typeof(FocusToken))) return 100;
-            if (ship.ActionBar.HasAction(typeof(ActionsList.EvadeAction)) || ship.Tokens.HasToken(typeof(EvadeToken))) return 50;
-            if (ship.ActionBar.HasAction(typeof(ActionsList.TargetLockAction)) || ship.Tokens.HasToken(typeof(BlueTargetLockToken), '*')) return 50;
+            if (ship.ActionBar.HasAction(typeof(EvadeAction)) || ship.Tokens.HasToken(typeof(EvadeToken))) return 50;
+            if (ship.ActionBar.HasAction(typeof(TargetLockAction)) || ship.Tokens.HasToken(typeof(BlueTargetLockToken), '*')) return 50;
             return 0;
         }
 
         private bool FilterJamTargets(GenericShip ship)
         {
             if (ship.Owner.PlayerNo == Selection.ThisShip.Owner.PlayerNo) return false;
-            if (ship.Tokens.HasToken(typeof(JamToken))) return false;
 
-            BoardTools.DistanceInfo distanceInfo = new BoardTools.DistanceInfo(Selection.ThisShip, ship);
-            if (distanceInfo.Range <= 1) return true;
+            bool result = false;
+            
+            if (Rules.Jam.JamIsAllowed(Selection.ThisShip, ship)) result = true;
 
-            BoardTools.ShotInfo shotInfo = new BoardTools.ShotInfo(Selection.ThisShip, ship, Selection.ThisShip.PrimaryWeapons);
-            if (shotInfo.Range <= 2 && shotInfo.InPrimaryArc) return true;
+            if (Edition.Current is Editions.FirstEdition)
+            {
+                if (ship.Tokens.HasToken(typeof(JamToken))) return false;
 
-            return false;
+                BoardTools.ShotInfo shotInfo = new BoardTools.ShotInfo(Selection.ThisShip, ship, Selection.ThisShip.PrimaryWeapons);
+                if (shotInfo.Range <= 2 && shotInfo.InPrimaryArc) return true;
+            }
+
+            return result;
         }
 
         private void SelectJamTarget()
@@ -126,7 +129,7 @@ namespace SubPhases
                     Name = "Jam",
                     TriggerOwner = Selection.ThisShip.Owner.PlayerNo,
                     TriggerType = TriggerTypes.OnTokenIsAssigned,
-                    EventHandler = (s,e)=>AssignJamToken(targetShip)
+                    EventHandler = (s,e)=>AssignJamToken(targetShip, jammingShip)
                 }
             );
 
@@ -139,9 +142,9 @@ namespace SubPhases
             });
         }
 
-        private void AssignJamToken(GenericShip targetShip)
+        private void AssignJamToken(GenericShip targetShip, GenericShip jammingShip)
         {
-            targetShip.Tokens.AssignToken(typeof(JamToken), Triggers.FinishTrigger);
+            targetShip.Tokens.AssignToken(new JamToken(targetShip, jammingShip.Owner), Triggers.FinishTrigger);
         }
 
         public override void RevertSubPhase()

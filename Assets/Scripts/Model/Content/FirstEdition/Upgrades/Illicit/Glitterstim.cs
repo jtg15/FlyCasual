@@ -98,7 +98,10 @@ namespace SubPhases
 
         public override void PrepareDecision(System.Action callBack)
         {
-            InfoText = GlitterstimAbility.HostShip.ShipId + ": Use ability of Glitterstim?";
+            DescriptionShort = "Glitterstim?";
+            DescriptionLong = GlitterstimAbility.HostShip.ShipId + ": Activate Glitterstim?";
+            ImageSource = GlitterstimAbility.HostUpgrade;
+
             RequiredPlayer = GlitterstimAbility.HostShip.Owner.PlayerNo;
 
             AddDecision("Yes", UseGlitterstimAbility);
@@ -131,7 +134,7 @@ namespace SubPhases
 
                     if (priority > 10)
                     {
-                        Messages.ShowInfo("AI decides to use Glitterstim");
+                        Messages.ShowInfo("The AI decides to use Glitterstim");
                         result = true;
                     }
                 }
@@ -208,7 +211,7 @@ namespace Conditions
     {
         public Glitterstim(GenericShip host) : base(host)
         {
-            Name = "Glitterstim Condition";
+            Name = ImageName = "Glitterstim Condition";
             Temporary = true;
             Tooltip = new UpgradesList.FirstEdition.Glitterstim().ImageUrl;
         }

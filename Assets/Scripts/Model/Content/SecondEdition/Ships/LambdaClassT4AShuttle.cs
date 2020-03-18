@@ -16,6 +16,9 @@ namespace Ship
             {
                 ShipInfo.ShipName = "Lambda-class T-4a Shuttle";
 
+                ShipInfo.Hull = 6;
+                ShipInfo.Shields = 4;
+
                 ShipInfo.ArcInfo.Arcs.Add(new ShipArcInfo(ArcType.Rear, 2));
 
                 ShipInfo.ActionIcons.RemoveActions(typeof(TargetLockAction));
@@ -26,8 +29,6 @@ namespace Ship
                 IconicPilots[Faction.Imperial] = typeof(CaptainKagi);
 
                 ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/d/d4/Maneuver_lambda_shuttle.png";
-
-                OldShipTypeName = "Lambda-class Shuttle";
             }
         }
     }

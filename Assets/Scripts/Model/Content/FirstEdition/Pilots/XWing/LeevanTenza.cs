@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using Abilities;
+using Actions;
 using ActionsList;
 using Upgrade;
 
@@ -51,7 +52,13 @@ namespace Abilities.FirstEdition
 
         private void AskToUseLeevanTenzaAbility(object sender, System.EventArgs e)
         {
-            HostShip.AskPerformFreeAction(new EvadeAction() { IsRed = true }, Triggers.FinishTrigger);
+            HostShip.AskPerformFreeAction(
+                new EvadeAction() { Color = ActionColor.Red },
+                Triggers.FinishTrigger,
+                HostShip.PilotInfo.PilotName,
+                "After you perform a Boost action, you may receive 1 Stress Token to receive an Evade token",
+                HostShip
+            );
         }
     }
 }

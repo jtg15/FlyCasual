@@ -10,6 +10,8 @@ using System.Reflection;
 using System;
 using Upgrade;
 using Migrations;
+using ExtraOptions;
+using Obstacles;
 
 public partial class MainMenu : MonoBehaviour {
 
@@ -33,14 +35,17 @@ public partial class MainMenu : MonoBehaviour {
 
         DontDestroyOnLoad(GameObject.Find("GlobalUI").gameObject);
 
-        SetBackground();
         ModsManager.Initialize();
         Options.ReadOptions();
         Options.UpdateVolume();
+        ExtraOptionsManager.Initialize();
+        SetBackground();
         UpdateVersionInfo();
         UpdatePlayerInfo();
 
         PrepareUpdateChecker();
+
+        new ObstaclesManager();
     }
 
     public void QuitGame()
@@ -55,7 +60,7 @@ public partial class MainMenu : MonoBehaviour {
 
     private void UpdateVersionInfo()
     {
-        GameObject.Find("UI/Panels/MainMenuPanel/Version/Version Text").GetComponent<Text>().text = Global.CurrentVersion;
+        GameObject.Find("UI/Panels/MainMenuPanel/Background/Version/Version Text").GetComponent<Text>().text = Global.CurrentVersion;
     }
 
     private void UpdatePlayerInfo()
@@ -66,23 +71,33 @@ public partial class MainMenu : MonoBehaviour {
         GameObject.Find("UI/Panels/MainMenuPanel/PlayerInfoPanel/NicknameAndTitleText").GetComponent<Text>().text = Options.NickName + "\n" + Options.Title;
     }
 
-    private void SetBackground()
+    public static void SetBackground()
     {
-        GameObject.Find("UI/BackgroundImage").GetComponent<Image>().sprite = GetRandomMenuBackground();
+        Sprite background = (Options.BackgroundImage != "_RANDOM") ? Resources.Load<Sprite>("Sprites/Backgrounds/MainMenu/" + Options.BackgroundImage) : GetRandomMenuBackground();
+        GameObject.Find("UI/BackgroundImage").GetComponent<Image>().sprite = background;
     }
 
     public static Sprite GetRandomMenuBackground()
     {
-        UnityEngine.Object[] sprites = Resources.LoadAll("Sprites/Backgrounds/MainMenu/", typeof(Sprite));
-        return (Sprite) sprites[UnityEngine.Random.Range(0, sprites.Length)];
+        List<Sprite> spritesList = Resources.LoadAll<Sprite>("Sprites/Backgrounds/MainMenu/")
+            .Where(n => n.name != "_RANDOM")
+            .ToList();
+        return spritesList[UnityEngine.Random.Range(0, spritesList.Count)];
     }
 
     public static Sprite GetRandomSplashScreen()
     {
-        List<UnityEngine.Object> sprites = new List<UnityEngine.Object>();
-        sprites.AddRange(Resources.LoadAll("Sprites/Backgrounds/MainMenu/", typeof(Sprite)).ToList());
-        sprites.AddRange(Resources.LoadAll("Sprites/Backgrounds/SplashScreens/", typeof(Sprite)).ToList());
-        return (Sprite)sprites[UnityEngine.Random.Range(0, sprites.Count)];
+        List<Sprite> spritesArray = new List<Sprite>();
+        spritesArray.AddRange(
+            Resources.LoadAll<Sprite>("Sprites/Backgrounds/MainMenu/")
+                .Where(n => n.name != "_RANDOM")
+                .ToList()
+        );
+        spritesArray.AddRange(
+            Resources.LoadAll<Sprite>("Sprites/Backgrounds/SplashScreens/")
+                .ToList()
+        );
+        return spritesArray[UnityEngine.Random.Range(0, spritesArray.Count)];
     }
 
     private void PrepareUpdateChecker()
@@ -93,8 +108,8 @@ public partial class MainMenu : MonoBehaviour {
 
     private void CheckUpdateNotification(bool wasUpdatedFromServer, bool settingsChanged, int serverResponse)
     {
-        int latestVersionInt = RemoteSettings.GetInt("UpdateLatestVersionInt", Global.CurrentVersionInt);
-        if (latestVersionInt > Global.CurrentVersionInt)
+        Global.LatestVersionInt = RemoteSettings.GetInt("UpdateLatestVersionInt", Global.CurrentVersionInt);
+        if (Global.LatestVersionInt > Global.CurrentVersionInt)
         {
             string latestVersion    = RemoteSettings.GetString("UpdateLatestVersion", Global.CurrentVersion);
             string updateLink       = RemoteSettings.GetString("UpdateLink");
@@ -243,10 +258,10 @@ public partial class MainMenu : MonoBehaviour {
         selector.transform.position = position;
     }
 
-    public void ChangeNickName(Text inputText)
+    public void ChangeNickName(string text)
     {
-        Options.NickName = inputText.text;
-        Options.ChangeParameterValue("NickName", inputText.text);
+        Options.NickName = text;
+        Options.ChangeParameterValue("NickName", text);
     }
 
     public void ChangeTitle(Text inputText)
@@ -287,5 +302,17 @@ public partial class MainMenu : MonoBehaviour {
             Options.ChangeParameterValue("DontShowAiInfo", GameObject.Find("GlobalUI/OpponentSquad/AiInformation/ToggleBlock/DontShowAgain").GetComponent<Toggle>().isOn);
             Global.StartBattle();
         });
+    }
+
+    public static void ScalePanel(Transform panelTransform, float maxScale = float.MaxValue, bool twoBorders = false)
+    {
+        float bordersSize = (twoBorders) ? 250f : 125f;
+        float globalUiScale = GameObject.Find("UI").GetComponent<RectTransform>().localScale.y;
+
+        float scaleX = Screen.width / panelTransform.GetComponent<RectTransform>().sizeDelta.x / globalUiScale;
+        float scaleY = (Screen.height - bordersSize * globalUiScale) / panelTransform.GetComponent<RectTransform>().sizeDelta.y / globalUiScale;
+        float scale = Mathf.Min(scaleX, scaleY);
+        scale = Mathf.Min(scale, maxScale);
+        panelTransform.localScale = new Vector3(scale, scale, scale);
     }
 }

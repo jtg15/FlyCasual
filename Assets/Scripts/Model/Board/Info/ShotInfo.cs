@@ -1,4 +1,5 @@
 ﻿using Arcs;
+using Obstacles;
 using Ship;
 using System;
 using System.Collections.Generic;
@@ -20,8 +21,10 @@ namespace BoardTools
         private Dictionary<GenericArc, bool> InArcInfo { get; set; }
         private Dictionary<GenericArc, bool> InSectorInfo { get; set; }
 
-        public bool IsObstructedByAsteroid { get; private set; }
+        public bool IsObstructedByObstacle { get { return ObstructedByObstacles.Count > 0; } }
         public bool IsObstructedByBombToken { get; private set; }
+        public List<GenericObstacle> ObstructedByObstacles = new List<GenericObstacle>();
+        public List<GenericShip> ObstructedByShips { get; private set; } = new List<GenericShip>();
 
         public IShipWeapon Weapon { get; private set; }
 
@@ -85,13 +88,6 @@ namespace BoardTools
             InArcInfo = new Dictionary<GenericArc, bool>();
             InSectorInfo = new Dictionary<GenericArc, bool>();
 
-            List<ArcType> WeaponArcRestrictions = new List<ArcType>(Weapon.WeaponInfo.ArcRestrictions);
-            if (WeaponArcRestrictions.Contains(ArcType.DoubleTurret))
-            {
-                WeaponArcRestrictions.RemoveAll(a => a == ArcType.DoubleTurret);
-                WeaponArcRestrictions.Add(ArcType.SingleTurret);
-            }
-
             foreach (var arc in Ship1.ArcsInfo.Arcs)
             {
                 ShotInfoArc shotInfoArc = new ShotInfoArc(Ship1, Ship2, arc);
@@ -103,10 +99,10 @@ namespace BoardTools
             sectorsAndTurrets.AddRange(Ship1.ArcsInfo.Arcs.Where(a => a.ArcType == ArcType.SingleTurret));
             foreach (var arc in sectorsAndTurrets)
             {
-                ShotInfoArc shotInfoArc = new ShotInfoArc(Ship1, Ship2, arc);
+                ShotInfoArc shotInfoArc = new ShotInfoArc(Ship1, Ship2, arc, Weapon);
                 InSectorInfo.Add(arc, shotInfoArc.InArc);
 
-                if (WeaponArcRestrictions.Count > 0 && !WeaponArcRestrictions.Contains(arc.ArcType))
+                if (Weapon.WeaponInfo.ArcRestrictions.Count > 0 && !Weapon.WeaponInfo.ArcRestrictions.Contains(arc.ArcType))
                     continue;
 
                 bool result = shotInfoArc.IsShotAvailable;
@@ -117,10 +113,19 @@ namespace BoardTools
                     if (IsShotAvailable == false)
                     {
                         MinDistance = shotInfoArc.MinDistance;
+                        ObstructedByShips = shotInfoArc.ObstructedByShips;
+                        ObstructedByObstacles = shotInfoArc.ObstructedByObstacles;
+                        IsObstructedByBombToken = shotInfoArc.IsObstructedByBombToken;
                     }
                     else
                     {
-                        if (shotInfoArc.MinDistance.DistanceReal < MinDistance.DistanceReal) MinDistance = shotInfoArc.MinDistance;
+                        if (shotInfoArc.MinDistance.DistanceReal < MinDistance.DistanceReal)
+                        {
+                            MinDistance = shotInfoArc.MinDistance;
+                            ObstructedByShips = shotInfoArc.ObstructedByShips;
+                            ObstructedByObstacles = shotInfoArc.ObstructedByObstacles;
+                            IsObstructedByBombToken = shotInfoArc.IsObstructedByBombToken;
+                        }
                     }
 
                     IsShotAvailable = true;
@@ -146,6 +151,7 @@ namespace BoardTools
                 if (distInfo.Range < 4)
                 {
                     MinDistance = distInfo.MinDistance;
+                    //TODO: Obstructed shots for 360 arcs
                     IsShotAvailable = true;
                 }
                 else
@@ -153,6 +159,19 @@ namespace BoardTools
                     NearestFailedDistance = distInfo.MinDistance;
                 }
             }
+
+            /*Debug.Log("Check results:");
+            if (IsShotAvailable)
+            {
+                foreach (var item in ObstructedByShips)
+                {
+                    Debug.Log("Obstructed by " + item.PilotInfo.PilotName);
+                }
+                foreach (var item in ObstructedByObstacles)
+                {
+                    Debug.Log("Obstructed by " + item.Name);
+                }
+            }*/
         }
 
         private void CheckFailed()
@@ -171,61 +190,6 @@ namespace BoardTools
             }
 
             return false;
-        }
-
-        // TODO: CHANGE
-
-        public void CheckObstruction(System.Action callBack)
-        {
-            GameObject prefab = (GameObject)Resources.Load("Prefabs/FiringLine", typeof(GameObject));
-            float SIZE_ANY = 91.44f;
-
-            FiringLine = MonoBehaviour.Instantiate(prefab, Board.GetBoard());
-            FiringLine.transform.position = MinDistance.Point1;
-            FiringLine.transform.LookAt(MinDistance.Point2);
-            FiringLine.transform.localScale = new Vector3(1, 1, Vector3.Distance(MinDistance.Point1, MinDistance.Point2) * SIZE_ANY / 100);
-            FiringLine.SetActive(true);
-            FiringLine.GetComponentInChildren<ObstaclesFiringLineDetector>().PointStart = MinDistance.Point1;
-            FiringLine.GetComponentInChildren<ObstaclesFiringLineDetector>().PointEnd = MinDistance.Point2;
-
-            GameManagerScript Game = GameObject.Find("GameManager").GetComponent<GameManagerScript>();
-            Game.Movement.FuncsToUpdate.Add(UpdateColisionDetection);
-
-            CallBack = callBack;
-        }
-
-        private bool UpdateColisionDetection()
-        {
-            bool isFinished = false;
-
-            if (updatesCount > 1)
-            {
-                GetResults();
-                isFinished = true;
-            }
-            else
-            {
-                updatesCount++;
-            }
-
-            return isFinished;
-        }
-
-        private void GetResults()
-        {
-            ObstaclesFiringLineDetector obstacleDetector = FiringLine.GetComponentInChildren<ObstaclesFiringLineDetector>();
-            if (obstacleDetector.IsObstructedByAsteroid)
-            {
-                IsObstructedByAsteroid = true;
-            }
-            if (obstacleDetector.IsObstructedByBombToken)
-            {
-                IsObstructedByBombToken = true;
-            }
-
-            MonoBehaviour.Destroy(FiringLine);
-
-            CallBack();
         }
     }
 }

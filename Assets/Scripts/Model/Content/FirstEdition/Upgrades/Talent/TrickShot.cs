@@ -37,7 +37,7 @@ namespace Abilities.FirstEdition
 
         private void CheckAbilityTrigger()
         {
-            if (Combat.ShotInfo.IsObstructedByAsteroid)
+            if (Combat.ShotInfo.IsObstructedByObstacle)
             {
                 RegisterAbilityTrigger(TriggerTypes.OnShotStart, AskTrickShotAbility);
             }
@@ -47,7 +47,14 @@ namespace Abilities.FirstEdition
         {
             if (!alwaysUseAbility)
             {
-                AskToUseAbility(AlwaysUseByDefault, UseAbilityDecision, null, null, true);
+                AskToUseAbility(
+                    HostUpgrade.UpgradeInfo.Name,
+                    AlwaysUseByDefault,
+                    UseAbilityDecision, 
+                    descriptionLong: "Do you want to roll 1 additional attack die?",
+                    imageHolder: HostUpgrade,
+                    showAlwaysUseOption: true
+                );
             }
             else
             {
@@ -70,7 +77,7 @@ namespace Abilities.FirstEdition
         protected void RollExtraDie(ref int diceCount)
         {
             HostShip.AfterGotNumberOfAttackDice -= RollExtraDie;
-            Messages.ShowInfo("Trick Shot: +1 attack die");
+            Messages.ShowInfo("The attack is obstructed, Trick Shot causes " + HostShip.PilotInfo.PilotName + " to roll +1 attack die");
             diceCount++;
         }
     }

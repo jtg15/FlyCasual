@@ -15,7 +15,7 @@ namespace UpgradesList.FirstEdition
         {
             UpgradeInfo = new UpgradeCardInfo(
                 "Thermal Detonators",
-                type: UpgradeType.Bomb,
+                type: UpgradeType.Device,
                 cost: 3
             );
 
@@ -35,9 +35,9 @@ namespace UpgradesList.FirstEdition
             ship.Damage.TryResolveDamage(1, thermaldetDamage, delegate { ship.Tokens.AssignToken(typeof(Tokens.StressToken), callBack); });
         }
 
-        public override void PlayDetonationAnimSound(GameObject bombObject, Action callBack)
+        public override void PlayDetonationAnimSound(GenericDeviceGameObject bombObject, Action callBack)
         {
-            BombsManager.CurrentBomb = this;
+            BombsManager.CurrentDevice = this;
 
             Sounds.PlayBombSound(bombObject, "Explosion-7");
             bombObject.transform.Find("Explosion/Explosion").GetComponent<ParticleSystem>().Play();

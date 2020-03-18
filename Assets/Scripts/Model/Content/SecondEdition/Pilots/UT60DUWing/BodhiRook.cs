@@ -16,7 +16,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Bodhi Rook",
                     4,
-                    49,
+                    48,
                     isLimited: true,
                     abilityType: typeof(BodhiRookAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -41,14 +41,13 @@ namespace Abilities.SecondEdition
             RulesList.TargetLocksRule.OnCheckTargetLockIsAllowed -= CanPerformTargetLock;
         }
 
-        private void CanPerformTargetLock(ref bool result, GenericShip ship, GenericShip defender)
+        private void CanPerformTargetLock(ref bool result, GenericShip ship, ITargetLockable defender)
         {
             if (ship.Owner.PlayerNo != HostShip.Owner.PlayerNo) return;
 
             foreach (GenericShip friendlyShip in HostShip.Owner.Ships.Values)
             {
-                DistanceInfo distInfo = new DistanceInfo(friendlyShip, defender);
-                if (distInfo.Range < 4)
+                if (defender.GetRangeToShip(friendlyShip) < 4)
                 {
                     result = true;
                     return;

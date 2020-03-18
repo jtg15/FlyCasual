@@ -5,6 +5,7 @@ using Actions;
 using ActionsList;
 using Arcs;
 using Upgrade;
+using UnityEngine;
 
 namespace Ship.FirstEdition.ScurrgH6Bomber
 {
@@ -30,8 +31,8 @@ namespace Ship.FirstEdition.ScurrgH6Bomber
                     UpgradeType.Torpedo,
                     UpgradeType.Missile,
                     UpgradeType.Crew,
-                    UpgradeType.Bomb,
-                    UpgradeType.Bomb
+                    UpgradeType.Device,
+                    UpgradeType.Device
                 ),
                 factionsAll: new List<Faction>() { Faction.Rebel, Faction.Scum }
             );
@@ -43,7 +44,9 @@ namespace Ship.FirstEdition.ScurrgH6Bomber
 
             ModelInfo = new ShipModelInfo(
                 "Scurrg H-6 Bomber",
-                "Lok Revenant"
+                "Lok Revenant",
+                new Vector3(-3.7f, 7.8f, 5.55f),
+                2f
             );
 
             DialInfo = new ShipDialInfo(

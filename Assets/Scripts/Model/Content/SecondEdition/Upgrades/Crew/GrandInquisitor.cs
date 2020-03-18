@@ -13,7 +13,7 @@ namespace UpgradesList.SecondEdition
             UpgradeInfo = new UpgradeCardInfo(
                 "Grand Inquisitor",
                 UpgradeType.Crew,
-                cost: 14,
+                cost: 13,
                 addForce: 1,
                 isLimited: true,
                 restriction: new FactionRestriction(Faction.Imperial),
@@ -43,6 +43,8 @@ namespace Abilities.SecondEdition
         {
             if (ship.Owner.PlayerNo == HostShip.Owner.PlayerNo) return;
             if (HostShip.State.Force == 0) return;
+            //skip if crew is owned by the AI, because it is hard to calculate correct priority of red action
+            if (HostShip.Owner.PlayerType == Players.PlayerType.Ai) return;
 
             DistanceInfo distInfo = new DistanceInfo(HostShip, ship);
             if (distInfo.Range > 2) return;
@@ -56,24 +58,28 @@ namespace Abilities.SecondEdition
             Selection.ChangeActiveShip(HostShip);
             Phases.CurrentSubPhase.RequiredPlayer = HostShip.Owner.PlayerNo;
 
-            Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": You can spend 1 Force to perform an action");
+            Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": You may spend 1 Force to perform an action");
 
-            HostShip.BeforeFreeActionIsPerformed += SpendForce;
+            HostShip.BeforeActionIsPerformed += SpendForce;
             HostShip.OnActionIsPerformed += RemoveSpendForce;
+
             HostShip.AskPerformFreeAction(
                 HostShip.GetAvailableActionsWhiteOnlyAsRed().Where(a => HostShip.ActionBar.HasAction(a.GetType())).ToList(),
-                FinishAbility
+                FinishAbility,
+                HostUpgrade.UpgradeInfo.Name,
+                "After an enemy ship at range 0-2 reveals its dial, you may spend 1 Force to perform 1 white action on your action bar, treating that action as red",
+                HostUpgrade
             );
         }
 
-        private void SpendForce(GenericAction action)
+        private void SpendForce(GenericAction action, ref bool isFreeAction)
         {
             HostShip.State.Force--;
         }
 
         private void RemoveSpendForce(GenericAction action)
         {
-            HostShip.BeforeFreeActionIsPerformed -= SpendForce;
+            HostShip.BeforeActionIsPerformed -= SpendForce;
             HostShip.OnActionIsPerformed -= RemoveSpendForce;
         }
 

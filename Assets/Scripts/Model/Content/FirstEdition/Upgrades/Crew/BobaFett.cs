@@ -61,7 +61,10 @@ namespace SubPhases
 
         public override void PrepareDecision(System.Action callBack)
         {
-            InfoText = "Use Boba Fett's ability?";
+            DescriptionShort = "Boba Fett";
+            DescriptionLong = "Do you want to discard this card to choose and discard 1 of the defender's Upgrade cards?";
+            ImageSource = bobaFettUpgradeCard;
+
             RequiredPlayer = Combat.Attacker.Owner.PlayerNo;
 
             AddDecision("Yes", UseBobaFettCrewAbility);
@@ -75,7 +78,7 @@ namespace SubPhases
         private void UseBobaFettCrewAbility(object sender, System.EventArgs e)
         {
             Sounds.PlayShipSound(GetRandomLine());
-            Messages.ShowInfo("Boba Fett is used");
+            Messages.ShowInfo("Boba Fett has been used");
             bobaFettUpgradeCard.TryDiscard(() =>
             {
                 var selectUpgradePhase = Phases.StartTemporarySubPhaseNew<BobaFettCrewUpgradeDecisionSubPhase>("Discard upgrade", ConfirmDecision);
@@ -100,7 +103,7 @@ namespace SubPhases
     {
         public override void PrepareDecision(System.Action callBack)
         {
-            InfoText = "Select upgrade to discard:";
+            DescriptionShort = "Select upgrade to discard:";
             RequiredPlayer = Combat.Attacker.Owner.PlayerNo;
 
             var upgrades = Combat.Defender.UpgradeBar.GetUpgradesOnlyFaceup();

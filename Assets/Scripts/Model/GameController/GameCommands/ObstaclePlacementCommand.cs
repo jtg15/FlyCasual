@@ -1,8 +1,7 @@
-﻿using SubPhases;
+﻿using Players;
+using SubPhases;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace GameCommands
@@ -18,8 +17,8 @@ namespace GameCommands
         {
             ObstaclesPlacementSubPhase.PlaceObstacle(
                  GetString("name"),
-                 new Vector3(GetFloat("positionX"), GetFloat("positionY"), GetFloat("positionZ")),
-                 new Vector3(GetFloat("rotationX"), GetFloat("rotationY"), GetFloat("rotationZ"))
+                 new Vector3(float.Parse(GetString("positionX")), 0, float.Parse(GetString("positionZ"))),
+                 new Vector3(float.Parse(GetString("rotationX")), float.Parse(GetString("rotationY")), float.Parse(GetString("rotationZ")))
              );
         }
     }

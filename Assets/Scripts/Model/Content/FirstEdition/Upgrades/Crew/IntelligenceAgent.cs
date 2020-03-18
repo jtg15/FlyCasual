@@ -50,11 +50,14 @@ namespace Abilities.FirstEdition
         private void AskToUseIntelligenceAgentAbility(object sender, System.EventArgs e)
         {
             AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
                 NeverUseByDefault,
                 delegate {
                     DecisionSubPhase.ConfirmDecisionNoCallback();
                     StartSelectTargetForAbility(sender, e);
-                }
+                },
+                descriptionLong: "Do you want to choose 1 enemy ship at Range 1-2 to look at that ship's chosen maneuver?",
+                imageHolder: HostUpgrade
             );
         }
 
@@ -66,7 +69,7 @@ namespace Abilities.FirstEdition
                 GetAiPriority,
                 HostShip.Owner.PlayerNo,
                 HostUpgrade.UpgradeInfo.Name,
-                "Choose a ship to look at it's chosen maneuver.",
+                "Choose a ship to look at it's chosen maneuver",
                 HostUpgrade
             );
         }
@@ -75,7 +78,7 @@ namespace Abilities.FirstEdition
         {
             if (TargetShip.Owner is Players.HotacAiPlayer)
             {
-                Messages.ShowErrorToHuman("Useless against HotAC AI =)");
+                Messages.ShowErrorToHuman("This ability is useless against HotAC AI =)");
             }
             else
             {
@@ -88,7 +91,9 @@ namespace Abilities.FirstEdition
 
         private bool FilterTargets(GenericShip ship)
         {
-            return FilterByTargetType(ship, new List<TargetTypes>() { TargetTypes.Enemy }) && FilterTargetsByRange(ship, MinRange, MaxRange);
+            return FilterByTargetType(ship, new List<TargetTypes>() { TargetTypes.Enemy })
+                && FilterTargetsByRange(ship, MinRange, MaxRange)
+                && ship.AssignedManeuver != null;
         }
 
         private int GetAiPriority(GenericShip ship)

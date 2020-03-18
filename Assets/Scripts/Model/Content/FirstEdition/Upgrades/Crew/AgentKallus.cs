@@ -59,6 +59,10 @@ namespace Abilities.FirstEdition
                 Triggers.FinishTrigger
             );
 
+            selectAgentKallusTargetDecisionSubPhase.DescriptionShort = "Agent Kallus";
+            selectAgentKallusTargetDecisionSubPhase.DescriptionLong = "Assign the Haunted condition to 1 enemy ship";
+            selectAgentKallusTargetDecisionSubPhase.ImageSource = HostUpgrade;
+
             foreach (var enemyShip in Roster.GetPlayer(Roster.AnotherPlayer(HostShip.Owner.PlayerNo)).Ships)
             {
                 selectAgentKallusTargetDecisionSubPhase.AddDecision(
@@ -66,8 +70,6 @@ namespace Abilities.FirstEdition
                     delegate { SelectTarget(enemyShip.Value); }
                 );
             }
-
-            selectAgentKallusTargetDecisionSubPhase.InfoText = "Agent Kallus: Select enemy ship";
 
             GenericShip bestEnemyAce = GetEnemyPilotWithHighestSkill();
             selectAgentKallusTargetDecisionSubPhase.DefaultDecisionName = bestEnemyAce.ShipId + ": " + bestEnemyAce.PilotInfo.PilotName;
@@ -79,7 +81,7 @@ namespace Abilities.FirstEdition
 
         protected virtual void SelectTarget(GenericShip targetShip)
         {
-            Messages.ShowInfo("Agent Kallus: " + targetShip.PilotInfo.PilotName + " (" + targetShip.ShipId + ") is selected");
+            Messages.ShowInfo("Agent Kallus is hunting " + targetShip.PilotInfo.PilotName + " (" + targetShip.ShipId + ")");
 
             AgentKallusSelectedTarget = targetShip;
 
@@ -171,7 +173,7 @@ namespace ActionsList
             }
             else
             {
-                Messages.ShowError("No Focus results to change");
+                Messages.ShowError("This die roll had no Focus results to change");
             }
             callBack();
         }

@@ -49,7 +49,7 @@ namespace Abilities.FirstEdition
             }
         }
 
-        private void RegisterHobbieKlivianPilotAbility(GenericShip ship)
+        private void RegisterHobbieKlivianPilotAbility(ITargetLockable ship)
         {
             if (HostShip.Tokens.HasToken(typeof(StressToken)))
             {
@@ -62,12 +62,13 @@ namespace Abilities.FirstEdition
             if (!alwaysUseAbility)
             {
                 AskToUseAbility(
+                    HostShip.PilotInfo.PilotName,
                     AlwaysUseByDefault,
                     DecideRemoveStress,
                     DecideDontRemoveStress,
-                    null,
-                    true,
-                    string.Format("Should {0} remove 1 stress token?", HostShip.PilotInfo.PilotName)
+                    showAlwaysUseOption: true,
+                    descriptionLong: "Do you want to remove 1 stress token from your ship?",
+                    imageHolder: HostShip
                 );
             }
             else

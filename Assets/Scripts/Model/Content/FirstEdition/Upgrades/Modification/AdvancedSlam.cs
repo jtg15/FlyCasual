@@ -33,17 +33,17 @@ namespace Abilities.FirstEdition
             HostShip.OnActionIsPerformed -= CheckSlamAction;
         }
 
-        private void CheckSlamAction(GenericAction action)
+        protected virtual void CheckSlamAction(GenericAction action)
         {
             if (action is SlamAction)
             {
                 if (HostShip.IsBumped)
                 {
-                    Messages.ShowErrorToHuman("Overlapped another ship: Advanced SLAM is skipped");
+                    Messages.ShowErrorToHuman("SLAM maneuver overlapped another ship, Advanced SLAM action is skipped");
                 }
                 else if (HostShip.IsHitObstacles)
                 {
-                    Messages.ShowErrorToHuman("Overlapped an obstacle: Advanced SLAM is skipped");
+                    Messages.ShowErrorToHuman("SLAM maneuver overlapped an obstacle, Advanced SLAM action is skipped");
                 }
                 else
                 {
@@ -52,7 +52,7 @@ namespace Abilities.FirstEdition
             }
         }
 
-        private void RegisterTrigger()
+        protected void RegisterTrigger()
         {
             Triggers.RegisterTrigger(new Trigger()
             {
@@ -68,7 +68,13 @@ namespace Abilities.FirstEdition
             List<GenericAction> actions = HostShip.GetAvailableActions();
             List<GenericAction> actionBarActions = actions.Where(n => n.IsInActionBar).ToList();
 
-            Selection.ThisShip.AskPerformFreeAction(actionBarActions, Triggers.FinishTrigger);
+            Selection.ThisShip.AskPerformFreeAction(
+                actionBarActions,
+                Triggers.FinishTrigger,
+                HostUpgrade.UpgradeInfo.Name,
+                "After performing a SLAM action, if you did not overlap an obstacle or another ship, you may perform a free action on your action bar",
+                HostUpgrade
+            );
         }
     }
 }

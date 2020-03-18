@@ -9,8 +9,6 @@ namespace UpgradesList.SecondEdition
     {
         public Zuckuss() : base()
         {
-            IsHidden = true;
-
             UpgradeInfo = new UpgradeCardInfo(
                 "Zuckuss",
                 UpgradeType.Crew,
@@ -87,7 +85,10 @@ namespace ActionsList
                 NumberOfDiceCanBeRerolled = 1,
                 IsOpposite = true,
                 CallBack = delegate {
-                    AssignStress(callBack);
+                    if (Combat.CurrentDiceRoll.DiceRerolled.Any())
+                        AssignStress(callBack);
+                    else
+                        callBack();
                 }
             };
             diceRerollManager.Start();

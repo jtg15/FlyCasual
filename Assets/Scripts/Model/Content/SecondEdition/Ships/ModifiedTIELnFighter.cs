@@ -1,5 +1,6 @@
 ﻿using Movement;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Ship
 {
@@ -25,7 +26,9 @@ namespace Ship
 
                 ModelInfo = new ShipModelInfo(
                     "Modified TIE Fighter",
-                    "Mining Guild"
+                    "Mining Guild Yellow",
+                    new Vector3(-3.7f, 7.8f, 5.55f),
+                    1.75f
                 );
 
                 ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/7/7a/Maneuver_modified_tie_ln_fighter.png";
@@ -40,6 +43,8 @@ namespace Abilities.SecondEdition
 {
     public class ModifiedTIELnFighterAbility : GenericAbility
     {
+        public override string Name { get { return "Notched Stabilizers"; } }
+
         public override void ActivateAbility()
         {
             HostShip.IgnoreObstacleTypes.Add(typeof(Obstacles.Asteroid));

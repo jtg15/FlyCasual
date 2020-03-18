@@ -50,7 +50,7 @@ namespace Abilities.SecondEdition
 
         private void CheckAttackAbility()
         {
-            if (Combat.ShotInfo.IsObstructedByAsteroid && Combat.ShotInfo.Weapon.WeaponType == WeaponTypes.PrimaryWeapon)
+            if (Combat.ShotInfo.IsObstructedByObstacle && Combat.ShotInfo.Weapon.WeaponType == WeaponTypes.PrimaryWeapon)
             {
                 if (alwaysUseAbility)
                 {
@@ -65,7 +65,7 @@ namespace Abilities.SecondEdition
 
         private void CheckDefenseAbility()
         {
-            if (Combat.ShotInfo.IsObstructedByAsteroid)
+            if (Combat.ShotInfo.IsObstructedByObstacle)
             {
                 if (alwaysUseAbility)
                 {
@@ -80,10 +80,12 @@ namespace Abilities.SecondEdition
         private void AskToUseAdditionalDie(object sender, EventArgs e)
         {
             AskToUseAbility(
+                HostShip.PilotInfo.PilotName,
                 AlwaysUseByDefault,
                 UseAdditionalDie,
                 showAlwaysUseOption: true,
-                infoText: "Han Solo: Roll an additional die?"
+                descriptionLong: "Do you want to roll 1 additional die?",
+                imageHolder: HostShip
             );
         }
 
@@ -95,20 +97,20 @@ namespace Abilities.SecondEdition
 
         private void CheckDefenseObstructionBonus(ref int count)
         {
-            if (UseAbility && Combat.ShotInfo.IsObstructedByAsteroid)
+            if (UseAbility && Combat.ShotInfo.IsObstructedByObstacle)
             {
                 count++;
-                Messages.ShowInfo("Han Solo: +1 defense die");
+                Messages.ShowInfo("The attack against Han Solo is obstructed, Han rolls +1 defense die");
                 UseAbility = false;
             }
         }
 
         private void CheckAttackObstructionBonus(ref int count)
         {
-            if (UseAbility && Combat.ShotInfo.IsObstructedByAsteroid && Combat.ShotInfo.Weapon.WeaponType == WeaponTypes.PrimaryWeapon)
+            if (UseAbility && Combat.ShotInfo.IsObstructedByObstacle && Combat.ShotInfo.Weapon.WeaponType == WeaponTypes.PrimaryWeapon)
             {
                 count++;
-                Messages.ShowInfo("Han Solo: +1 attack die");
+                Messages.ShowInfo("Han Solo's attack is obstructed, Han rolls +1 attack die");
                 UseAbility = false;
             }
         }

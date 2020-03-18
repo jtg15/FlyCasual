@@ -39,12 +39,24 @@ public static class ImageManager
         }
         else
         {
+            Debug.Log(www.error);
             if (!web)
             {
                 File.Delete(filePath);
             }
         }
-        callback(DownloadHandlerTexture.GetContent(www));
+
+        Texture2D texture = null;
+        try
+        {
+            texture = DownloadHandlerTexture.GetContent(www);
+        }
+        catch(Exception e)
+        {
+            Debug.Log("Cannot download image: " + url + Environment.NewLine + e.Message);
+        }
+
+        callback(texture);
     }
 
     // DELETE CACHED IMAGES FOR MIGRATIONS

@@ -14,11 +14,11 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Grand Inquisitor",
                     5,
-                    56,
+                    52,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.GrandInquisitorAbility),
                     force: 2,
-                    extraUpgradeIcon: UpgradeType.Force,
+                    extraUpgradeIcon: UpgradeType.ForcePower,
                     seImageNumber: 99
                 );
             }
@@ -53,7 +53,13 @@ namespace Abilities.SecondEdition
 
             RegisterAbilityTrigger(TriggerTypes.OnAttackStart, delegate
             {
-                AskToUseAbility(AlwaysUseByDefault, UseInquisitorAttackAbility);
+                AskToUseAbility(
+                    HostShip.PilotInfo.PilotName,
+                    AlwaysUseByDefault,
+                    UseInquisitorAttackAbility,
+                    descriptionLong: "Do you want to spend 1 Force to apply the range 1 bonus?",
+                    imageHolder: HostShip
+                );
             });
         }
 
@@ -67,7 +73,13 @@ namespace Abilities.SecondEdition
 
             RegisterAbilityTrigger(TriggerTypes.OnAttackStart, delegate
             {
-                AskToUseAbility(AlwaysUseByDefault, UseInquisitorDefenseAbility);
+                AskToUseAbility(
+                    HostShip.PilotInfo.PilotName,
+                    AlwaysUseByDefault,
+                    UseInquisitorDefenseAbility,
+                    descriptionLong: "Do you want to spend 1 Force to prevent the range 1 bonus?",
+                    imageHolder: HostShip
+                );
             });
         }
 

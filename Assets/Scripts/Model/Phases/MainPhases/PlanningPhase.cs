@@ -25,7 +25,9 @@ namespace MainPhases
         {
             Selection.DeselectAllShips();
 
-            bool anyShipHasSystemsAbility = Roster.AllShips.Values.Any(n => n.IsSystemsAbilityCanBeActivated);
+            // Check if any ship has system ability (bombs etc)
+            bool anyShipHasSystemsAbility = Roster.AllUnits.Values.Any(n => n.IsSystemsAbilityCanBeActivated);
+
             if (anyShipHasSystemsAbility)
             {
                 GenericSubPhase subphase = Phases.StartTemporarySubPhaseNew("Notification", typeof(NotificationSubPhase), StartSystemsPhase);

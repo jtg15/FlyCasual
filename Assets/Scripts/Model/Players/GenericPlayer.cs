@@ -7,6 +7,9 @@ using ActionsList;
 using GameModes;
 using SubPhases;
 using GameCommands;
+using Obstacles;
+using System.Linq;
+using Remote;
 
 public enum Faction
 {
@@ -15,7 +18,16 @@ public enum Faction
     Imperial,
     Scum,
     Resistance,
-    FirstOrder
+    FirstOrder,
+    Republic,
+    Separatists
+}
+
+public enum ForceAlignment
+{
+    None,
+    Light,
+    Dark
 }
 
 namespace Players
@@ -23,7 +35,8 @@ namespace Players
     public enum PlayerNo
     {
         Player1,
-        Player2
+        Player2,
+        PlayerNone
     }
 
     public enum PlayerType
@@ -48,7 +61,17 @@ namespace Players
 
         public GameObject PlayerInfoPanel;
 
-        public Dictionary<string, GenericShip> Ships = new Dictionary<string, GenericShip>();
+        public Dictionary<string, GenericShip> Units = new Dictionary<string, GenericShip>();
+        public Dictionary<string, GenericShip> Ships { get { return Units.Where(n => !(n.Value is GenericRemote)).ToDictionary(n => n.Key, m => m.Value); } }
+        public Dictionary<string, GenericShip> Remotes { get { return Units.Where(n => n.Value is GenericRemote).ToDictionary(n => n.Key, m => m.Value); } }
+
+        public virtual void AskAssignManeuver()
+        {
+            Roster.HighlightPlayer(PlayerNo);
+            GameController.CheckExistingCommands();
+        }
+
+        public List<GenericObstacle> ChosenObstacles = new List<GenericObstacle>();
 
         public Dictionary<string, GenericShip> EnemyShips
         {
@@ -79,7 +102,13 @@ namespace Players
             GameController.CheckExistingCommands();
         }
 
-        public virtual void AssignManeuver()
+        public virtual void SetupBomb()
+        {
+            Roster.HighlightPlayer(PlayerNo);
+            GameController.CheckExistingCommands();
+        }
+
+        public virtual void AssignManeuversStart()
         {
             Roster.HighlightPlayer(PlayerNo);
             GameController.CheckExistingCommands();
@@ -126,7 +155,7 @@ namespace Players
         public virtual void OnTargetNotLegalForAttack()
         {
             // TODOREVERT
-            Messages.ShowErrorToHuman("Target is not legal");
+            Messages.ShowErrorToHuman("The target is not a legal target for the attacker");
 
             /*// TODO: Better explanations
             if (!Rules.TargetIsLegalForShot.IsLegal())
@@ -149,9 +178,9 @@ namespace Players
             UI.ShowSkipButton();
             UI.HighlightSkipButton();
 
-            if (Phases.CurrentSubPhase is ExtraAttackSubPhase)
+            if (Phases.CurrentSubPhase is AttackExecutionSubphase)
             {
-                (Phases.CurrentSubPhase as ExtraAttackSubPhase).RevertSubphase();
+                (Phases.CurrentSubPhase as AttackExecutionSubphase).RevertSubphase();
             }
             else
             {
@@ -164,9 +193,9 @@ namespace Players
             return ship.Owner.PlayerNo != Phases.CurrentSubPhase.RequiredPlayer;
         }
 
-        public virtual void ChangeManeuver(Action<string> callback, Func<string, bool> filter = null) { }
+        public virtual void ChangeManeuver(Action<string> doWithManeuverString, Action callback, Func<string, bool> filter = null) { }
 
-        public virtual void SelectManeuver(Action<string> callback, Func<string, bool> filter = null)
+        public virtual void SelectManeuver(Action<string> doWithManeuverString, Action callback, Func<string, bool> filter = null)
         {
             Phases.CurrentSubPhase.IsReadyForCommands = true;
         }
@@ -179,6 +208,12 @@ namespace Players
             GameController.CheckExistingCommands();
         }
 
+        public virtual void SelectShipsForAbility()
+        {
+            Roster.HighlightPlayer(PlayerNo);
+            GameController.CheckExistingCommands();
+        }
+
         public virtual void SelectObstacleForAbility()
         {
             Roster.HighlightPlayer(PlayerNo);
@@ -186,6 +221,12 @@ namespace Players
         }
 
         public virtual void SetupShipMidgame()
+        {
+            Roster.HighlightPlayer(PlayerNo);
+            GameController.CheckExistingCommands();
+        }
+
+        public virtual void MoveObstacleMidgame()
         {
             Roster.HighlightPlayer(PlayerNo);
             GameController.CheckExistingCommands();

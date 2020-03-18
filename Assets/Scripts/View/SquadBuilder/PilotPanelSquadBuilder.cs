@@ -3,6 +3,7 @@ using Mods;
 using Ship;
 using SquadBuilderNS;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -15,6 +16,9 @@ public class PilotPanelSquadBuilder : MonoBehaviour {
     private Action<GenericShip> OnClick;
     private bool ShowFromModInfo;
 
+    public static int WaitingToLoad = 0;
+    public static List<PilotPanelSquadBuilder> AllLoadingPanels = new List<PilotPanelSquadBuilder>();
+
     public void Initialize(GenericShip ship, Action<GenericShip> onClick = null, bool showFromModInfo = false)
     {
         Ship = ship;
@@ -25,6 +29,9 @@ public class PilotPanelSquadBuilder : MonoBehaviour {
     void Start()
     {
         this.gameObject.SetActive(false);
+
+        WaitingToLoad++;
+        AllLoadingPanels.Add(this);
 
         LoadTooltipImage(this.gameObject, Ship.ImageUrl);
         if (ShowFromModInfo) SetFromModeName();
@@ -60,17 +67,47 @@ public class PilotPanelSquadBuilder : MonoBehaviour {
         Image image = targetObject.transform.GetComponent<Image>();
         image.sprite = newSprite;
 
-        this.gameObject.SetActive(true);
+        ReadyToShow();
     }
 
     private void ShowTextVersionOfCard()
     {
         if (this == null) return;
 
-        this.transform.Find("PilotInfo").GetComponent<Text>().text = Ship.PilotInfo.PilotName;
+        this.transform.Find("PilotName").GetComponent<Text>().text = Ship.PilotInfo.PilotName;
+        this.transform.Find("PilotSkill").GetComponent<Text>().text = Ship.PilotInfo.Initiative.ToString();
+        this.transform.Find("PilotAbility").GetComponent<Text>().text = Ship.PilotInfo.AbilityText + "\n\n" + Ship.ShipInfo.AbilityText;
         if (Edition.Current is FirstEdition) this.transform.Find("CostInfo").GetComponent<Text>().text = Ship.PilotInfo.Cost.ToString();
 
-        this.gameObject.SetActive(true);
+        ReadyToShow();
+    }
+
+    private void ReadyToShow()
+    {
+        WaitingToLoad--;
+
+        if (WaitingToLoad == 0) ShowAllLoadedPanels();
+    }
+
+    private void ShowAllLoadedPanels()
+    {
+        foreach (PilotPanelSquadBuilder loadingPanel in AllLoadingPanels)
+        {
+            loadingPanel.FinallyShow();
+        }
+        AllLoadingPanels.Clear();
+
+        GameObject loadingText = GameObject.Find("UI/Panels/SelectPilotPanel/LoadingText");
+        if (loadingText != null) loadingText.SetActive(false);
+    }
+
+    public void FinallyShow()
+    {
+        try
+        {
+            this.gameObject.SetActive(true);
+        }
+        catch { }
     }
 
     private void SetFromModeName()
@@ -94,7 +131,7 @@ public class PilotPanelSquadBuilder : MonoBehaviour {
             // Show extra icons (that not present on all pilots of this ship)
             Text slotsText = this.transform.Find("SlotsInfo").GetComponent<Text>();
             for (int i = 0; i < CountUpgradeIcons(UpgradeType.Talent); i++) slotsText.text += "E";
-            for (int i = 0; i < CountUpgradeIcons(UpgradeType.Force); i++) slotsText.text += "F";
+            for (int i = 0; i < CountUpgradeIcons(UpgradeType.ForcePower); i++) slotsText.text += "F";
             if (Ship is Ship.SecondEdition.YT2400LightFreighter.YT2400LightFreighter) for (int i = 0; i < CountUpgradeIcons(UpgradeType.Crew); i++) slotsText.text += "W";
             if (Ship.Faction != Faction.Scum) for (int i = 0; i < CountUpgradeIcons(UpgradeType.Illicit); i++) slotsText.text += "I";
         }

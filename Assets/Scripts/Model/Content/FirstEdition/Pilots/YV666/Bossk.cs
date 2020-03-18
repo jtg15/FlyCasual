@@ -55,7 +55,7 @@ namespace Abilities.FirstEdition
                 typeof(DecisionSubPhase),
                 Triggers.FinishTrigger);
 
-            decisionSubPhase.InfoText = "Bossk: Would you like to cancel 1 critical result to add 2 success results?";
+            decisionSubPhase.DescriptionShort = "Bossk: Would you like to cancel 1 critical result to add 2 success results?";
 
             decisionSubPhase.AddDecision("Yes", ConvertCriticalsToSuccesses);
             decisionSubPhase.AddDecision("No", delegate { DecisionSubPhase.ConfirmDecision(); }
@@ -77,7 +77,7 @@ namespace Abilities.FirstEdition
             Combat.DiceRollAttack.DiceList.Remove(
                 Combat.DiceRollAttack.DiceList.First(die => die.Side == DieSide.Crit));
 
-            Messages.ShowInfoToHuman("Bossk: Changed one critical result into two success results.");
+            Messages.ShowInfoToHuman("Bossk: Changed one critical result into two success results");
             DecisionSubPhase.ConfirmDecision();
             Phases.CurrentSubPhase.Resume();
         }

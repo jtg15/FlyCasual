@@ -69,8 +69,8 @@ namespace RulesList
             Phases.StartTemporarySubPhaseOld(
                 "Initiative",
                 typeof(SubPhases.InitialiveDecisionSubPhase),
-                delegate() { Triggers.FinishTrigger();
-            });
+                Triggers.FinishTrigger
+            );
         }
     } 
 }
@@ -83,12 +83,14 @@ namespace SubPhases
 
         public override void PrepareDecision(Action callBack)
         {
-            InfoText = "Player " + Tools.PlayerToInt(Phases.PlayerWithInitiative) + ", which player should have initiative?";
-
             AddDecision("Me", StayWithInitiative);
             AddDecision("Opponent", GiveInitiative);
 
             DefaultDecisionName = "Opponent";
+
+            DescriptionShort = "Initiative";
+            string playerName = (Roster.GetPlayer(2) is HumanPlayer) ? "Player " + Tools.PlayerToInt(Phases.PlayerWithInitiative) : Roster.GetPlayer(Phases.PlayerWithInitiative).NickName;
+            DescriptionLong = playerName + ", which player should have initiative?";
 
             callBack();
         }
@@ -106,7 +108,7 @@ namespace SubPhases
 
         private void InformConfirmDecision()
         {
-            Messages.ShowInfo("Player " + Tools.PlayerToInt(Phases.PlayerWithInitiative) + " has Initiative");
+            Messages.ShowInfo(Roster.GetPlayer(Phases.PlayerWithInitiative).NickName + " has Initiative");
             Phases.FinishSubPhase(this.GetType());
             CallBack();
         }

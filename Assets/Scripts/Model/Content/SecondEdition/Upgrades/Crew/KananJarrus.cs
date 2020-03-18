@@ -33,12 +33,12 @@ namespace Abilities.SecondEdition
 
         public override void ActivateAbility()
         {
-            GenericShip.OnMovementFinishGlobal += CheckAbility;            
+            GenericShip.OnPositionFinishGlobal += CheckAbility;
         }
 
         public override void DeactivateAbility()
         {
-            GenericShip.OnMovementFinishGlobal -= CheckAbility;            
+            GenericShip.OnPositionFinishGlobal -= CheckAbility;
         }
 
         private void CheckAbility(GenericShip ship)
@@ -53,7 +53,7 @@ namespace Abilities.SecondEdition
                 if (distanceInfo.Range < 3)
                 {
                     ShipToRemoveStress = ship;
-                    RegisterAbilityTrigger(TriggerTypes.OnMovementFinish, AskKananJarrusAbility);
+                    RegisterAbilityTrigger(TriggerTypes.OnPositionFinish, AskKananJarrusAbility);
                 }
             }
         }
@@ -62,7 +62,13 @@ namespace Abilities.SecondEdition
         {
             if (ShipToRemoveStress.Tokens.HasToken(typeof(StressToken)) && HostShip.Tokens.HasToken<ForceToken>())
             {
-                AskToUseAbility(AlwaysUseByDefault, RemoveStress, null, null, true);
+                AskToUseAbility(
+                    HostUpgrade.UpgradeInfo.Name,
+                    AlwaysUseByDefault,
+                    RemoveStress,
+                    descriptionLong: "Do you want to spend 1 Force to remove 1 Stress Token from that ship?",
+                    imageHolder: HostUpgrade
+                );
             }
             else
             {

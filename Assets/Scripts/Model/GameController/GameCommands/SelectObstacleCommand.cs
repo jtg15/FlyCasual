@@ -1,4 +1,5 @@
-﻿using SubPhases;
+﻿using Players;
+using SubPhases;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,8 @@ namespace GameCommands
 
         public override void Execute()
         {
-            SelectObstacleSubPhase.ConfirmSelectionOfObstacle(GetString("name"));
+            if (Phases.CurrentSubPhase is SelectObstacleSubPhase) SelectObstacleSubPhase.ConfirmSelectionOfObstacle(GetString("name"));
+            else if (Phases.CurrentSubPhase is SelectTargetLockableSubPhase) SelectTargetLockableSubPhase.ConfirmSelectionOfObstacle(GetString("name"));
         }
     }
 

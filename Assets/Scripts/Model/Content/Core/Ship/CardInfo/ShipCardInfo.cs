@@ -24,7 +24,10 @@ namespace Ship
 
         public Faction SubFaction { get; set; }
 
-        public ShipCardInfo(string shipName, BaseSize baseSize, Faction faction, ShipArcsInfo arcInfo, int agility, int hull, int shields, ShipActionsInfo actionIcons, ShipUpgradesInfo upgradeIcons, char icon = ' ', Faction subFaction = Faction.None, List<Faction> factionsAll = null)
+        public string Description { get; set; }
+        public string AbilityText { get; private set; }
+
+        public ShipCardInfo(string shipName, BaseSize baseSize, Faction faction, ShipArcsInfo arcInfo, int agility, int hull, int shields, ShipActionsInfo actionIcons, ShipUpgradesInfo upgradeIcons, char icon = ' ', Faction subFaction = Faction.None, List<Faction> factionsAll = null, string description = null, string abilityText = "")
         {
             ShipName = shipName;
             BaseSize = baseSize;
@@ -44,6 +47,10 @@ namespace Ship
             Icon = icon;
 
             FactionsAll = (factionsAll != null) ? factionsAll : new List<Faction>() { faction };
+
+            Description = description;
+
+            AbilityText = abilityText;
         }
     }
 }

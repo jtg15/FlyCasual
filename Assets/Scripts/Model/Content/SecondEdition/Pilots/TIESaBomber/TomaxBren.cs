@@ -15,7 +15,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Tomax Bren",
                     5,
-                    36,
+                    35,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.TomaxBrenAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -64,7 +64,11 @@ namespace Abilities.SecondEdition
                 "Tomax Bren's ability",
                 Triggers.FinishTrigger
             );
-            phase.InfoText = "You may recover a charge:";
+
+            phase.DescriptionShort = "Tomax Bren";
+            phase.DescriptionLong = "You may recover a charge:";
+            phase.ImageSource = HostShip;
+
             phase.RequiredPlayer = Selection.ThisShip.Owner.PlayerNo;
 
             phase.ShowSkipButton = true;

@@ -17,8 +17,9 @@ namespace Upgrade
         public float bombSideDistanceZ;
 
         public bool IsDiscardedAfterDropped;
+        public int detonationRange = 0;
 
-        public List<GameObject> CurrentBombObjects = new List<GameObject>();
+        public List<GenericDeviceGameObject> CurrentBombObjects = new List<GenericDeviceGameObject>();
 
         public GenericBomb() : base()
         {
@@ -47,7 +48,7 @@ namespace Upgrade
             }
         }
 
-        public virtual void ActivateBombs(List<GameObject> bombObjects, Action callBack)
+        public virtual void ActivateBombs(List<GenericDeviceGameObject> bombObjects, Action callBack)
         {
             HostShip.IsBombAlreadyDropped = true;
             BombsManager.RegisterBombs(bombObjects, this);
@@ -57,7 +58,7 @@ namespace Upgrade
         public virtual void TryDetonate(object sender, EventArgs e)
         {
             BombsManager.CurrentBombObject = (e as BombDetonationEventArgs).BombObject;
-            BombsManager.CurrentBomb = BombsManager.GetBombByObject(BombsManager.CurrentBombObject);
+            BombsManager.CurrentDevice = BombsManager.GetBombByObject(BombsManager.CurrentBombObject);
             BombsManager.DetonatedShip = (e as BombDetonationEventArgs).DetonatedShip;
 
             BombsManager.CallGetPermissionToDetonateTrigger(Detonate);
@@ -94,13 +95,21 @@ namespace Upgrade
         {
             if (!ship.IgnoressBombDetonationEffect)
             {
-                ExplosionEffect(ship, callBack);
+                ExplosionEffect(
+                    ship, 
+                    delegate { AfterBombEffect(ship, callBack); }
+                );
             }
             else
             {
-                Messages.ShowInfo(string.Format("{0} ignored effect of detonation of {1}", ship.PilotInfo.PilotName, BombsManager.CurrentBomb.UpgradeInfo.Name));
+                Messages.ShowInfo(string.Format("{0} ignored the detonation of {1}", ship.PilotInfo.PilotName, BombsManager.CurrentDevice.UpgradeInfo.Name));
                 callBack();
             }
+        }
+
+        private void AfterBombEffect(GenericShip ship, Action callback)
+        {
+            ship.CallAfterSufferBombEffect(this, callback);
         }
 
         public virtual void ExplosionEffect(GenericShip ship, Action callBack)
@@ -108,7 +117,7 @@ namespace Upgrade
             callBack();
         }
 
-        public virtual void PlayDetonationAnimSound(GameObject bombObject, Action callBack)
+        public virtual void PlayDetonationAnimSound(GenericDeviceGameObject bombObject, Action callBack)
         {
             callBack();
         }

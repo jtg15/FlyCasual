@@ -33,7 +33,7 @@ namespace Ship
                     new ShipUpgradesInfo(
                         UpgradeType.Title,
                         UpgradeType.Modification,
-                        UpgradeType.System,
+                        UpgradeType.Sensor,
                         UpgradeType.Missile,
                         UpgradeType.Tech
                     ),
@@ -46,7 +46,8 @@ namespace Ship
 
                 ModelInfo = new ShipModelInfo(
                     "TIE/SF Fighter",
-                    "First Order"
+                    "First Order",
+                    previewScale: 2f
                 );
 
                 DialInfo = new ShipDialInfo(

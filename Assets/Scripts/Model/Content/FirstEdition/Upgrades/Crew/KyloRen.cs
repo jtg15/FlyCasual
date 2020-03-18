@@ -55,6 +55,11 @@ namespace Abilities.FirstEdition
             host.AddAvailableAction(action);
         }
 
+        protected virtual bool IsActionAvailbale()
+        {
+            return true;
+        }
+
         private void DoKyloRenAction()
         {
             RegisterAbilityTrigger(TriggerTypes.OnAbilityDirect, SelectShip);
@@ -132,7 +137,9 @@ namespace Abilities.FirstEdition
 
             selectPilotCritSubphase.DefaultDecisionName = selectPilotCritSubphase.GetDecisions().First().Name;
 
-            selectPilotCritSubphase.InfoText = "Kylo Ren: Select Damage Card";
+            selectPilotCritSubphase.DescriptionShort = "Kylo Ren";
+            selectPilotCritSubphase.DescriptionLong = "Select a Damage Card to assign";
+            selectPilotCritSubphase.ImageSource = HostUpgrade;
 
             selectPilotCritSubphase.RequiredPlayer = HostShip.Owner.PlayerNo;
 
@@ -141,7 +148,7 @@ namespace Abilities.FirstEdition
 
         private void SelectDamageCard(GenericDamageCard damageCard)
         {
-            Messages.ShowInfo("Card is selected: " + damageCard.Name);
+            Messages.ShowInfo("Kylo Ren selected  " + damageCard.Name);
 
             AssignedDamageCard = damageCard;
             AssignedDamageCard.IsFaceup = true;
@@ -150,8 +157,12 @@ namespace Abilities.FirstEdition
             opponentDamageDeck.ReShuffleDeck();
             AssignConditions(TargetShip);
 
+            SpendExtra();
+
             DecisionSubPhase.ConfirmDecision();
         }
+
+        protected virtual void SpendExtra() {}
 
         private void AssignConditions(GenericShip ship)
         {
@@ -178,11 +189,11 @@ namespace Abilities.FirstEdition
         {
             if ((e as DamageSourceEventArgs).DamageType == DamageTypes.ShipAttack)
             {
-                Messages.ShowInfo("Kylo Ren: Assigned card is dealt instead");
 
                 isSkipSufferDamage = true;
 
                 GenericShip ship = ShipWithCondition;
+                Messages.ShowInfo("Kylo Ren's vison of the Dark Side came true: " + ship.PilotInfo.PilotName + " suffers " + AssignedDamageCard.Name);
                 Combat.CurrentCriticalHitCard = AssignedDamageCard;
 
                 AssignedDamageCard = null;

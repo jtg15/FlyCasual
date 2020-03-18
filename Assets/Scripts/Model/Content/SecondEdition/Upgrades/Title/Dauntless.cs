@@ -34,7 +34,7 @@ namespace Abilities.SecondEdition
 
         public override void DeactivateAbility()
         {
-            HostShip.OnMovementFinishUnsuccessfully += RegisterAbility;
+            HostShip.OnMovementFinishUnsuccessfully -= RegisterAbility;
         }
 
         private void RegisterAbility(GenericShip ship)
@@ -44,11 +44,12 @@ namespace Abilities.SecondEdition
 
         private void AskToPerformWhiteActionAsRed(object sender, System.EventArgs e)
         {
-            Messages.ShowInfoToHuman(HostUpgrade.UpgradeInfo.Name + ": You may perform an action");
-
             HostShip.AskPerformFreeAction(
                 HostShip.GetAvailableActionsWhiteOnlyAsRed(),
-                Triggers.FinishTrigger
+                Triggers.FinishTrigger,
+                HostUpgrade.UpgradeInfo.Name,
+                "After you partially execute a maneuver, you may perform 1 white action, treating that action as red",
+                HostUpgrade
             );
         }
     }

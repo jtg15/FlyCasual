@@ -13,7 +13,7 @@ namespace UpgradesList.FirstEdition
         {
             UpgradeInfo = new UpgradeCardInfo(
                 "Ordnance Silos",
-                UpgradeType.Bomb,
+                UpgradeType.Device,
                 cost: 2,
                 restriction: new ShipRestriction(typeof(Ship.FirstEdition.BSF17Bomber.BSF17Bomber)),
                 abilityType: typeof(Abilities.FirstEdition.OrdnanceSilosAbility)
@@ -45,7 +45,7 @@ namespace Abilities.FirstEdition
         {
             foreach (var upgrade in HostShip.UpgradeBar.GetUpgradesOnlyFaceup())
             {
-                if (upgrade.HasType(UpgradeType.Bomb))
+                if (upgrade.HasType(UpgradeType.Device))
                 {
                     SetOrdnanceTokens(upgrade);
                 }
@@ -92,7 +92,14 @@ namespace Abilities.FirstEdition
         {
             if (!alwaysUseAbility)
             {
-                AskToUseAbility(AlwaysUseByDefault, UseAbilityDecision, null, null, true);
+                AskToUseAbility(
+                    HostUpgrade.UpgradeInfo.Name,
+                    AlwaysUseByDefault,
+                    UseAbilityDecision,
+                    descriptionLong: "Do you want to discard 1 Ordnance Roken instead?",
+                    imageHolder: HostUpgrade,
+                    showAlwaysUseOption: true
+                );
             }
             else
             {
@@ -107,7 +114,7 @@ namespace Abilities.FirstEdition
 
         private void DiscardTokenInstead(Action callback)
         {
-            Messages.ShowInfo("Ordnance token is discarded instead of " + GenericUpgrade.CurrentUpgrade.UpgradeInfo.Name);
+            Messages.ShowInfo("An ordinance token has been discarded instead of " + GenericUpgrade.CurrentUpgrade.UpgradeInfo.Name);
 
             RemoveOrdnanceToken(GenericUpgrade.CurrentUpgrade);
 

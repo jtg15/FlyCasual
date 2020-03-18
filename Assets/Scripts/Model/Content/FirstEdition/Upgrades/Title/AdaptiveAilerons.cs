@@ -35,7 +35,7 @@ namespace Abilities.FirstEdition
         private static readonly List<string> ChangedManeuversCodes = new List<string>() { "1.L.B", "1.F.S", "1.R.B" };
         private Dictionary<string, MovementComplexity> SavedManeuverColors;
 
-        bool doAilerons = true;
+        bool doAilerons = false;
 
         public override void ActivateAbility()
         {
@@ -95,7 +95,14 @@ namespace Abilities.FirstEdition
         {
             if (HostShip.PilotInfo.PilotName == "\"Duchess\"")
             {
-                AskToUseAbility(AlwaysUseByDefault, UseAbility, DontUseAbility);
+                AskToUseAbility(
+                    HostShip.PilotInfo.PilotName,
+                    NeverUseByDefault,
+                    UseAilerons,
+                    DontUseAilerons,
+                    descriptionLong: "Do you want to activate your Adaptive Ailerons?",
+                    imageHolder: HostShip
+                );
             }
             else
             {
@@ -103,13 +110,12 @@ namespace Abilities.FirstEdition
             }
         }
 
-        private void UseAbility(object sender, EventArgs e)
+        private void DontUseAilerons(object sender, EventArgs e)
         {
-            doAilerons = false;
             DecisionSubPhase.ConfirmDecision();
         }
 
-        private void DontUseAbility(object sender, EventArgs e)
+        private void UseAilerons(object sender, EventArgs e)
         {
             DecisionSubPhase.ConfirmDecisionNoCallback();
             SelectAdaptiveAileronsManeuver(sender, e);
@@ -117,10 +123,10 @@ namespace Abilities.FirstEdition
 
         private void SelectAdaptiveAileronsManeuver(object sender, EventArgs e)
         {
+            doAilerons = true;
             HostShip.Owner.ChangeManeuver(
-                (maneuverCode) => {
-                    GameMode.CurrentGameMode.AssignManeuver(maneuverCode);
-                },
+                GameMode.CurrentGameMode.AssignManeuver,
+                Triggers.FinishTrigger,
                 AdaptiveAileronsFilter
             );
         }
@@ -138,24 +144,41 @@ namespace Abilities.FirstEdition
             if (doAilerons)
             {
                 HostShip.AssignedManeuver.IsRevealDial = false;
-                HostShip.AssignedManeuver.GrantedBy = "Ailerons"; ;
+                HostShip.AssignedManeuver.GrantedBy = "Ailerons";
+                HostShip.CanPerformActionsWhenBumped = true;
+                HostShip.CanPerformActionsWhenOverlapping = true;
                 ShipMovementScript.LaunchMovement(FinishAdaptiveAileronsAbility);
             }
             else
             {
-                doAilerons = true;
                 FinishAdaptiveAileronsAbility();
             }
         }
 
         private void FinishAdaptiveAileronsAbility()
         {
+            doAilerons = false;
+            HostShip.CanPerformActionsWhenBumped = false;
+            HostShip.CanPerformActionsWhenOverlapping = false;
             RestoreManuverColors(HostShip);
-
             Phases.CurrentSubPhase.IsReadyForCommands = true;
-            ShipMovementScript.SendAssignManeuverCommand(Selection.ThisShip.ShipId, SavedManeuver.ToString());
-            //GameMode.CurrentGameMode.AssignManeuver(SavedManeuver.ToString());
-            // It calls Triggers.FinishTrigger
+            //ship may have flown off the board; only assign saved maneuver if ship is exists
+            if (Roster.GetShipById("ShipId:" + Selection.ThisShip.ShipId) != null)
+            {
+                ManeuverSelectionSubphase subphase = Phases.StartTemporarySubPhaseNew<ManeuverSelectionSubphase>(
+                    "Select a maneuver",
+                    Triggers.FinishTrigger
+                );
+                subphase.RequiredPlayer = Selection.ThisShip.Owner.PlayerNo;
+                subphase.Start();
+                subphase.IsReadyForCommands = true;
+
+                ShipMovementScript.SendAssignManeuverCommand(Selection.ThisShip.ShipId, SavedManeuver.ToString());
+            }
+            else
+            {
+                Triggers.FinishTrigger();
+            }
         }
 
         private bool AdaptiveAileronsFilter(string maneuverString)

@@ -9,6 +9,8 @@ namespace Ship
         public bool IsSetupPerformed { get; set; }
         public bool IsManeuverPerformed { get; set; }
         public bool IsAttackPerformed { get; set; }
+        public bool IsAttackSkipped { get; set; }
+        public bool IsManeuverSkipped { get; set; }
         public bool IsActivatedDuringCombat { get; set; }
 
         public bool IsSkipsActionSubPhase { get; set; }
@@ -16,16 +18,22 @@ namespace Ship
 
         public bool IsFreeActionSkipped { get; set; }
 
-        public bool CanPerformActionsWhileStressed { get; set; }
         public bool CanPerformActionsWhenBumped { get; set; }
-        public bool CanPerformRedManeuversWhileStressed { get; set; }
-        public int CanLaunchBombsWithTemplate { get; set; }
+        public bool CanPerformActionsWhenOverlapping { get; set; }
+        public bool CanBeCoordinated
+        {
+            get
+            {
+                bool result = true;
+                if (OnCanBeCoordinated != null) OnCanBeCoordinated(this, ref result);
+                return result;
+            }
+        }
 
         public bool IsReadyToBeDestroyed { get; set; }
-        public bool PreventDestruction { get; set; }
         public bool IsDestroyed { get; set; }
 
-        public bool IsSystemsAbilityCanBeActivated { get { return OnSystemsAbilityActivation != null && !IsSystemsAbilityInactive; } }
+        public bool IsSystemsAbilityCanBeActivated { get { return CheckSystemsAbilityActivation() && !IsSystemsAbilityInactive; } }
         public bool IsSystemsAbilityInactive { get; set; }
 
         public bool AlwaysShowAssignedManeuver { get; set; }

@@ -52,13 +52,17 @@ namespace Abilities.FirstEdition
             Selection.ActiveShip = sender as GenericShip;
 
             AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
                 IsShouldUseAbility,
                 UseAbility,
                 delegate
                 {
                     Selection.ActiveShip = previousShip;
                     SubPhases.DecisionSubPhase.ConfirmDecision();
-                });
+                },
+                descriptionLong: "Do you want to discard Astromech to discard current Damage card?",
+                imageHolder: HostUpgrade
+            );
         }
 
         private bool IsShouldUseAbility()
@@ -77,14 +81,14 @@ namespace Abilities.FirstEdition
             if (astromech != null)
             {
                 Sounds.PlayShipSound("R2D2-Killed");
-                Messages.ShowInfo("Integrated Astromech is used");
-                Messages.ShowInfo(astromech.UpgradeInfo.Name + " is discarded");
+                Messages.ShowInfo("Integrated Astromech causes " + astromech.UpgradeInfo.Name + " to take a hit instead of " + HostShip.PilotInfo.PilotName);
+                Messages.ShowInfo(astromech.UpgradeInfo.Name + " has been discarded");
                 Combat.CurrentCriticalHitCard = null;
                 astromech.Discard(DiscardModification);
             }
             else
             {
-                Messages.ShowError("Error: No astromech to disacard!");
+                Messages.ShowError("Error: This ship has no astromech!");
                 SubPhases.DecisionSubPhase.ConfirmDecision();
             }
         }

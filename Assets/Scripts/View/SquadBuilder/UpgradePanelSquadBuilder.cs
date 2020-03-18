@@ -21,6 +21,9 @@ public class UpgradePanelSquadBuilder : MonoBehaviour {
     private bool ShowFromModInfo;
     private bool Compact;
 
+    public static int WaitingToLoad = 0;
+    public static List<UpgradePanelSquadBuilder> AllLoadingPanels = new List<UpgradePanelSquadBuilder>();
+
     public void Initialize(string upgradeName, UpgradeSlot slot, GenericUpgrade upgrade = null, Action<UpgradeSlot, GenericUpgrade> onClick = null, bool showFromModInfo = false, bool compact = false)
     {
         UpgradeName = upgradeName;
@@ -36,6 +39,9 @@ public class UpgradePanelSquadBuilder : MonoBehaviour {
     void Start()
     {
         this.gameObject.SetActive(false);
+
+        WaitingToLoad++;
+        AllLoadingPanels.Add(this);
 
         if (IsSlotImage())
         {
@@ -63,7 +69,7 @@ public class UpgradePanelSquadBuilder : MonoBehaviour {
         Sprite sprite = (Sprite)Resources.Load("Sprites/SquadBuiler/UpgradeSlots/" + editionName + "/" + slotTypeName, typeof(Sprite));
         this.gameObject.transform.Find("UpgradeImage").GetComponent<Image>().sprite = sprite;
 
-        this.gameObject.SetActive(true);
+        ReadyToShow();
     }
 
     private void LoadTooltipImage(GameObject thisGameObject, string url)
@@ -118,7 +124,7 @@ public class UpgradePanelSquadBuilder : MonoBehaviour {
         Image image = targetObject.transform.GetComponent<Image>();
         image.sprite = newSprite;
 
-        this.gameObject.SetActive(true);
+        ReadyToShow();
     }
 
     private void ShowTextVersionOfCard()
@@ -128,14 +134,15 @@ public class UpgradePanelSquadBuilder : MonoBehaviour {
             this.transform.Find("UpgradeInfo").GetComponent<Text>().text = UpgradeName;
             if (Edition.Current is FirstEdition) this.transform.Find("CostInfo").GetComponent<Text>().text = Upgrade.UpgradeInfo.Cost.ToString();
 
-            this.gameObject.SetActive(true);
+            ReadyToShow();
         }
         catch { }
     }
 
     private void SetFromModeName()
     {
-        Text infoText = this.transform.Find("FromModInfo").GetComponent<Text>();
+        Text modText = this.transform.Find("FromModInfo").GetComponent<Text>();
+        Text costText = this.transform.Find("CostInfo").GetComponent<Text>();
 
         if (Edition.Current is FirstEdition)
         {
@@ -147,11 +154,18 @@ public class UpgradePanelSquadBuilder : MonoBehaviour {
         }
         else if (Edition.Current is SecondEdition)
         {
-            infoText.transform.GetComponent<RectTransform>().sizeDelta = new Vector2(418, 0);
+            if (Upgrade.FromMod != null)
+            {
+                Mod mod = (Mod)Activator.CreateInstance(Upgrade.FromMod);
+                modText.transform.GetComponent<RectTransform>().sizeDelta = new Vector2(418, 0);
+                modText.transform.localPosition = new Vector3(129, -325, 0);
+                modText.text = mod.Name;
+            }
 
-            infoText.alignment = TextAnchor.MiddleRight;
-            infoText.fontSize = 50;
-            infoText.text = Upgrade.UpgradeInfo.Cost.ToString();
+            costText.transform.GetComponent<RectTransform>().sizeDelta = new Vector2(418, 0);
+            costText.alignment = TextAnchor.MiddleRight;
+            costText.fontSize = 50;
+            costText.text = Upgrade.UpgradeInfo.Cost.ToString();
         }
     }
 
@@ -169,5 +183,33 @@ public class UpgradePanelSquadBuilder : MonoBehaviour {
             FixScrollRect fixScrollRect = this.gameObject.AddComponent<FixScrollRect>();
             fixScrollRect.MainScroll = mainScroll;
         }
+    }
+
+    private void ReadyToShow()
+    {
+        WaitingToLoad--;
+
+        if (WaitingToLoad == 0) ShowAllLoadedPanels();
+    }
+
+    private void ShowAllLoadedPanels()
+    {
+        foreach (UpgradePanelSquadBuilder loadingPanel in AllLoadingPanels)
+        {
+            loadingPanel.FinallyShow();
+        }
+        AllLoadingPanels.Clear();
+
+        GameObject loadingText = GameObject.Find("UI/Panels/SelectUpgradePanel/LoadingText");
+        if (loadingText != null) loadingText.SetActive(false);
+    }
+
+    public void FinallyShow()
+    {
+        try
+        {
+            this.gameObject.SetActive(true);
+        }
+        catch { }
     }
 }

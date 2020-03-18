@@ -6,6 +6,8 @@ using System.Linq;
 using System.Reflection;
 using System;
 using UnityEngine.Analytics;
+using UnityEngine.Networking;
+using SquadBuilderNS;
 
 public enum LogTypes
 {
@@ -103,7 +105,13 @@ public partial class Console : MonoBehaviour {
         {
             if (IsHiddenError(logString)) return;
 
-            if (DebugManager.ReleaseVersion && !DebugManager.ErrorIsAlreadyReported) SendReport(stackTrace);
+            if (!DebugManager.ErrorIsAlreadyReported)
+            {
+                if (DebugManager.ReleaseVersion && Global.CurrentVersionInt == Global.LatestVersionInt)
+                {
+                    SendReport(stackTrace);
+                }
+            }
 
             IsActive = true;
             Write("\n" + logString + "\n\n" + stackTrace, LogTypes.Errors, true, "red");
@@ -114,32 +122,51 @@ public partial class Console : MonoBehaviour {
     {
         DebugManager.ErrorIsAlreadyReported = true;
 
-        string[] StackTraceLines = stackTrace.Split('\n');
-        string StackTraceFilesList = "";
-        foreach (var line in StackTraceLines)
-        {
-            int lastPosition = line.LastIndexOf('/');
-            if (lastPosition != -1)
-            {
-                string fileName = line.Substring(lastPosition + 1, line.Length - lastPosition - 2);
-                if (StackTraceFilesList.Length != 0) StackTraceFilesList += "\n";
-                StackTraceFilesList += fileName;
-
-                if (StackTraceFilesList.Length > 99)
-                {
-                    StackTraceFilesList = StackTraceFilesList.Substring(0, 99);
-                    break;
-                }
-            }
-        }
-
         AnalyticsEvent.LevelFail(
             UnityEngine.SceneManagement.SceneManager.GetActiveScene().name,
             new Dictionary<string, object>()
             {
-                    { "T", StackTraceFilesList }
+                { "Version", Global.CurrentVersion },
+                { "Pilot", (Selection.ThisShip != null) ? Selection.ThisShip.PilotInfo.PilotName : "None" },
+                { "Trigger", (Triggers.CurrentTrigger != null) ? Triggers.CurrentTrigger.Name : "None" },
+                { "Subphase", (Phases.CurrentSubPhase != null) ? Phases.CurrentSubPhase.GetType().ToString() : "None" }
             }
         );
+
+        StartCoroutine(UploadCustomReport(stackTrace));
+    }
+
+    IEnumerator UploadCustomReport(string stackTrace)
+    {
+        JSONObject jsonData = new JSONObject();
+        jsonData.AddField("name", Options.NickName);
+        jsonData.AddField("description", "No description");
+        jsonData.AddField("p1pilot", (Selection.ThisShip != null) ? Selection.ThisShip.PilotInfo.PilotName : "None");
+        jsonData.AddField("p2pilot", (Selection.AnotherShip != null) ? Selection.AnotherShip.PilotInfo.PilotName : "None");
+        jsonData.AddField("stacktrace", stackTrace);
+        jsonData.AddField("trigger", (Triggers.CurrentTrigger != null) ? Triggers.CurrentTrigger.Name : "None");
+        jsonData.AddField("subphase", (Phases.CurrentSubPhase != null) ? Phases.CurrentSubPhase.GetType().ToString() : "None");
+        jsonData.AddField("scene", UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
+        jsonData.AddField("version", Global.CurrentVersion);
+
+        try
+        {
+            jsonData.AddField("p1squad", SquadBuilder.SquadLists[0].SavedConfiguration.ToString().Replace("\"", "\\\""));
+            jsonData.AddField("p2squad", SquadBuilder.SquadLists[1].SavedConfiguration.ToString().Replace("\"", "\\\""));
+        }
+        catch (Exception)
+        {
+            jsonData.AddField("p1squad", "None");
+            jsonData.AddField("p2squad", "None");
+        }
+
+        var request = new UnityWebRequest("http://flycasualapi.sandrem.space/api/errorreport", "POST");
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData.ToString());
+        request.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+        yield return request.SendWebRequest();
+        Debug.Log("Status Code: " + request.responseCode);
     }
 
     private bool IsHiddenError(string text)

@@ -16,13 +16,15 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Ka'ato Leeachos",
                     3,
-                    29,
+                    27,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.KaatoLeeachosAbility),
                     extraUpgradeIcons: new List<UpgradeType>() { UpgradeType.Talent, UpgradeType.Illicit },
                     factionOverride: Faction.Scum,
                     seImageNumber: 170
                 );
+
+                ModelInfo.SkinName = "Kaa'to Leeachos";
             }
         }
     }
@@ -50,7 +52,7 @@ namespace Abilities.SecondEdition
 
         protected virtual string GenerateAbilityMessage()
         {
-            return "Choose another friendly ship to transfer focus or evade from.";
+            return "Choose another friendly ship to transfer focus or evade from";
         }
 
         private void Ability(object sender, EventArgs e)
@@ -97,7 +99,6 @@ namespace Abilities.SecondEdition
 
         }
 
-
         public class KaatoLeeachosDecisionSubPhaseSE : DecisionSubPhase
         {
             public GenericShip HostShip;
@@ -106,7 +107,10 @@ namespace Abilities.SecondEdition
 
             public override void PrepareDecision(Action callBack)
             {
-                InfoText = TargetShip.PilotInfo.PilotName + ": " + "Select token to transfer to Kaato.";
+                DescriptionShort = "Ka'ato Leeachos";
+                DescriptionLong = TargetShip.PilotInfo.PilotName + ": " + "Select token to transfer to Kaato.";
+                ImageSource = HostShip;
+
                 DecisionOwner = TargetShip.Owner;
 
                 if (TargetShip.Tokens.HasToken(typeof(FocusToken)))

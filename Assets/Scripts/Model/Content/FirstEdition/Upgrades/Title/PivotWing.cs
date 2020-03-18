@@ -54,7 +54,17 @@ namespace Abilities.FirstEdition
         {
             Phases.Events.OnGameStart -= ChangeInitialWingsPosition;
             HostShip.OnMovementFinish -= RegisterAskToUseFlip;
-            HostShip.ChangeAgilityBy(-1);
+            HostShip.ChangeAgilityBy(-1); // Works only if flipped during battle, for squad builder ActivateAbilityForSquadBuilder is used
+        }
+
+        public override void ActivateAbilityForSquadBuilder()
+        {
+            HostShip.ShipInfo.Agility++;
+        }
+
+        public override void DeactivateAbilityForSquadBuilder()
+        {
+            HostShip.ShipInfo.Agility--;
         }
 
         protected virtual void RegisterAskToUseFlip(GenericShip ship)
@@ -66,7 +76,13 @@ namespace Abilities.FirstEdition
 
         protected void AskToFlip(object sender, EventArgs e)
         {
-            AskToUseAbility(NeverUseByDefault, DoFlipSide, infoText: "Flip to Landing position?");
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                NeverUseByDefault,
+                DoFlipSide,
+                descriptionLong: "Do you want to flip to Landing position?",
+                imageHolder: HostUpgrade
+            );
         }
 
         private void DoFlipSide(object sender, EventArgs e)
@@ -109,7 +125,13 @@ namespace Abilities.FirstEdition
 
         private void AskToFlip(object sender, EventArgs e)
         {
-            AskToUseAbility(AlwaysUseByDefault, DoFlipSide, infoText: "Flip to Attack position?");
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                AlwaysUseByDefault,
+                DoFlipSide,
+                descriptionLong: "Do you want to flip to Attack position?",
+                imageHolder: HostUpgrade
+            );
         }
 
         private void DoFlipSide(object sender, EventArgs e)
@@ -129,7 +151,13 @@ namespace Abilities.FirstEdition
 
         protected virtual void AskToRotate(object sender, EventArgs e)
         {
-            AskToUseAbility(NeverUseByDefault, RotateShip, infoText: "Rotate this ship?");
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                NeverUseByDefault,
+                RotateShip,
+                descriptionLong: "Do you want to rotate this ship?",
+                imageHolder: HostUpgrade
+            );
         }
 
         private void RotateShip(object sender, EventArgs e)

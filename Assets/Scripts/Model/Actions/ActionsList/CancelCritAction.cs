@@ -7,14 +7,14 @@ namespace ActionsList
 
     public class CancelCritAction : GenericAction
     {
-        private GenericDamageCard CritCard;
+        public GenericDamageCard CritCard;
 
         public CancelCritAction()
         {
             IsCritCancelAction = true;
         }
 
-        public void Initilize(GenericDamageCard critCard)
+        public void Initialize(GenericDamageCard critCard)
         {
             CritCard = critCard;
 
@@ -27,17 +27,19 @@ namespace ActionsList
         public override void ActionTake()
         {
             Selection.ActiveShip = Selection.ThisShip;
-
             HostShip = Selection.ThisShip;
+            ActionsHolder.SelectedCriticalHitCard = CritCard;
+
             if (CritCard.CancelDiceResults.Count == 0)
             {
                 CritCard.DiscardEffect();
-                Phases.FinishSubPhase(typeof(SubPhases.CancelCritCheckSubPhase));
-                Phases.CurrentSubPhase.CallBack();
+                Selection.ThisShip.CallFaceupDamageCardIsRepaired(
+                    ActionsHolder.SelectedCriticalHitCard,
+                    Phases.CurrentSubPhase.CallBack
+                );
             }
             else
             {
-                ActionsHolder.SelectedCriticalHitCard = CritCard;
                 Selection.ActiveShip = Selection.ThisShip;
                 Phases.StartTemporarySubPhaseOld(
                     "Trying to flip critical card",
@@ -81,7 +83,7 @@ namespace SubPhases
             Selection.ActiveShip = Selection.ThisShip;
             if (ActionsHolder.SelectedCriticalHitCard.CancelDiceResults.Contains(CurrentDiceRoll.DiceList[0].Side)) ActionsHolder.SelectedCriticalHitCard.DiscardEffect();
 
-            CallBack();
+            Selection.ThisShip.CallFaceupDamageCardIsRepaired(ActionsHolder.SelectedCriticalHitCard, CallBack);
         }
 
     }

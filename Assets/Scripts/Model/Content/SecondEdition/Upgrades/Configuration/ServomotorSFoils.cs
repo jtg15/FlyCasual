@@ -12,6 +12,9 @@ namespace UpgradesList.SecondEdition
     {
         public ServomotorSFoilsClosed() : base()
         {
+            IsHidden = true;
+            NameCanonical = "servomotorsfoils-anotherside";
+
             UpgradeInfo = new UpgradeCardInfo(
                 "Servomotor S-Foils (Closed)",
                 UpgradeType.Configuration,
@@ -67,12 +70,18 @@ namespace Abilities.SecondEdition
 
         private void RegisterAskToUseFlip(GenericShip ship)
         {
-            RegisterAbilityTrigger(TriggerTypes.OnMovementActivation, AskToFlip);
+            RegisterAbilityTrigger(TriggerTypes.OnMovementActivationStart, AskToFlip);
         }
 
         protected void AskToFlip(object sender, EventArgs e)
         {
-            AskToUseAbility(AIWantsToFlip, DoFlipSide, null, null, false, FlipQuestion);
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                AIWantsToFlip,
+                DoFlipSide,
+                descriptionLong: FlipQuestion,
+                imageHolder: HostUpgrade
+            );
         }
 
         protected void DoFlipSide(object sender, EventArgs e)

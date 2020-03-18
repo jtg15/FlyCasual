@@ -27,8 +27,6 @@ namespace Ship
                 DialInfo.AddManeuver(new ManeuverHolder(ManeuverSpeed.Speed4, ManeuverDirection.Forward, ManeuverBearing.Straight), MovementComplexity.Normal);
 
                 ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/3/33/Maneuver_aggressor.png";
-
-                OldShipTypeName = "Aggressor";
             }
         }
     }
@@ -38,6 +36,8 @@ namespace Abilities.SecondEdition
 {
     public class AdvancedDroidBrain : GenericAbility
     {
+        public override string Name { get { return "Advanced Droid Brain"; } }
+
         public override void ActivateAbility()
         {
             HostShip.OnActionIsPerformed += CheckAbility;

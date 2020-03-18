@@ -9,7 +9,7 @@ namespace CommandsList
 {
     public class TokenCommand : GenericCommand
     {
-        private Dictionary<string, Type> stringToType = new Dictionary<string, Type>()
+        private Dictionary<string, Type> StringToType = new Dictionary<string, Type>()
         {
             { "focus",          typeof(FocusToken)          },
             { "evade",          typeof(EvadeToken)          },
@@ -24,14 +24,16 @@ namespace CommandsList
             { "energy",         typeof(EnergyToken)         },
             { "calculate",      typeof(CalculateToken)      },
             { "force",          typeof(ForceToken)          },
-            { "charge",         typeof(ChargeToken)         }
+            { "charge",         typeof(ChargeToken)         },
+            { "strain",         typeof(StrainToken)         },
+            { "deplete",        typeof(DepleteToken)        },
         };
 
         public TokenCommand()
         {
             Keyword = "token";
             Description =   "token assign id:<shipId> type:<type> [target:<targetShipId>]- assing token to ship\n" +
-                            "where type: focus, evade, stress, targetlock, ion, tractorbeam, jam, reinforceaft, reinforcefore, cloak, energy, calculate, force, charge\n" +
+                            "where type: focus, evade, stress, targetlock, ion, tractorbeam, jam, reinforceaft, reinforcefore, cloak, energy, calculate, force, charge, strain, deplete\n" +
                             "(target is used only for targetlock type)";
 
             Console.AddAvailableCommand(this);
@@ -55,7 +57,7 @@ namespace CommandsList
             string typeString = (parameters.ContainsKey("type")) ? parameters["type"] : null;
             if (typeString != null)
             {
-                if (stringToType.ContainsKey(typeString)) tokenType = stringToType[typeString];
+                if (StringToType.ContainsKey(typeString)) tokenType = StringToType[typeString];
             }
 
             if (shipId != -1 && tokenType != null)
@@ -70,7 +72,7 @@ namespace CommandsList
 
         private void AssignToken(int shipId, Type tokenType, int targetShipId)
         {
-            GenericShip ship = Roster.AllShips.FirstOrDefault(n => n.Key == "ShipId:" + shipId).Value;
+            GenericShip ship = Roster.AllUnits.FirstOrDefault(n => n.Key == "ShipId:" + shipId).Value;
 
             if (ship != null)
             {
@@ -78,7 +80,7 @@ namespace CommandsList
                 {
                     if (targetShipId != -1)
                     {
-                        GenericShip targetShip = Roster.AllShips.FirstOrDefault(n => n.Key == "ShipId:" + targetShipId).Value;
+                        GenericShip targetShip = Roster.AllUnits.FirstOrDefault(n => n.Key == "ShipId:" + targetShipId).Value;
                         if (targetShip != null)
                         {
                             ActionsHolder.AcquireTargetLock(ship, targetShip, ShowMessage, ShowErrorMessage);
@@ -95,7 +97,7 @@ namespace CommandsList
                 }
                 else if (tokenType == typeof(TractorBeamToken))
                 {
-                    GenericShip targetShip = Roster.AllShips.FirstOrDefault(n => n.Key == "ShipId:" + targetShipId).Value;
+                    GenericShip targetShip = Roster.AllUnits.FirstOrDefault(n => n.Key == "ShipId:" + targetShipId).Value;
                     TractorBeamToken token = new TractorBeamToken(ship, targetShip.Owner);
                     ship.Tokens.AssignToken(token, ShowMessage);
                 }

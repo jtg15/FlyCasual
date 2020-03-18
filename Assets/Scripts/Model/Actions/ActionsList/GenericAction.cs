@@ -5,6 +5,7 @@ using Ship;
 using Upgrade;
 using System;
 using SubPhases;
+using Actions;
 
 public enum DiceModificationTimingType
 {
@@ -22,7 +23,20 @@ namespace ActionsList
         public string DiceModificationName;
         public string ImageUrl;
 
-        public bool IsRed;
+        public bool IsRealAction = true;
+        public bool IsCoordinatedAction = false;
+
+        public bool IsRed
+        {
+            get { return Color == ActionColor.Red; }
+        }
+
+        public bool IsPurple
+        {
+            get { return Color == ActionColor.Purple; }
+        }
+
+        public ActionColor Color;
 
         public bool IsCritCancelAction;
 
@@ -73,8 +87,18 @@ namespace ActionsList
             get
             {
                 var redAction = (GenericAction)MemberwiseClone();
-                redAction.IsRed = true;
+                redAction.Color = ActionColor.Red;
                 return redAction;
+            }
+        }
+
+        public GenericAction AsCoordinatedAction
+        {
+            get
+            {
+                var coordinatedAction = (GenericAction)MemberwiseClone();
+                coordinatedAction.IsCoordinatedAction = true;
+                return coordinatedAction;
             }
         }
 
@@ -125,6 +149,8 @@ namespace ActionsList
             * 100 - Free change limited by side if 1
             * 95 - Free rerolls limited by side
             * 90 - Free rerolls
+            * 89 - Not-free add dice with value
+            * 87 - Not-Free rerolls limited by side if 1
             * 85 - Not-Free rerolls
             * 80 - Free focus to evades
             * 70 - Regular Evade if 1 uncancelled
@@ -157,8 +183,8 @@ namespace ActionsList
             /*
             * 100 - Rotate arc to get a shot in no enemies in arc
             * 90 - Cancel crit
+            * 80 - Evade action is 1-hull
             * 50 - Focus action if has target
-            * 40 - Evade action
             * 25 - Reinforce action if there are no enemies
             * 20 - Focus action if no target
             * 10 - Focus action if Expertise is installed

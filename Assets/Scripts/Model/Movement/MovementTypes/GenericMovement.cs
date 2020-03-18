@@ -4,6 +4,7 @@ using UnityEngine;
 using System;
 using Editions;
 using Obstacles;
+using Remote;
 
 namespace Movement
 { 
@@ -27,6 +28,19 @@ namespace Movement
             set {
                 theShip = value;
             }
+        }
+
+        public bool IsBasicManeuver
+        {
+            get
+            {
+                return Bearing == ManeuverBearing.Straight || Bearing == ManeuverBearing.Bank || Bearing == ManeuverBearing.Turn;
+            }
+        }
+
+        public bool IsAdvancedManeuver
+        {
+            get { return !IsBasicManeuver; }
         }
 
         protected float ProgressTarget { get; set; }
@@ -106,7 +120,8 @@ namespace Movement
                 Rules.Collision.AddBump(TheShip, shipBumped);
             }
 
-            TheShip.LandedOnObstacles = new List<GenericObstacle>(movementPrediction.LandedOnObstacles);
+            TheShip.RemotesOverlapped = new List<GenericRemote>(movementPrediction.RemotesOverlapped);
+            TheShip.ObstaclesLanded = new List<GenericObstacle>(movementPrediction.LandedOnObstacles);
 
             if (movementPrediction.AsteroidsHit.Count > 0)
             {
@@ -239,7 +254,7 @@ namespace Movement
                 case ManeuverBearing.Stationary:
                     maneuverString += "S";
                     break;
-                case ManeuverBearing.Reverse:
+                case ManeuverBearing.ReverseStraight:
                     maneuverString += "V";
                     break;
                 default:
@@ -279,7 +294,7 @@ namespace Movement
                 case ManeuverBearing.Stationary:
                     result = "5";
                     break;
-                case ManeuverBearing.Reverse:
+                case ManeuverBearing.ReverseStraight:
                     switch (Direction)
                     {
                         case ManeuverDirection.Left:

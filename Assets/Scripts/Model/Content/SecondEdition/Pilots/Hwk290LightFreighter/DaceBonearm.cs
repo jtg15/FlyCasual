@@ -18,7 +18,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Dace Bonearm",
                     4,
-                    35,
+                    33,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.DaceBonearmAbility),
                     charges: 3,
@@ -66,7 +66,13 @@ namespace Abilities.SecondEdition
 
         private void AskDaceBonearmAbility(object sender, EventArgs e)
         {
-            AskToUseAbility(ShouldUseAbility, UseDaceBonearmAbility);
+            AskToUseAbility(
+                HostShip.PilotInfo.PilotName,
+                ShouldUseAbility,
+                UseDaceBonearmAbility,
+                descriptionLong: "Do you want to spend 3 Charge? (If you do, that ship gains 2 additional Ion Tokens)",
+                imageHolder: HostShip
+            );
         }
 
         private bool ShouldUseAbility()
@@ -78,7 +84,7 @@ namespace Abilities.SecondEdition
         {
             DecisionSubPhase.ConfirmDecisionNoCallback();
 
-            Messages.ShowInfo("Ability of Dace Bonearm is used");
+            Messages.ShowInfo("Dace Bonearm's ability has been activated");
 
             for (int i = 0; i < 3; i++)
             {

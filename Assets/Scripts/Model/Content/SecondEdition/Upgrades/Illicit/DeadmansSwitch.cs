@@ -28,22 +28,16 @@ namespace Abilities.SecondEdition
     {
         public override void ActivateAbility()
         {
-            HostShip.OnReadyToBeDestroyed += RegisterAbility;
+            HostShip.OnShipIsDestroyed += RegisterAbility;
         }
 
         public override void DeactivateAbility()
         {
-            HostShip.OnReadyToBeDestroyed -= RegisterAbility;
+            HostShip.OnShipIsDestroyed -= RegisterAbility;
         }
 
-        private void RegisterAbility(GenericShip ship)
+        private void RegisterAbility(GenericShip ship, bool flag)
         {
-            ship.OnShipIsDestroyed += RegisterTrigger;
-        }
-
-        private void RegisterTrigger(GenericShip ship, bool flag)
-        {
-            ship.OnShipIsDestroyed -= RegisterTrigger;
             RegisterAbilityTrigger(TriggerTypes.OnShipIsDestroyed, DealDamage);
         }
         
@@ -59,7 +53,7 @@ namespace Abilities.SecondEdition
                 if (distInfo.Range < 2) sufferedShips.Add(ship);
             }
 
-            Messages.ShowInfo("Deadman's Switch damages " + sufferedShips.Count + " ships");
+            Messages.ShowInfo("Deadman's Switch deals 1 Hit to " + sufferedShips.Count + " ships");
             DealDamageToShips(sufferedShips, 1, false, Triggers.FinishTrigger);
         }
     }

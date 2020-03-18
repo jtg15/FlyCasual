@@ -11,9 +11,9 @@ namespace Ship
             public SarcoPlank() : base()
             {
                 PilotInfo = new PilotCardInfo(
-                    "Jakku Gunrunner",
+                    "Sarco Plank",
                     2,
-                    34,
+                    32,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.SarcoPlankAbility),
                     seImageNumber: 162
@@ -50,9 +50,11 @@ namespace Abilities.SecondEdition
         private void AskToUseSarcoPlankAbility(object sender, System.EventArgs e)
         {
             AskToUseAbility(
+                HostShip.PilotInfo.PilotName,
                 ShouldUseAbility,
                 ChangeAgility,
-                infoText: "Treat your agility value as " + HostShip.AssignedManeuver.Speed + "?"
+                descriptionLong: "Do you want to treat your agility value as " + HostShip.AssignedManeuver.Speed + "?",
+                imageHolder: HostShip
             );
         }
 
@@ -63,7 +65,7 @@ namespace Abilities.SecondEdition
 
         private void ChangeAgility(object sender, System.EventArgs e)
         {
-            Messages.ShowInfo(HostShip.PilotInfo.PilotName + ": Agility is " + HostShip.AssignedManeuver.Speed);
+            Messages.ShowInfo(HostShip.PilotInfo.PilotName + "'s Agility is now " + HostShip.AssignedManeuver.Speed);
 
             OriginalAgility = HostShip.State.Agility;
             HostShip.ChangeAgilityBy(HostShip.AssignedManeuver.Speed - HostShip.State.Agility);
@@ -77,7 +79,7 @@ namespace Abilities.SecondEdition
         {
             HostShip.OnAttackFinishAsDefender -= RestoreOriginalAgility;
 
-            Messages.ShowInfo(HostShip.PilotInfo.PilotName + ": Agility is " + OriginalAgility);
+            Messages.ShowInfo(HostShip.PilotInfo.PilotName + "'s Agility hass been restored to " + OriginalAgility);
             HostShip.ChangeAgilityBy(OriginalAgility - HostShip.AssignedManeuver.Speed);
         }
     }

@@ -1,6 +1,6 @@
 ﻿using Ship;
 using Upgrade;
-using Tokens;
+using ActionsList;
 
 namespace UpgradesList.FirstEdition
 {
@@ -26,35 +26,43 @@ namespace Abilities.FirstEdition
     {
         public override void ActivateAbility()
         {
-            HostShip.CanPerformActionsWhileStressed = true;
-            HostShip.OnActionIsPerformed += RegisterDoDamageIfStressed;
+            HostShip.OnCheckCanPerformActionsWhileStressed += ConfirmThatIsPossible;
+            HostShip.OnCanPerformActionWhileStressed += AlwaysAllow;
+
+            HostShip.BeforeActionIsPerformed += CheckIfShipIsStressed;
         }
 
         public override void DeactivateAbility()
         {
-            HostShip.CanPerformActionsWhileStressed = false;
-            HostShip.OnActionIsPerformed -= RegisterDoDamageIfStressed;
+            HostShip.OnCheckCanPerformActionsWhileStressed -= ConfirmThatIsPossible;
+            HostShip.OnCanPerformActionWhileStressed -= AlwaysAllow;
+
+            HostShip.BeforeActionIsPerformed -= CheckIfShipIsStressed;
         }
 
-        private void RegisterDoDamageIfStressed(ActionsList.GenericAction action)
+        private void CheckIfShipIsStressed(GenericAction action, ref bool data)
         {
-            if (HostShip.Tokens.HasToken(typeof(StressToken)))
+            if (HostShip.IsStressed) HostShip.OnActionIsPerformed += RegisterDoDamageIfStressed;
+        }
+
+        private void RegisterDoDamageIfStressed(GenericAction action)
+        {
+            HostShip.OnActionIsPerformed -= RegisterDoDamageIfStressed;
+
+            Triggers.RegisterTrigger(new Trigger()
             {
-                Triggers.RegisterTrigger(new Trigger()
-                {
-                    Name = "Check damage from \"Chopper\"",
-                    TriggerType = TriggerTypes.OnActionIsPerformed,
-                    TriggerOwner = HostShip.Owner.PlayerNo,
-                    EventHandler = DoDamage,
-                });
-            }
+                Name = "Check damage from \"Chopper\"",
+                TriggerType = TriggerTypes.OnActionIsPerformed,
+                TriggerOwner = HostShip.Owner.PlayerNo,
+                EventHandler = DoDamage,
+            });
         }
 
         private void DoDamage(object sender, System.EventArgs e)
         {
             Phases.CurrentSubPhase.Pause();
 
-            Messages.ShowError("\"Chopper\": Damage is dealt");
+            Messages.ShowInfo("\"Chopper\": This ship suffers 1 damage");
 
             DamageSourceEventArgs chopperDamage = new DamageSourceEventArgs()
             {
@@ -66,6 +74,16 @@ namespace Abilities.FirstEdition
                 Phases.CurrentSubPhase.Resume();
                 Triggers.FinishTrigger();
             });
+        }
+
+        private void ConfirmThatIsPossible(ref bool isAllowed)
+        {
+            AlwaysAllow(null, ref isAllowed);
+        }
+
+        private void AlwaysAllow(GenericAction action, ref bool isAllowed)
+        {
+            isAllowed = true;
         }
     }
 }

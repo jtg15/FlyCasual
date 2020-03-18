@@ -16,7 +16,7 @@ namespace UpgradesList.SecondEdition
             UpgradeInfo = new UpgradeCardInfo(
                 "Ciena Ree",
                 UpgradeType.Crew,
-                cost: 10,
+                cost: 6,
                 isLimited: true,
                 restrictions: new UpgradeCardRestrictions(
                     new FactionRestriction(Faction.Imperial),
@@ -67,7 +67,9 @@ namespace Abilities.SecondEdition
         {
             CienaReeRotationDecisionSubphase subphase = Phases.StartTemporarySubPhaseNew<CienaReeRotationDecisionSubphase>("Rotate the ship?", Triggers.FinishTrigger);
 
-            subphase.InfoText = "Gain 1 Stress to rotate the ship?";
+            subphase.DescriptionShort = "Ciena Ree";
+            subphase.DescriptionLong = "Gain 1 Stress to rotate the ship?";
+            subphase.ImageSource = HostUpgrade;
 
             subphase.AddDecision("90 Counterclockwise", Rotate90Counterclockwise);
             subphase.AddDecision("90 Clockwise", Rotate90Clockwise);

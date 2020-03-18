@@ -79,7 +79,9 @@ namespace SubPhases
 
         public override void PrepareDecision(Action callBack)
         {
-            InfoText = "Perform free evade action?";
+            DescriptionShort = "TIE/v1";
+            DescriptionLong = "Do you want to perform free evade action?";
+            ImageSource = TIEv1Upgrade;
 
             AddDecision("Yes", PerformFreeEvadeAction);
             AddDecision("No", DontPerformFreeEvadeAction);
@@ -100,7 +102,14 @@ namespace SubPhases
 
         private void PerformFreeEvadeAction(object sender, EventArgs e)
         {
-            Selection.ThisShip.AskPerformFreeAction(new EvadeAction(), DecisionSubPhase.ConfirmDecision, true);
+            Selection.ThisShip.AskPerformFreeAction(
+                new EvadeAction(),
+                DecisionSubPhase.ConfirmDecision,
+                TIEv1Upgrade.UpgradeInfo.Name,
+                "After you acquire a target lock, you may perform a free evade action",
+                TIEv1Upgrade,
+                isForced: true
+            );
         }
 
         private void DontPerformFreeEvadeAction(object sender, EventArgs e)

@@ -6,6 +6,7 @@ using Upgrade;
 using Ship;
 using System.Linq;
 using SubPhases;
+using Bombs;
 
 namespace UpgradesList.FirstEdition
 {
@@ -15,7 +16,7 @@ namespace UpgradesList.FirstEdition
         {
             UpgradeInfo = new UpgradeCardInfo(
                 "Proximity Mines",
-                UpgradeType.Bomb,
+                UpgradeType.Device,
                 cost: 3
             );
 
@@ -36,7 +37,7 @@ namespace UpgradesList.FirstEdition
                 });
         }
 
-        public override void PlayDetonationAnimSound(GameObject bombObject, Action callBack)
+        public override void PlayDetonationAnimSound(GenericDeviceGameObject bombObject, Action callBack)
         {
             int random = UnityEngine.Random.Range(1, 8);
             Sounds.PlayBombSound(bombObject, "Explosion-" + random);
@@ -78,7 +79,7 @@ namespace SubPhases.FirstEdition
 
         private void SufferDamage()
         {
-            Messages.ShowError("Proximity Mines: ship suffered damage");
+            Messages.ShowInfo("Proximity Mines: The attacked ship suffered damage");
 
             DamageSourceEventArgs proximityDamage = new DamageSourceEventArgs()
             {
@@ -91,7 +92,7 @@ namespace SubPhases.FirstEdition
 
         private void NoDamage()
         {
-            Messages.ShowInfoToHuman("No damage");
+            Messages.ShowInfoToHuman("The attacked ship suffered no damage");
             CallBack();
         }
     }

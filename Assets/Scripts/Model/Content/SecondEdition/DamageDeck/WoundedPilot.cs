@@ -14,7 +14,7 @@ namespace DamageDeckCardSE
         {
             Name = "Wounded Pilot";
             Type = CriticalCardType.Pilot;
-            ImageUrl = "https://i.imgur.com/GtW7OR5.png";
+            ImageUrl = "https://i.imgur.com/BIla4b2.jpg";
         }
 
         public override void ApplyEffect(object sender, EventArgs e)
@@ -101,7 +101,7 @@ namespace SubPhases
 
         private void SufferStress()
         {
-            Messages.ShowError("Wounded Pilot: ship is assigned stress");
+            Messages.ShowInfo("Wounded Pilot: This ship has gained a stress token");
             HostShip.Tokens.AssignToken(typeof(StressToken), CallBack);
         }
 

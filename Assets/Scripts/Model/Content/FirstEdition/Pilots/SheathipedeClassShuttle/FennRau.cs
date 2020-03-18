@@ -61,27 +61,34 @@ namespace Abilities.FirstEdition
         private void AskAbility(object sender, System.EventArgs e)
         {
             Messages.ShowInfo("Fenn Rau can use his ability");
-            AskToUseAbility(AlwaysUseByDefault, UseAbility, DontUseAbility);
+            AskToUseAbility(
+                HostShip.PilotInfo.PilotName,
+                AlwaysUseByDefault,
+                UseAbility,
+                DontUseAbility,
+                descriptionLong: "Do you want to gain 1 stress token? (If you do, attacker cannot spend tokens to modify dice while it performs an attack this phase)",
+                imageHolder: HostShip
+            );
         }
 
         private void UseAbility(object sender, System.EventArgs e)
         {
             if (!HostShip.Tokens.HasToken(typeof(StressToken)))
             {
-                Messages.ShowInfoToHuman("Fenn Rau: Ability was used");
+                Messages.ShowInfoToHuman("Fenn Rau's target is unable to spend tokens to modify attack dice this round");
 
                 HostShip.Tokens.AssignToken(typeof(StressToken), AssignConditionToActivatedShip);
             }
             else
             {
-                Messages.ShowErrorToHuman("Fenn Rau: Cannot use ability - already has stress");
+                Messages.ShowErrorToHuman("Fenn Rau's abiltiy cannot be used: Fenn Rau has one or more stress tokens");
                 Triggers.FinishTrigger();
             }
         }
 
         private void DontUseAbility(object sender, System.EventArgs e)
         {
-            Messages.ShowInfoToHuman("Fenn Rau: Ability was not used");
+            Messages.ShowInfoToHuman("Fenn Rau's ability was not used");
             DecisionSubPhase.ConfirmDecision();
         }
 
@@ -101,7 +108,7 @@ namespace Abilities.FirstEdition
         {
             if (Combat.Attacker == affectedShip && action.DiceModificationTiming != DiceModificationTimingType.Opposite && action.TokensSpend.Count > 0)
             {
-                Messages.ShowErrorToHuman("Fenn Rau: Cannot use dice modification\n" + action.Name);
+                Messages.ShowErrorToHuman("Fenn Rau: " + Combat.Attacker.PilotInfo.PilotName + " cannot modify their attack rolls, \n" + action.Name + " cannot be completed");
                 canBeUsed = false;
             }
         }
@@ -124,7 +131,7 @@ namespace Conditions
     {
         public FennRauRebelCondition(GenericShip host) : base(host)
         {
-            Name = "Debuff Token";
+            Name = ImageName = "Debuff Token";
             Temporary = false;
         }
     }

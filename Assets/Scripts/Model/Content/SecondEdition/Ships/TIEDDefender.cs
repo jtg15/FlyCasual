@@ -19,14 +19,14 @@ namespace Ship
                 ShipInfo.ShipName = "TIE/D Defender";
 
                 ShipInfo.UpgradeIcons.Upgrades.Remove(UpgradeType.Modification);
-                ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.System);
+                ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.Sensor);
 
                 ShipInfo.Shields = 4;
 
                 ShipInfo.ActionIcons.AddActions(new ActionInfo(typeof(EvadeAction)));
                 ShipInfo.ActionIcons.AddActions(new ActionInfo(typeof(BoostAction)));
 
-                ShipAbilities.Add(new Abilities.FirstEdition.TIEx7Ability());
+                ShipAbilities.Add(new Abilities.SecondEdition.FullThrottle());
 
                 IconicPilots[Faction.Imperial] = typeof(CountessRyad);
 
@@ -35,9 +35,17 @@ namespace Ship
                 DialInfo.AddManeuver(new ManeuverHolder(ManeuverSpeed.Speed2, ManeuverDirection.Forward, ManeuverBearing.KoiogranTurn), MovementComplexity.Complex);
 
                 ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/1/18/Maneuver_tie_defender.png";
-
-                OldShipTypeName = "TIE Defender";
             }
         }
+    }
+}
+
+namespace Abilities.SecondEdition
+{
+    public class FullThrottle: Abilities.FirstEdition.TIEx7Ability
+    {
+        public override string Name { get { return "Full Throttle"; } }
+
+        // Full copy
     }
 }

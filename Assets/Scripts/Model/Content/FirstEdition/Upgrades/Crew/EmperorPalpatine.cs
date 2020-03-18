@@ -102,8 +102,11 @@ namespace Abilities.FirstEdition
                 Triggers.FinishTrigger
             );
 
+            newSubPhase.DescriptionShort = "Emperor Palpatine";
+            newSubPhase.DescriptionLong = "Name a die result. After rolling, you must change 1 of your dice results to the named result.";
+            newSubPhase.ImageSource = HostUpgrade;
+
             newSubPhase.RequiredPlayer = HostShip.Owner.PlayerNo;
-            newSubPhase.InfoText = "Use " + Name + "?";
             newSubPhase.ShowSkipButton = true;
             newSubPhase.OnSkipButtonIsPressed = DontUseEmperorPalpatine;
 
@@ -131,7 +134,7 @@ namespace Abilities.FirstEdition
         {
             IsAbilityUsed = true;
             PalpatineDieChoice = dieSide;
-            Messages.ShowInfo(string.Format("Emperor Palpatine chooses '{0}'", dieDescription));
+            Messages.ShowInfo(string.Format("Emperor Palpatine chooses '{0}'.", dieDescription));
             ShipUsingPalpatine.OnImmediatelyAfterRolling += HandlePalpatineDiceChange;
             DecisionSubPhase.ConfirmDecision();
         }
@@ -260,10 +263,10 @@ namespace Abilities.FirstEdition
                 DieSide dieToChange = diceroll.FindDieToChange(PalpatineDieChoice);
                 if (dieToChange == DieSide.Unknown)
                 {
-                    Messages.ShowErrorToHuman("Error selecting die to change for Emperor Palpatine.");
+                    Messages.ShowErrorToHuman("Error selecting die to change for Emperor Palpatine");
                     return;
                 }
-                Messages.ShowInfo(string.Format("Emperor Palpatine changes one '{0}' to {1}.", dieToChange, PalpatineDieChoice));
+                Messages.ShowInfo(string.Format("Emperor Palpatine changes one '{0}' to {1}", dieToChange, PalpatineDieChoice));
                 diceroll.ChangeOne(dieToChange, PalpatineDieChoice, true, true);
                 PalpatineDieChoice = DieSide.Unknown;
                 return;

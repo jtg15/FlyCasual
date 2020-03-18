@@ -27,10 +27,6 @@ namespace SubPhases
 
         public Func<bool> SetupFilter;
 
-        public string AbilityName;
-        public string Description;
-        public IImageHolder ImageSource;
-
         public override void Start()
         {
             IsTemporary = true;
@@ -54,7 +50,7 @@ namespace SubPhases
 
             Board.ToggleOffTheBoardHolder(false);
 
-            Board.SetShipPreSetup(ShipToSetup);
+            Board.SetShipPreSetup(ShipToSetup, 1, GetDefaulRotationForSetupSide());
 
             Roster.HighlightShipsFiltered(FilterShipsToSetup);
 
@@ -62,9 +58,26 @@ namespace SubPhases
             Roster.GetPlayer(RequiredPlayer).SetupShipMidgame();
         }
 
+        private float GetDefaulRotationForSetupSide()
+        {
+            switch (SetupSide)
+            {
+                case Direction.Bottom:
+                    return 0;
+                case Direction.Left:
+                    return 90;
+                case Direction.Top:
+                    return 180;
+                case Direction.Right:
+                    return 270;
+                default:
+                    return 0;
+            }
+        }
+
         public void ShowDescription()
         {
-            ShowSubphaseDescription(AbilityName, Description, ImageSource);
+            ShowSubphaseDescription(DescriptionShort, DescriptionLong, ImageSource);
         }
 
         public override void Next()
@@ -99,8 +112,8 @@ namespace SubPhases
         {
             JSONObject parameters = new JSONObject();
             parameters.AddField("id", shipId.ToString());
-            parameters.AddField("positionX", position.x); parameters.AddField("positionY", position.y); parameters.AddField("positionZ", position.z);
-            parameters.AddField("rotationX", angles.x); parameters.AddField("rotationY", angles.y); parameters.AddField("rotationZ", angles.z);
+            parameters.AddField("positionX", position.x.ToString()); parameters.AddField("positionY", position.y.ToString()); parameters.AddField("positionZ", position.z.ToString());
+            parameters.AddField("rotationX", angles.x.ToString()); parameters.AddField("rotationY", angles.y.ToString()); parameters.AddField("rotationZ", angles.z.ToString());
             return GameController.GenerateGameCommand(
                 GameCommandTypes.ShipPlacement,
                 typeof(SetupShipMidgameSubPhase),
@@ -136,22 +149,20 @@ namespace SubPhases
 
             MovementTemplates.ReturnRangeRuler();
 
-            GenericShip nearestShip = null;
+            GenericShip nearestEnemyShip = null;
             float nearestDistance = int.MaxValue;
 
-            foreach (GenericShip anotherShip in Roster.AllShips.Values)
+            foreach (GenericShip anotherShip in Selection.ThisShip.Owner.EnemyShips.Values)
             {
-                if (anotherShip == Selection.ThisShip) continue;
-
                 DistanceInfo distInfo = new DistanceInfo(Selection.ThisShip, anotherShip);
                 if (distInfo.MinDistance.DistanceReal < nearestDistance)
                 {
                     nearestDistance = distInfo.MinDistance.DistanceReal;
-                    nearestShip = anotherShip;
+                    nearestEnemyShip = anotherShip;
                 }
             }
 
-            DistanceInfo distInfoFinal = new DistanceInfo(Selection.ThisShip, nearestShip);
+            DistanceInfo distInfoFinal = new DistanceInfo(Selection.ThisShip, nearestEnemyShip);
             if (distInfoFinal.Range < 4)
             {
                 MovementTemplates.ShowRangeRuler(distInfoFinal.MinDistance);
@@ -336,7 +347,7 @@ namespace SubPhases
             }
         }
 
-        private Dictionary<string, float> GetSpaceBetween(Ship.GenericShip thisShip, Ship.GenericShip anotherShip)
+        private Dictionary<string, float> GetSpaceBetween(GenericShip thisShip, GenericShip anotherShip)
         {
             Dictionary<string, float> result = new Dictionary<string, float>();
 
@@ -387,34 +398,54 @@ namespace SubPhases
 
             if (Phases.CurrentSubPhase.GetType() == typeof(SetupShipMidgameSubPhase))
             {
-                if (!ship.ShipBase.IsInside(StartingZone))
-
+                if (!CheckIsInCorrectEdgeZone())
                 {
                     if (CameraScript.InputTouchIsEnabled)
                     {
                         // Touch-tailored error message
-                        Messages.ShowErrorToHuman("Drag ship into highlighted area");
+                        Messages.ShowErrorToHuman("Drag the ship into the highlighted area");
                     }
                     else
                     {
-                        Messages.ShowErrorToHuman("Place ship into highlighted area");
+                        Messages.ShowErrorToHuman("Place the ship in the highlighted area");
                     }
                     result = false;
                 }
 
                 if (Selection.ThisShip.Model.GetComponentInChildren<ObstaclesStayDetector>().OverlapedShips.Count > 0)
                 {
-                    Messages.ShowErrorToHuman("This ship shouldn't collide with another ships");
+                    Messages.ShowErrorToHuman("This ship overlaps another ship, please try placing it again");
                     result = false;
                 }
 
                 if (SetupFilter != null && !SetupFilter()) return false;
-
             }
 
             if (result) StopDrag();
 
             return result;
+        }
+
+        private bool CheckIsInCorrectEdgeZone()
+        {
+            if (SetupSide != Direction.All)
+            {
+                return Selection.ThisShip.ShipBase.IsInside(StartingZone);
+            }
+            else
+            {
+                List<Direction> directions = new List<Direction>() { Direction.Left, Direction.Right, Direction.Top, Direction.Bottom };
+                foreach (Direction direction in directions)
+                {
+                    Transform startZone = Board.GetStartingZone(direction);
+                    if (Selection.ThisShip.ShipBase.IsInside(startZone))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
         }
 
         public override void NextButton()

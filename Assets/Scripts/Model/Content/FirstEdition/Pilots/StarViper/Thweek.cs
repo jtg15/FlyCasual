@@ -65,7 +65,9 @@ namespace Abilities.FirstEdition
                 );
             }
 
-            selectTargetForThweekDecisionSubPhase.InfoText = "Thweek: Select enemy ship";
+            selectTargetForThweekDecisionSubPhase.DescriptionShort = "Thweek";
+            selectTargetForThweekDecisionSubPhase.DescriptionLong = "Select enemy ship";
+            selectTargetForThweekDecisionSubPhase.ImageSource = HostShip;
 
             GenericShip bestEnemyAce = GetEnemyPilotWithHighestSkill();
             selectTargetForThweekDecisionSubPhase.DefaultDecisionName = bestEnemyAce.ShipId + ": " + bestEnemyAce.PilotInfo.PilotName;
@@ -105,7 +107,10 @@ namespace Abilities.FirstEdition
             selectAbilityForThweekDecisionSubPhase.AddDecision("Shadowed", delegate { Shadowed(targetShip); });
             selectAbilityForThweekDecisionSubPhase.AddTooltip("Shadowed", (new Conditions.Shadowed(targetShip)).Tooltip);
 
-            selectAbilityForThweekDecisionSubPhase.InfoText = "Thweek: Select ability";
+            selectAbilityForThweekDecisionSubPhase.DescriptionShort = "Thweek";
+            selectAbilityForThweekDecisionSubPhase.DescriptionLong = "Select ability to copy";
+            selectAbilityForThweekDecisionSubPhase.ImageSource = HostShip;
+
             selectAbilityForThweekDecisionSubPhase.DefaultDecisionName = "Shadowed";
 
             selectAbilityForThweekDecisionSubPhase.RequiredPlayer = HostShip.Owner.PlayerNo;
@@ -120,7 +125,7 @@ namespace Abilities.FirstEdition
             {
                 if (!ability.IsAppliesConditionCard)
                 {
-                    Messages.ShowInfo("Ability of " + targetShip.PilotInfo.PilotName + " is mimicked");
+                    Messages.ShowInfo(targetShip.PilotInfo.PilotName + "'s ability has been mimicked!");
 
                     HostShip.PilotAbilities.Add((GenericAbility)Activator.CreateInstance(ability.GetType()));
                     HostShip.PilotAbilities[1].Initialize(HostShip);
@@ -141,7 +146,7 @@ namespace Abilities.FirstEdition
 
         private void Shadowed(GenericShip targetShip)
         {
-            Messages.ShowInfo("Pilot skill of " + targetShip.PilotInfo.PilotName + " is shadowed");
+            Messages.ShowInfo("The Pilot skill of " + targetShip.PilotInfo.PilotName + " is shadowed");
             new ThweekPilotSkillModifier(HostShip, targetShip.State.Initiative);
             targetShip.Tokens.AssignCondition(typeof(Conditions.Shadowed));
             DecisionSubPhase.ConfirmDecision();
@@ -211,7 +216,7 @@ namespace Conditions
     {
         public Mimicked(GenericShip host) : base(host)
         {
-            Name = "Thweek Condition";
+            Name = ImageName = "Thweek Condition";
             Temporary = false;
             Tooltip = "https://raw.githubusercontent.com/guidokessels/xwing-data/master/images/conditions/mimicked.png";
         }
@@ -221,7 +226,7 @@ namespace Conditions
     {
         public Shadowed(GenericShip host) : base(host)
         {
-            Name = "Thweek Condition";
+            Name = ImageName = "Thweek Condition";
             Temporary = false;
             Tooltip = "https://raw.githubusercontent.com/guidokessels/xwing-data/master/images/conditions/shadowed.png";
         }

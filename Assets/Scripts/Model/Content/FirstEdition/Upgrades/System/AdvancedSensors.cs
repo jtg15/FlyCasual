@@ -12,7 +12,7 @@ namespace UpgradesList.FirstEdition
         {
             UpgradeInfo = new UpgradeCardInfo(
                 "Advanced Sensors",
-                UpgradeType.System,
+                UpgradeType.Sensor,
                 cost: 3,
                 abilityType: typeof(Abilities.FirstEdition.AdvancedSensorsAbility)
             );
@@ -44,17 +44,29 @@ namespace Abilities.FirstEdition
 
         private void ShowUseAdvancedSensorsDecision(object sender, System.EventArgs e)
         {
-            // give user the option to use ability
-            AskToUseAbility(AlwaysUseByDefault, UseAdvancedSensors);
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                AlwaysUseByDefault,
+                UseAdvancedSensors,
+                descriptionLong: "Do you want to perform 1 action? (If you do, you cannot perform another action during your activation)",
+                imageHolder: HostUpgrade
+            );
         }
 
         private void UseAdvancedSensors(object sender, System.EventArgs e)
         {
             List<GenericAction> actions = HostShip.GetAvailableActions();
 
-            HostShip.AskPerformFreeAction(actions, SubPhases.DecisionSubPhase.ConfirmDecision);
             // if ability is used, skipped Perform Action
             HostShip.IsSkipsActionSubPhase = true;
+
+            HostShip.AskPerformFreeAction(
+                actions,
+                SubPhases.DecisionSubPhase.ConfirmDecision,
+                HostUpgrade.UpgradeInfo.Name,
+                "You may perform 1 action. You cannot perform another action during your activation.",
+                HostUpgrade
+            );
         }
 
     }

@@ -23,7 +23,7 @@ public static partial class Roster {
         Players = new List<GenericPlayer>();
         rosterPlayer1 = new List<GameObject>();
         rosterPlayer2 = new List<GameObject>();
-        AllShips = new Dictionary<string, GenericShip>();
+        AllUnits = new Dictionary<string, GenericShip>();
         Reserve = new List<GenericShip>();
 
         PrepareSquadrons();
@@ -266,8 +266,10 @@ public static partial class Roster {
                 totalHeight += transform.GetComponent<RectTransform>().sizeDelta.y + 5;
             }
 
+            float globalUiScale = GameObject.Find("UI").transform.localScale.x;
             float scale = 1f;
-            if (totalHeight > 795) scale = 795 / totalHeight;
+            float sizeLimit = (Screen.height - 105f) / globalUiScale;
+            if (totalHeight > sizeLimit) scale = sizeLimit / totalHeight;
             GameObject.Find("UI/RostersHolder").transform.Find("TeamPlayer" + i).GetComponent<RectTransform>().localScale = new Vector3(scale, scale, scale);
         }
     }
@@ -279,7 +281,7 @@ public static partial class Roster {
         {
             if (item.tag != "Untagged")
             {
-                if (Roster.AllShips.ContainsKey(item.tag))
+                if (Roster.AllUnits.ContainsKey(item.tag))
                 {
                     if (Selection.TryToChangeShip(item.tag)) return;
                 }
@@ -296,7 +298,7 @@ public static partial class Roster {
             {
                 if (!Network.IsNetworkGame)
                 {
-                    if (AllShips[item.tag].Owner.PlayerNo == Phases.CurrentPhasePlayer)
+                    if (AllShips[item.tag].Owner.PlayerNo == Phases.CurrentPhasePlayer && !(AllShips[item.tag].Owner is GenericAiPlayer))
                     {
                         ToggleManeuverVisibility(AllShips[item.tag], true);
                         return;
@@ -365,7 +367,7 @@ public static partial class Roster {
         {
             if (item.tag.StartsWith("ShipId:"))
             {
-                if (Roster.AllShips.ContainsKey(item.tag))
+                if (Roster.AllUnits.ContainsKey(item.tag))
                 {
                     Selection.TryMarkShip(item.tag);
                 }
@@ -443,16 +445,21 @@ public static partial class Roster {
 
         foreach (var token in GetTokensSorted(thisShip))
         {
-            GameObject prefab = (GameObject)Resources.Load("Prefabs/PanelToken", typeof(GameObject));
+            GameObject prefab = (GameObject)Resources.Load("Prefabs/TokenPanel", typeof(GameObject));
             GameObject tokenPanel = MonoBehaviour.Instantiate(prefab, thisShip.InfoPanel.transform.Find("ShipInfo").Find("TokensBar"));
+            Sprite tokenSprite = Resources.Load<Sprite>("Sprites/Tokens/" + token.ImageName);
+            if (tokenSprite == null) Console.Write("Token's image was not found: " + token.ImageName, LogTypes.Errors, true, "red");
+            tokenPanel.GetComponentInChildren<Image>().sprite = tokenSprite;
             tokenPanel.GetComponent<RectTransform>().localPosition = Vector3.zero;
             tokenPanel.name = token.Name;
-            Tooltips.AddTooltip(tokenPanel, token.Tooltip);
-            tokenPanel.transform.Find(token.Name).gameObject.SetActive(true);
 
-            if (token.GetType().BaseType == typeof(Tokens.GenericTargetLockToken))
+            Tooltips.AddTooltip(tokenPanel, token.Tooltip);
+
+            if (token.GetType().BaseType == typeof(GenericTargetLockToken))
             {
-                tokenPanel.transform.Find(token.Name).Find("Letter").GetComponent<Text>().text = (token as Tokens.GenericTargetLockToken).Letter.ToString();
+                Text tokenText = tokenPanel.transform.Find("Image/Letter").GetComponent<Text>();
+                tokenText.text = (token as GenericTargetLockToken).Letter.ToString();
+                tokenText.color = (token is BlueTargetLockToken) ? new Color(0, 0.6f, 1) : Color.red;
             }
 
             tokenPanel.SetActive(true);
@@ -479,9 +486,7 @@ public static partial class Roster {
         foreach (var upgrade in newShip.UpgradeBar.GetUpgradesAll())
         {
             GameObject upgradeNamePanel = newPanel.transform.Find("ShipInfo/UpgradesBar/Upgrade"+index).gameObject;
-            string upgradeName = upgrade.UpgradeInfo.Name;
-            if (upgrade.State.UsesCharges) upgradeName += " (" + upgrade.State.Charges + ")";
-            upgradeNamePanel.GetComponent<Text>().text = upgradeName;
+            upgradeNamePanel.GetComponent<Text>().text = upgrade.State.Name;
             upgradeNamePanel.SetActive(true);
             index++;
         }
@@ -548,7 +553,7 @@ public static partial class Roster {
 
     public static void RosterAllPanelsHighlightOff()
     {
-        foreach (var ship in AllShips)
+        foreach (var ship in AllUnits)
         {
             RosterPanelHighlightOff(ship.Value);
         }
@@ -579,6 +584,8 @@ public static partial class Roster {
 
     public static void UpdateAssignedManeuverDial(GenericShip ship, Movement.GenericMovement maneuver)
     {
+        if (maneuver == null) return;
+
         GameObject maneuverDial = ship.InfoPanel.transform.Find("AssignedManeuverDial").gameObject;
 
         Text maneuverSpeed = maneuverDial.transform.Find("Holder").Find("ManeuverSpeed").GetComponent<Text>();
@@ -603,6 +610,8 @@ public static partial class Roster {
 
     public static void ToggleManeuverVisibility(GenericShip ship, bool isVisible)
     {
+        if (ship.AssignedManeuver == null) return;
+
         if (isVisible) UpdateAssignedManeuverDial(ship, ship.AssignedManeuver);
 
         GameObject maneuverDial = ship.InfoPanel.transform.Find("AssignedManeuverDial").gameObject;

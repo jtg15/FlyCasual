@@ -1,8 +1,5 @@
 ﻿using Ship;
 using Upgrade;
-using Movement;
-using Actions;
-using ActionsList;
 using System;
 using BoardTools;
 using Tokens;
@@ -26,6 +23,8 @@ namespace UpgradesList.SecondEdition
                 cannotBeRecharged: false,
                 abilityType: typeof(Abilities.SecondEdition.ChewbaccaResistanceCrewAbility)
             );
+
+            NameCanonical = "chewbacca-crew-swz19";
 
             ImageUrl = "https://sb-cdn.fantasyflightgames.com/card_images/en/3090c218acff7dc71a81e791ce15860e.png";
         }
@@ -72,7 +71,7 @@ namespace Abilities.SecondEdition
             {
                 if (this.HostUpgrade.State.Charges != UpgradesList.SecondEdition.ChewbaccaResistance.ChewbaccaFullChargeValue)
                 {
-                    Messages.ShowInfo(this.HostUpgrade.UpgradeInfo.Name + ": 1 charge recovered");
+                    Messages.ShowInfo(this.HostUpgrade.UpgradeInfo.Name + " recovers 1 charge");
                 }
                 this.HostUpgrade.State.RestoreCharge();
             }
@@ -109,12 +108,12 @@ namespace Abilities.SecondEdition
             if (this.HostUpgrade.State.Charges >= UpgradesList.SecondEdition.ChewbaccaResistance.ChewbaccaFullChargeValue)
             {
                 this.HostUpgrade.State.SpendCharges(UpgradesList.SecondEdition.ChewbaccaResistance.ChewbaccaFullChargeValue);
-                Messages.ShowInfo(this.HostUpgrade.UpgradeInfo.Name + ": Ability was activated");
+                Messages.ShowInfo(this.HostUpgrade.UpgradeInfo.Name + " was activated");
                 callback(true);
             }
             else
             {
-                Messages.ShowError(this.HostUpgrade.UpgradeInfo.Name + ": Not enough charges");
+                Messages.ShowError(this.HostUpgrade.UpgradeInfo.Name + " could not activate: Chewbacca does not have enough charges");
                 callback(false);
             }
         }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Ship;
 using Bombs;
+using System.Linq;
 
 namespace Upgrade
 {
@@ -37,7 +38,7 @@ namespace Upgrade
             HostShip.AddAvailableAction(action);
         }
 
-        public override void ActivateBombs(List<GameObject> bombObjects, Action callBack)
+        public override void ActivateBombs(List<GenericDeviceGameObject> bombObjects, Action callBack)
         {
             CallBack = callBack;
             CurrentBombObjects = bombObjects;
@@ -80,21 +81,8 @@ namespace Upgrade
 
             if (collisionChecker.OverlapsShipNow)
             {
-                //TODO: FIX: Select manually
-                GenericShip detonatedShip = collisionChecker.OverlappedShipsNow[0];
-
-                Triggers.RegisterTrigger(new Trigger()
-                {
-                    Name = "Damage from mine",
-                    TriggerOwner = detonatedShip.Owner.PlayerNo,
-                    TriggerType = TriggerTypes.OnPositionFinish,
-                    EventHandler = TryDetonate,
-                    EventArgs = new BombDetonationEventArgs()
-                    {
-                        DetonatedShip = detonatedShip,
-                        BombObject = collisionChecker.transform.parent.gameObject
-                    }
-                });
+                List<GenericShip> shipsHitMine = collisionChecker.OverlappedShipsNow;
+                CheckNumberOfShipsHit(shipsHitMine, collisionChecker.transform.parent.GetComponent<GenericDeviceGameObject>());
             }
 
             immediateDetonationsCheckedCount++;
@@ -111,6 +99,89 @@ namespace Upgrade
                 immediateDetonationsCheckedCount = 0;
                 Triggers.ResolveTriggers(TriggerTypes.OnBombIsDetonated, CallBack);
             }
+        }
+
+        private void CheckNumberOfShipsHit(List<GenericShip> shipsHitMine, GenericDeviceGameObject bombObject)
+        {
+            if (shipsHitMine.Count == 1)
+            {
+                RegisterMineDetonationForShip(shipsHitMine[0], bombObject);
+            }
+            else
+            {
+                Triggers.RegisterTrigger(
+                    new Trigger()
+                    {
+                        Name = "Decide what ship triggered this mine",
+                        TriggerOwner = HostShip.Owner.PlayerNo,
+                        TriggerType = TriggerTypes.OnBombIsDetonated,
+                        EventHandler = delegate { DecideWhatShipTriggeredMine(shipsHitMine, bombObject); },
+                    }
+                );
+            }
+        }
+
+        private void DecideWhatShipTriggeredMine(List<GenericShip> shipsHitMine, GenericDeviceGameObject bombObject)
+        {
+            MineDetonationShipSelection subphase = Phases.StartTemporarySubPhaseNew<MineDetonationShipSelection>(
+                "Decide what ship triggered this mine",
+                Triggers.FinishTrigger
+            );
+
+            subphase.DescriptionShort = UpgradeInfo.Name;
+            subphase.DescriptionLong = "Decide what ship triggered this mine";
+            subphase.ImageSource = this;
+
+            subphase.DecisionOwner = HostShip.Owner;
+            subphase.ShowSkipButton = false;
+
+            GenericShip enemyShipToDetonate = null;
+            foreach (GenericShip ship in shipsHitMine)
+            {
+                if (ship.Owner.PlayerNo != HostShip.Owner.PlayerNo)
+                {
+                    if (enemyShipToDetonate == null || ship.State.HullCurrent + ship.State.ShieldsCurrent < enemyShipToDetonate.State.HullCurrent + enemyShipToDetonate.State.ShieldsCurrent)
+                    {
+                        enemyShipToDetonate = ship;
+                    }
+                }
+
+                subphase.AddDecision(
+                    ship.ShipId + ": " + ship.PilotInfo.PilotName,
+                    delegate { ChooseToDetonate(ship, bombObject); },
+                    ship.ImageUrl
+                );
+            }
+
+            subphase.DefaultDecisionName = (enemyShipToDetonate != null) ? enemyShipToDetonate.ShipId + ": " + enemyShipToDetonate.PilotInfo.PilotName : subphase.GetDecisions().First().Name;
+
+            subphase.Start();
+        }
+
+        private class MineDetonationShipSelection : SubPhases.DecisionSubPhase { };
+
+        private void ChooseToDetonate(GenericShip detonatedShip, GenericDeviceGameObject bombObject)
+        {
+            SubPhases.DecisionSubPhase.ConfirmDecisionNoCallback();
+            RegisterMineDetonationForShip(detonatedShip, bombObject);
+
+            Triggers.ResolveTriggers(TriggerTypes.OnBombIsDetonated, Triggers.FinishTrigger);
+        }
+
+        private void RegisterMineDetonationForShip(GenericShip detonatedShip, GenericDeviceGameObject bombObject)
+        {
+            Triggers.RegisterTrigger(new Trigger()
+            {
+                Name = "Damage from mine",
+                TriggerOwner = HostShip.Owner.PlayerNo,
+                TriggerType = TriggerTypes.OnBombIsDetonated,
+                EventHandler = TryDetonate,
+                EventArgs = new BombDetonationEventArgs()
+                {
+                    DetonatedShip = detonatedShip,
+                    BombObject = bombObject
+                }
+            });
         }
 
         protected override void Detonate()

@@ -5,13 +5,14 @@ using System.Linq;
 using Ship;
 using GameModes;
 using GameCommands;
+using Remote;
 
 namespace SubPhases
 {
 
     public class ActivationSubPhase : GenericSubPhase
     {
-        public override List<GameCommandTypes> AllowedGameCommandTypes { get { return new List<GameCommandTypes>() { GameCommandTypes.ActivateAndMove, GameCommandTypes.HotacSwerve, GameCommandTypes.HotacFreeTargetLock, GameCommandTypes.AssignManeuver }; } }
+        public override List<GameCommandTypes> AllowedGameCommandTypes { get { return new List<GameCommandTypes>() { GameCommandTypes.ActivateAndMove, GameCommandTypes.HotacSwerve, GameCommandTypes.HotacFreeTargetLock }; } }
 
         public override void Start()
         {
@@ -22,7 +23,7 @@ namespace SubPhases
 
         public override void Prepare()
         {
-            RequiredPilotSkill = PILOTSKILL_MIN - 1;
+            RequiredInitiative = PILOTSKILL_MIN - 1;
         }
 
         public override void Initialize()
@@ -32,10 +33,10 @@ namespace SubPhases
 
         public override void Next()
         {
-            bool success = GetNextActivation(RequiredPilotSkill);
+            bool success = GetNextActivation(RequiredInitiative);
             if (!success)
             {
-                int nextPilotSkill = GetNextPilotSkill(RequiredPilotSkill);
+                int nextPilotSkill = GetNextPilotSkill(RequiredInitiative);
                 if (nextPilotSkill != int.MinValue)
                 {
                     success = GetNextActivation(nextPilotSkill);
@@ -49,7 +50,7 @@ namespace SubPhases
             if (success)
             {
                 UpdateHelpInfo();
-                Roster.HighlightShipsFiltered(FilterShipsToPerformAttack);
+                Roster.HighlightShipsFiltered(FilterShipsToExecuteManeuver);
 
                 IsReadyForCommands = true;
                 Roster.GetPlayer(RequiredPlayer).PerformManeuver();
@@ -70,7 +71,7 @@ namespace SubPhases
 
             if (pilotSkillResults.Count() > 0)
             {
-                RequiredPilotSkill = pilotSkill;
+                RequiredInitiative = pilotSkill;
 
                 var playerNoResults =
                     from n in pilotSkillResults
@@ -99,6 +100,7 @@ namespace SubPhases
             var ascPilotSkills =
                 from n in Roster.AllShips
                 where n.Value.State.Initiative > pilotSkillMin
+                where n.Value.IsManeuverPerformed == false
                 orderby n.Value.State.Initiative
                 select n;
 
@@ -136,13 +138,13 @@ namespace SubPhases
         {
             bool result = false;
 
-            if ((ship.Owner.PlayerNo == RequiredPlayer) && (ship.State.Initiative == RequiredPilotSkill) && (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(Players.HumanPlayer)))
+            if ((ship.Owner.PlayerNo == RequiredPlayer) && (ship.State.Initiative == RequiredInitiative) && (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(Players.HumanPlayer)))
             {
                 result = true;
             }
             else
             {
-                Messages.ShowErrorToHuman("Ship cannot be selected:\n Need " + RequiredPlayer + " and pilot skill " + RequiredPilotSkill);
+                Messages.ShowErrorToHuman("This ship cannot be selected, the ship must be owned by " + RequiredPlayer + " and have a pilot skill of " + RequiredInitiative);
             }
             return result;
         }
@@ -158,14 +160,17 @@ namespace SubPhases
             }
             else
             {
-                Messages.ShowErrorToHuman("This ship has already executed his maneuver");
+                Messages.ShowErrorToHuman("This ship has already executed their maneuver");
             };
             return result;
         }
 
-        private bool FilterShipsToPerformAttack(GenericShip ship)
+        private bool FilterShipsToExecuteManeuver(GenericShip ship)
         {
-            return ship.State.Initiative == RequiredPilotSkill && !ship.IsManeuverPerformed && ship.Owner.PlayerNo == RequiredPlayer;
+            return ship.State.Initiative == RequiredInitiative
+                && !ship.IsManeuverPerformed
+                && ship.Owner.PlayerNo == RequiredPlayer
+                && !(ship is GenericRemote);
         }
 
         public override void DoSelectThisShip(GenericShip ship, int mouseKeyIsPressed)
@@ -178,7 +183,7 @@ namespace SubPhases
             }
             else
             {
-                Messages.ShowErrorToHuman("This ship has already executed his maneuver");
+                Messages.ShowErrorToHuman("This ship has already executed their maneuver");
             };
         }
 

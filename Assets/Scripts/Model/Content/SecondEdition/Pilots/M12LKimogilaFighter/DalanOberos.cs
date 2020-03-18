@@ -16,9 +16,9 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Dalan Oberos",
                     3,
-                    48,
+                    45,
                     isLimited: true,
-                    abilityType: typeof(Abilities.SecondEdition.ToraniKuldaAbility),
+                    abilityType: typeof(Abilities.SecondEdition.DalanOberosKimogilaAbility),
                     charges: 2,
                     extraUpgradeIcon: UpgradeType.Talent,
                     seImageNumber: 208
@@ -73,7 +73,7 @@ namespace Abilities.SecondEdition
                 GetAiPriority,
                 HostShip.Owner.PlayerNo,
                 HostShip.PilotInfo.PilotName,
-                "Choose a shielded ship in your bullseye arc and spend a charge - that ship loses 1 shield and you recover 1 shield",
+                "Choose a shielded ship in your Bullseye arc and spend a charge - that ship loses 1 shield and you recover 1 shield",
                 HostShip
             );
         }

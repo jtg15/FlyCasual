@@ -50,7 +50,13 @@ namespace Abilities.FirstEdition
 
         private void AskUseAbility(object sender, System.EventArgs e)
         {
-            AskToUseAbility(NeverUseByDefault, ActivateBiggsAbility);
+            AskToUseAbility(
+                HostShip.PilotInfo.PilotName,
+                NeverUseByDefault,
+                ActivateBiggsAbility,
+                descriptionLong: "Do you want to activate ability? (Until the end of the round, other friendly ships at Range 1 cannot be targeted by attacks if the attacker could target you instead)",
+                imageHolder: HostShip
+            );
         }
 
         private void ActivateBiggsAbility(object sender, System.EventArgs e)
@@ -124,7 +130,7 @@ namespace Conditions
     {
         public BiggsDarklighterCondition(GenericShip host) : base(host)
         {
-            Name = "Buff Token";
+            Name = ImageName = "Buff Token";
             Temporary = false;
             Tooltip = new Ship.FirstEdition.XWing.BiggsDarklighter().ImageUrl;
         }

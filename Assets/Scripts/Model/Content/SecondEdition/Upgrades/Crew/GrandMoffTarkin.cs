@@ -38,15 +38,22 @@ namespace Abilities.SecondEdition
     {
         public override void ActivateAbility()
         {
-            Phases.Events.OnSystemsPhaseStart += CheckForAbility;
+            HostShip.OnCheckSystemsAbilityActivation += CheckForAbility;
+            HostShip.OnSystemsAbilityActivation += RegisterAbility;
         }
 
         public override void DeactivateAbility()
         {
-            Phases.Events.OnSystemsPhaseStart -= CheckForAbility;
+            HostShip.OnCheckSystemsAbilityActivation -= CheckForAbility;
+            HostShip.OnSystemsAbilityActivation += RegisterAbility;
         }
 
-        private void CheckForAbility()
+        private void CheckForAbility(GenericShip ship, ref bool flag)
+        {
+            if (HostUpgrade.State.Charges >= 2 && HostShip.Tokens.CountTokensByType<BlueTargetLockToken>() > 0) flag = true;
+        }
+
+        private void RegisterAbility(GenericShip ship)
         {
             if (HostUpgrade.State.Charges >= 2 && HostShip.Tokens.CountTokensByType<BlueTargetLockToken>() > 0)
             {
@@ -56,10 +63,14 @@ namespace Abilities.SecondEdition
 
         private void AskToUseTarkinAbility(object sender, EventArgs e)
         {
-            AskToUseAbility(AlwaysUseByDefault, 
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                AlwaysUseByDefault, 
                 UseAbility,
                 dontUseAbility: delegate { DecisionSubPhase.ConfirmDecision(); },                
-                infoText: "Grand Moff Tarkin: Allow all allies to lock " + HostShip.PilotInfo.PilotName + "'s locked ship?");
+                descriptionLong: "Do you want to spend 2 Charges? (If you do, each friendly ship may acquire a target lock on a ship that you have locked)",
+                imageHolder: HostUpgrade
+            );
         }
 
         protected void UseAbility(object sender, EventArgs e)
@@ -67,20 +78,20 @@ namespace Abilities.SecondEdition
             HostUpgrade.State.SpendCharges(2);
             var tarkinsLocks = HostShip.Tokens.GetTokens<BlueTargetLockToken>('*');
             var targets = tarkinsLocks
-                .Where(t => t.OtherTokenOwner is GenericShip)
-                .Select(t => t.OtherTokenOwner)
+                .Where(t => t.OtherTargetLockTokenOwner is GenericShip)
+                .Select(t => t.OtherTargetLockTokenOwner)
                 .ToArray();
             // Limit the list of friendlies down to those that can actually lock these targets.
             var friendlies = HostShip.Owner.Ships.Values
                 .Where(f => targets.Any(t =>
                 {
-                    var range = BoardTools.Board.GetRangeOfShips(f, t);
+                    var range = t.GetRangeToShip(f);
                     return f.TargetLockMinRange <= range && f.TargetLockMaxRange >= range;
                 }))
                 .ToArray();
             if (friendlies.Length == 0)
             {
-                Messages.ShowInfo(string.Format("No friendly ship is at lock range of any of {0}'s targets", HostShip.PilotInfo.PilotName));
+                Messages.ShowInfo(string.Format("No friendly ships are at Target Lock range of any of {0}'s targets", HostShip.PilotInfo.PilotName));
 
             }
             else
@@ -90,7 +101,7 @@ namespace Abilities.SecondEdition
                     Triggers.RegisterTrigger(
                         new Trigger()
                         {
-                            Name = friendly.PilotInfo.PilotName + " (" + friendly.ShipId + ") can acquire " + HostShip.PilotInfo.PilotName + "'s lock",
+                            Name = friendly.PilotInfo.PilotName + " (" + friendly.ShipId + ") can acquire " + HostShip.PilotInfo.PilotName + "'s Target Lock.",
                             TriggerOwner = HostShip.Owner.PlayerNo,
                             TriggerType = TriggerTypes.OnAbilityDirect,
                             EventHandler = AskToAcquireTarkinsLock,
@@ -112,7 +123,7 @@ namespace Abilities.SecondEdition
         {
             public GenericShip tarkinsShip;
             public GenericShip tarkinsFriend;
-            public GenericShip[] tarkinsLocks;            
+            public ITargetLockable[] tarkinsLocks;            
         }
 
         protected void AskToAcquireTarkinsLock(object sender, EventArgs e)
@@ -132,7 +143,7 @@ namespace Abilities.SecondEdition
                 t => GetAiTargetPriority(ship, t),
                 HostShip.Owner.PlayerNo,
                 HostUpgrade.UpgradeInfo.Name,
-                shipName + ": You may lock any of " + tarkinsShip.PilotInfo.PilotName + "'s target(s).",
+                shipName + ": You may lock any of " + tarkinsShip.PilotInfo.PilotName + "'s target(s)",
                 HostUpgrade
             );
         }

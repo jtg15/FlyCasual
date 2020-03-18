@@ -65,7 +65,7 @@ namespace Abilities.FirstEdition
 
         private void RegisterExtraShotAbility()
         {
-            if (!HostShip.Host.IsCannotAttackSecondTime)
+            if (!HostShip.DockingHost.IsCannotAttackSecondTime)
             {
                 RegisterAbilityTrigger(TriggerTypes.OnCombatPhaseEnd, ExtraShotWithTurret);
             }
@@ -73,22 +73,27 @@ namespace Abilities.FirstEdition
 
         private void ExtraShotWithTurret(object sender, System.EventArgs e)
         {
-            if (!HostShip.Host.IsCannotAttackSecondTime)
+            if (!HostShip.DockingHost.IsCannotAttackSecondTime)
             {
-                HostShip.Host.IsCannotAttackSecondTime = true;
+                HostShip.DockingHost.IsCannotAttackSecondTime = true;
 
-                Combat.StartAdditionalAttack(
-                    HostShip.Host,
-                    Triggers.FinishTrigger,
+                Combat.StartSelectAttackTarget(
+                    HostShip.DockingHost,
+                    delegate {
+                        HostShip.DockingHost.IsAttackPerformed = true;
+                        //if bonus attack was skipped, allow bonus attacks again
+                        if (HostShip.DockingHost.IsAttackSkipped) HostShip.DockingHost.IsCannotAttackSecondTime = false;
+                        Triggers.FinishTrigger();
+                    },
                     IsTurretAttack,
                     HostUpgrade.UpgradeInfo.Name,
-                    "You may perform additional turret attack.",
+                    "You may perform additional turret attack",
                     HostUpgrade
                 );
             }
             else
             {
-                Messages.ShowErrorToHuman(string.Format("{0} cannot attack one more time", HostShip.Host.PilotInfo.PilotName));
+                Messages.ShowErrorToHuman(string.Format("{0} cannot attack an additional time", HostShip.DockingHost.PilotInfo.PilotName));
                 Triggers.FinishTrigger();
             }
         }
@@ -104,7 +109,7 @@ namespace Abilities.FirstEdition
             }
             else
             {
-                if (!isSilent) Messages.ShowError("Attack must be performed from Turret");
+                if (!isSilent) Messages.ShowError("This attack must be performed from a turret");
             }
 
             return result;

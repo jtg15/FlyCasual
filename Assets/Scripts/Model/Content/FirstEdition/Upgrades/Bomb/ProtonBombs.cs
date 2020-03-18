@@ -18,7 +18,7 @@ namespace UpgradesList.FirstEdition
         {
             UpgradeInfo = new UpgradeCardInfo(
                 "Proton Bombs",
-                type: UpgradeType.Bomb,
+                type: UpgradeType.Device,
                 cost: 5
             );
 
@@ -47,9 +47,9 @@ namespace UpgradesList.FirstEdition
             Triggers.ResolveTriggers(TriggerTypes.OnDamageIsDealt, callBack);
         }
 
-        public override void PlayDetonationAnimSound(GameObject bombObject, Action callBack)
+        public override void PlayDetonationAnimSound(GenericDeviceGameObject bombObject, Action callBack)
         {
-            BombsManager.CurrentBomb = this;
+            BombsManager.CurrentDevice = this;
 
             Sounds.PlayBombSound(bombObject, "Explosion-7");
             bombObject.transform.Find("Explosion/Explosion").GetComponent<ParticleSystem>().Play();

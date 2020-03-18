@@ -15,7 +15,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Commander Malarus",
                     5,
-                    41,
+                    38,
                     charges: 2,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.CommanderMalarusAbility),
@@ -116,7 +116,10 @@ namespace SubPhases
 
         public override void PrepareDecision(System.Action callBack)
         {
-            InfoText = "Use ability of Commander Malarus?";
+            DescriptionShort = "Commander Malarus";
+            DescriptionLong = "Do you want to spend 1 Charge and gain 1 Stress Token to activate ability?";
+            ImageSource = CommanderMalarusAbility.HostShip;
+
             RequiredPlayer = CommanderMalarusAbility.HostShip.Owner.PlayerNo;
 
             AddDecision("Yes", UseCommanderMalarusAbility);
@@ -147,7 +150,7 @@ namespace SubPhases
 
                     if (priority > 10)
                     {
-                        Messages.ShowInfo("AI decides to use Commander Malarus ability");
+                        Messages.ShowInfo("The AI decides to use Commander Malarus' ability");
                         result = true;
                     }
                 }
@@ -224,7 +227,7 @@ namespace Conditions
     {
         public CommanderMalarusCondition(GenericShip host) : base(host)
         {
-            Name = "Buff Token";
+            Name = ImageName = "Buff Token";
             Temporary = true;
             Tooltip = new Ship.SecondEdition.TIEFoFighter.CommanderMalarus().ImageUrl;
         }

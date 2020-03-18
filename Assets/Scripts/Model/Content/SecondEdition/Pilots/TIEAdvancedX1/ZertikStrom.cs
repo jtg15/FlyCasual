@@ -16,10 +16,9 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Zertik Strom",
                     3,
-                    42,
+                    41,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.ZertikStromAbility),
-                    extraUpgradeIcon: UpgradeType.Talent,
                     seImageNumber: 96
                 );
             }
@@ -38,7 +37,7 @@ namespace Abilities.SecondEdition
 
         public override void DeactivateAbility()
         {
-            Phases.Events.OnEndPhaseStart_Triggers += UseZertikStromAbility;
+            Phases.Events.OnEndPhaseStart_Triggers -= UseZertikStromAbility;
         }
 
         private void UseZertikStromAbility()
@@ -48,32 +47,41 @@ namespace Abilities.SecondEdition
             // Do we have a target lock?
             if (tlock != null)
             {
-                GenericShip tlocked = tlock.OtherTokenOwner;
+                ITargetLockable tlocked = tlock.OtherTargetLockTokenOwner;
 
-                if (!tlocked.Damage.HasFacedownCards)
-                    return;
+                if (tlocked is GenericShip)
+                {
+                    if (!(tlocked as GenericShip).Damage.HasFacedownCards)
+                        return;
 
-                Triggers.RegisterTrigger(
-                    new Trigger()
-                    {
-                        Name = "Zertik Strom's Ability",
-                        TriggerOwner = HostShip.Owner.PlayerNo,
-                        TriggerType = TriggerTypes.OnEndPhaseStart,
-                        EventHandler = delegate
+                    Triggers.RegisterTrigger(
+                        new Trigger()
                         {
-                            AskToUseAbility(AlwaysUseByDefault, RemoveTargetLock);
+                            Name = "Zertik Strom's Ability",
+                            TriggerOwner = HostShip.Owner.PlayerNo,
+                            TriggerType = TriggerTypes.OnEndPhaseStart,
+                            EventHandler = delegate
+                            {
+                                AskToUseAbility(
+                                    HostShip.PilotInfo.PilotName,
+                                    AlwaysUseByDefault,
+                                    RemoveTargetLock,
+                                    descriptionLong: "Do you want to spend a lock you have on an enemy ship to expose 1 of that ship's damage cards?",
+                                    imageHolder: HostShip
+                                );
+                            }
                         }
-                    }
-                );
+                    );
+                }
             }
         }
 
         private void RemoveTargetLock(System.Object sender, EventArgs e)
         {
             BlueTargetLockToken tlock = HostShip.Tokens.GetToken(typeof(BlueTargetLockToken), '*') as BlueTargetLockToken;
-            GenericShip tlocked = tlock.OtherTokenOwner;
+            ITargetLockable tlocked = tlock.OtherTargetLockTokenOwner;
 
-            HostShip.Tokens.RemoveToken(tlock, delegate { tlocked.Damage.ExposeRandomFacedownCard(DecisionSubPhase.ConfirmDecision); });
+            HostShip.Tokens.RemoveToken(tlock, delegate { (tlocked as GenericShip).Damage.ExposeRandomFacedownCard(DecisionSubPhase.ConfirmDecision); });
         }
     }
 }

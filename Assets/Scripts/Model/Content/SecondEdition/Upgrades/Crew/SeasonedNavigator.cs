@@ -6,18 +6,34 @@ using Movement;
 
 namespace UpgradesList.SecondEdition
 {
-    public class SeasonedNavigator : GenericUpgrade
+    public class SeasonedNavigator : GenericUpgrade, IVariableCost
     {
         public SeasonedNavigator() : base()
         {
             UpgradeInfo = new UpgradeCardInfo(
                 "Seasoned Navigator",
                 UpgradeType.Crew,
-                cost: 5,
+                cost: 3,
                 abilityType: typeof(Abilities.SecondEdition.SeasonedNavigator),
                 seImageNumber: 47
             );
-        }        
+        }
+
+        public void UpdateCost(GenericShip ship)
+        {
+            Dictionary<int, int> initiativeToCost = new Dictionary<int, int>()
+            {
+                {0, 2},
+                {1, 3},
+                {2, 4},
+                {3, 5},
+                {4, 6},
+                {5, 7},
+                {6, 8}
+            };
+
+            UpgradeInfo.Cost = initiativeToCost[ship.PilotInfo.Initiative];
+        }
     }
 }
 
@@ -42,21 +58,27 @@ namespace Abilities.SecondEdition
 
         private void AskToChangeManeuver(object sender, System.EventArgs e)
         {
-            AskToUseAbility(NeverUseByDefault, ShowAvailableManeuver);
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                NeverUseByDefault,
+                ShowAvailableManeuver,
+                descriptionLong: "Do you want to set your dial to another non-red maneuver of the same speed? (While you execute that maneuver, increase its difficulty)",
+                imageHolder: HostUpgrade
+            );
         }
 
         private void ShowAvailableManeuver(object sender, System.EventArgs e)
         {
             SubPhases.DecisionSubPhase.ConfirmDecisionNoCallback();
 
-            HostShip.Owner.ChangeManeuver(AssignManeuverWithIncreasedComplexity, IsSameSpeedNotRed);
+            HostShip.Owner.ChangeManeuver(AssignManeuverWithIncreasedComplexity, Triggers.FinishTrigger, IsSameSpeedNotRed);
         }
 
         private void AssignManeuverWithIncreasedComplexity(string maneuverCode)
         {
             if (maneuverCode != HostShip.AssignedManeuver.ToString())
             {
-                Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": Complexity of maneuver is increased");
+                Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": The difficulty of the maneuver has been increased");
 
                 HostShip.AfterGetManeuverColorIncreaseComplexity += ChangeComplexity;
                 HostShip.OnMovementFinish += ClearAbility;

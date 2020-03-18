@@ -44,13 +44,25 @@ namespace Abilities.FirstEdition
             RegisterAbilityTrigger(TriggerTypes.OnCombatPhaseStart, AskGuriAbility);
         }
 
+        protected virtual Vector2 AbilityRange
+        {
+            get { return new Vector2(1, 1); }
+        }
+
         private void AskGuriAbility(object sender, EventArgs e)
         {
-            if (BoardTools.Board.GetShipsAtRange(HostShip, new Vector2(1, 1), Team.Type.Enemy).Count > 0)
+            if (BoardTools.Board.GetShipsAtRange(HostShip, AbilityRange, Team.Type.Enemy).Count > 0)
             {
                 if (!alwaysUseAbility)
                 {
-                    AskToUseAbility(AlwaysUseByDefault, UseAbility, null, null, true);
+                    AskToUseAbility(
+                        HostShip.PilotInfo.PilotName,
+                        AlwaysUseByDefault,
+                        UseAbility,
+                        descriptionLong: "Do you want to gain 1 Focus Token?",
+                        imageHolder: HostShip,
+                        showAlwaysUseOption: true
+                    );
                 }
                 else
                 {

@@ -22,7 +22,7 @@ namespace SubPhases
 
         public override void Prepare()
         {
-            RequiredPilotSkill = PILOTSKILL_MIN - 1;
+            RequiredInitiative = PILOTSKILL_MIN - 1;
         }
 
         public override void Initialize()
@@ -34,10 +34,10 @@ namespace SubPhases
         {
             UI.HideSkipButton();
 
-            bool success = GetNextActivation(RequiredPilotSkill);
+            bool success = GetNextActivation(RequiredInitiative);
             if (!success)
             {
-                int nextPilotSkill = GetNextPilotSkill(RequiredPilotSkill);
+                int nextPilotSkill = GetNextPilotSkill(RequiredInitiative);
                 if (nextPilotSkill != int.MinValue)
                 {
                     success = GetNextActivation(nextPilotSkill);
@@ -64,14 +64,14 @@ namespace SubPhases
             bool result = false;
 
             var pilotSkillResults =
-                from n in Roster.AllShips
+                from n in Roster.AllUnits
                 where n.Value.State.Initiative == pilotSkill
                 where n.Value.IsSystemsAbilityCanBeActivated == true
                 select n;
 
             if (pilotSkillResults.Count() > 0)
             {
-                RequiredPilotSkill = pilotSkill;
+                RequiredInitiative = pilotSkill;
 
                 var playerNoResults =
                     from n in pilotSkillResults
@@ -98,7 +98,7 @@ namespace SubPhases
             int result = int.MinValue;
 
             var ascPilotSkills =
-                from n in Roster.AllShips
+                from n in Roster.AllUnits
                 where n.Value.State.Initiative > pilotSkillMin
                 where n.Value.IsSystemsAbilityCanBeActivated == true
                 orderby n.Value.State.Initiative
@@ -121,20 +121,20 @@ namespace SubPhases
         {
             bool result = false;
 
-            if ((ship.Owner.PlayerNo == RequiredPlayer) && (ship.State.Initiative == RequiredPilotSkill) && (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(Players.HumanPlayer)))
+            if ((ship.Owner.PlayerNo == RequiredPlayer) && (ship.State.Initiative == RequiredInitiative) && (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(Players.HumanPlayer)))
             {
                 result = true;
             }
             else
             {
-                Messages.ShowErrorToHuman("Ship cannot be selected:\n Need " + RequiredPlayer + " and pilot skill " + RequiredPilotSkill);
+                Messages.ShowErrorToHuman("This ship cannot be selected: Selectable ships must be owned by " + RequiredPlayer + " and have a pilot skill of " + RequiredInitiative);
             }
             return result;
         }
 
         private bool FilterShipsWithActiveDevice(GenericShip ship)
         {
-            return ship.State.Initiative == RequiredPilotSkill && ship.IsSystemsAbilityCanBeActivated && ship.Owner.PlayerNo == RequiredPlayer;
+            return ship.State.Initiative == RequiredInitiative && ship.IsSystemsAbilityCanBeActivated && ship.Owner.PlayerNo == RequiredPlayer;
         }
 
         public override void DoSelectThisShip(GenericShip ship, int mouseKeyIsPressed)
@@ -168,12 +168,22 @@ namespace SubPhases
 
         public override void SkipButton()
         {
-            foreach (GenericShip ship in Roster.GetPlayer(RequiredPlayer).Ships.Values)
+            foreach (GenericShip ship in Roster.GetPlayer(RequiredPlayer).Units.Values)
             {
-                if (ship.State.Initiative == RequiredPilotSkill) ship.IsSystemsAbilityInactive = true;
+                if (ship.State.Initiative == RequiredInitiative) ship.IsSystemsAbilityInactive = true;
             }
 
             Next();
+        }
+
+        public override void Pause()
+        {
+            UI.HideSkipButton();
+        }
+
+        public override void Resume()
+        {
+            UI.ShowSkipButton();
         }
 
     }

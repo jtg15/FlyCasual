@@ -15,7 +15,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Petty Officer Thanisson",
                     1,
-                    60,
+                    59,
                     isLimited: true,
                     charges: 1,
                     regensCharges: true,
@@ -54,7 +54,8 @@ namespace Abilities.SecondEdition
 
             if (HostShip.State.Charges == 0) return;
 
-            if (HostShip.SectorsInfo.IsShipInSector(ship, ArcType.Front)
+            if (HostShip.ShipId != ship.ShipId //a ship is never in its own arc
+                && HostShip.SectorsInfo.IsShipInSector(ship, ArcType.Front)
                 && HostShip.SectorsInfo.RangeToShipBySector(ship, ArcType.Front) <= 2)
             {
                 ShipWithStressToken = ship;
@@ -65,9 +66,11 @@ namespace Abilities.SecondEdition
         private void ShowDecision(object sender, System.EventArgs e)
         {
             AskToUseAbility(
+                HostShip.PilotInfo.PilotName,
                 ShouldUseAbility,
                 UseAbility,
-                infoText: HostShip.PilotInfo.PilotName + ": Assign Tractor token to " + ShipWithStressToken.PilotInfo.PilotName + "?"
+                descriptionLong: "Do you want to assign Tractor token to " + ShipWithStressToken.PilotInfo.PilotName + "?",
+                imageHolder: HostShip
             );
         }
 

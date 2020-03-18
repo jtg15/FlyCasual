@@ -36,7 +36,7 @@ namespace Abilities
         protected string Description;
         protected Func<GenericShip, IShipWeapon, bool, bool> ExtraAttackFilter;
 
-        protected void RegisterCorranHornAbility()
+        protected virtual void RegisterCorranHornAbility()
         {
             if (!HostShip.Tokens.HasToken(typeof(WeaponsDisabledToken)))
             {
@@ -46,7 +46,7 @@ namespace Abilities
 
         protected void UseCorranHornAbility(object sender, System.EventArgs e)
         {
-            Combat.StartAdditionalAttack(
+            Combat.StartSelectAttackTarget(
                 HostShip,
                 AfterExtraAttackSubPhase,
                 ExtraAttackFilter,
@@ -59,7 +59,7 @@ namespace Abilities
         private void AfterExtraAttackSubPhase()
         {
             // "Weapons disabled" token is assigned only if attack was successfully performed
-            if (HostShip.IsAttackPerformed) Phases.Events.OnRoundStart += RegisterAssignWeaponsDisabledTrigger;
+            if (!HostShip.IsAttackSkipped) Phases.Events.OnRoundStart += RegisterAssignWeaponsDisabledTrigger;
 
             Triggers.FinishTrigger();
         }
@@ -84,7 +84,7 @@ namespace Abilities
             public CorranHornAbility()
             {
                 TriggerType = TriggerTypes.OnEndPhaseStart;
-                Description = "You may perform an additional attack.\nYou cannot attack during next round.";
+                Description = "You may perform an additional attack.\nYou cannot attack during next round";
             }
 
             public override void ActivateAbility()

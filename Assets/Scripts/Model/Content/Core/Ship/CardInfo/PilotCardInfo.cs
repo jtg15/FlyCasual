@@ -8,10 +8,13 @@ namespace Ship
     {
         public string PilotName { get; private set; }
         public string PilotTitle { get; private set; }
-        public int Initiative { get; private set; }
-        public bool IsLimited { get; private set; }
+        public int Initiative { get; set; }
 
-        public Type AbilityType { get; private set; }
+        public int Limited { get; private set; }
+        public bool IsLimited { get { return Limited != 0; } }
+
+        public Type AbilityType { get; protected set; }
+        public string AbilityText { get; private set; }
 
         public int Force { get; set; }
         public int Charges { get; private set; }
@@ -23,14 +26,23 @@ namespace Ship
         public Faction Faction { get; private set; }
         public int SEImageNumber { get; private set; }
 
-        public PilotCardInfo(string pilotName, int initiative, int cost, bool isLimited = false, Type abilityType = null, string pilotTitle = "", int force = 0, int charges = 0, bool regensCharges = false, UpgradeType extraUpgradeIcon = UpgradeType.None, List<UpgradeType> extraUpgradeIcons = null, Faction factionOverride = Faction.None, int seImageNumber = 0)
+        public PilotCardInfo(string pilotName, int initiative, int cost, bool isLimited = false, int limited = 0, Type abilityType = null, string pilotTitle = "", int force = 0, int charges = 0, bool regensCharges = false, UpgradeType extraUpgradeIcon = UpgradeType.None, List<UpgradeType> extraUpgradeIcons = null, Faction factionOverride = Faction.None, int seImageNumber = 0, string abilityText = "")
         {
             PilotName = pilotName;
             PilotTitle = pilotTitle;
             Initiative = initiative;
-            IsLimited = isLimited;
+
+            if (isLimited)
+            {
+                Limited = 1;
+            }
+            else
+            {
+                Limited = limited;
+            }
 
             AbilityType = abilityType;
+            AbilityText = abilityText;
 
             Force = force;
             Charges = charges;

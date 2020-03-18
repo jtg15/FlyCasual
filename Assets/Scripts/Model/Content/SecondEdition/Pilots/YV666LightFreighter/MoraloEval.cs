@@ -12,7 +12,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Moralo Eval",
                     4,
-                    70,
+                    66,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.MoraloEvalAbility),
                     charges: 2,
@@ -51,7 +51,7 @@ namespace Abilities.SecondEdition
                 HostShip.SpendCharge();
                 shouldBeDestroyed = false;
 
-                Messages.ShowInfo(HostShip.PilotInfo.PilotName + " is moved to Reserve");
+                Messages.ShowInfo(HostShip.PilotInfo.PilotName + " has been moved to the Reserve");
 
                 Roster.MoveToReserve(HostShip);
 
@@ -73,15 +73,15 @@ namespace Abilities.SecondEdition
             var subphase = Phases.StartTemporarySubPhaseNew<SetupShipMidgameSubPhase>(
                 "Setup",
                 delegate {
-                    Messages.ShowInfo(HostShip.PilotInfo.PilotName + " returned to the play area");
+                    Messages.ShowInfo(HostShip.PilotInfo.PilotName + " has returned to the play area");
                     Triggers.FinishTrigger();
                 }
             );
 
             subphase.ShipToSetup = HostShip;
             subphase.SetupSide = ShipFledSide;
-            subphase.AbilityName = HostShip.PilotInfo.PilotName;
-            subphase.Description = "Place yourself within range 1 of the edge of the play area that you fled from";
+            subphase.DescriptionShort = HostShip.PilotInfo.PilotName;
+            subphase.DescriptionLong = "Place yourself within range 1 of the edge of the play area that you fled from";
             subphase.ImageSource = HostShip;
 
             subphase.Start();

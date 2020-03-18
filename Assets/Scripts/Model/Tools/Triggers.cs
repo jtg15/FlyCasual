@@ -25,8 +25,10 @@ public enum TriggerTypes
     OnCombatPhaseEnd,
     OnEndPhaseStart,
     OnRoundEnd,
+    OnEngagementInitiativeChanged,
+    OnSelectTargetForAttackStart_System,
 
-    OnMovementActivation,
+    OnMovementActivationStart,
     OnCombatActivation,
     OnCombatDeactivation,
 
@@ -37,11 +39,12 @@ public enum TriggerTypes
     OnMovementStart,
     OnMovementExecuted,
     OnMovementFinish,
+    OnPositionIsReadyToFinish,
     OnPositionFinish,
     
     OnFreeActionPlanned,
     OnFreeAction,
-    BeforeFreeActionIsPerformed,
+    BeforeActionIsPerformed,
     OnActionIsPerformed,
     OnActionIsPerformed_System,
     OnActionIsReadyToBeFailed,
@@ -51,11 +54,13 @@ public enum TriggerTypes
     OnTokenIsSpent,
     OnTokenIsRemoved,
     OnCoordinateTargetIsSelected,
+    OnCoordinateMultiTargetsAreSelected,
     OnJamTargetIsSelected,
     OnTargetLockIsAcquired,
     OnRerollIsConfirmed,
     OnDieResultIsSpent,
     OnDecloak,
+    OnSlam,
 
     OnAttackStart,
     OnShotStart,
@@ -70,6 +75,7 @@ public enum TriggerTypes
     OnAttackFinish,
     OnCombatCheckExtraAttack,
 
+    OnAfterModifyDefenseDiceStep,
     OnAtLeastOneCritWasCancelledByDefender,
     OnDamageIsDealt,
     OnDamageWasSuccessfullyDealt,
@@ -79,12 +85,16 @@ public enum TriggerTypes
     OnFaceupCritCardReadyToBeDealt,
     OnFaceupCritCardReadyToBeDealtUI,
     OnFaceupCritCardIsDealt,
+    OnSelectDamageCardToExpose,
+    OnFaceupDamageCardIsRepaired,
     OnShipIsDestroyed,
+    OnShipIsRemoved,
 
     OnBombIsDetonated,
     OnBombIsRemoved,
     OnCheckPermissionToDetonate,
     OnCheckSufferBombDetonation,
+    OnAfterSufferBombEffect,
 
     OnAbilityDirect,
     OnAbilityTargetIsSelected,
@@ -96,8 +106,11 @@ public enum TriggerTypes
     OnAfterFlipFaceUp,
     OnSystemsAbilityActivation,
 
+    OnBombWillBeDropped,
     OnBombWasDropped,
-    OnBombWasLaunched
+    OnBombWasLaunched,
+
+    OnUndockingFinish
 }
 
 public class Trigger
@@ -177,6 +190,8 @@ public class StackLevel
 
 public static partial class Triggers
 {
+    public static Trigger CurrentTrigger { get; private set; }
+
     public static List<StackLevel> TriggersStack { get; private set; }
 
     // PUBLIC
@@ -188,7 +203,7 @@ public static partial class Triggers
 
     public static void RegisterTrigger(Trigger trigger)
     {
-        Console.Write(trigger.Name + " is registed", LogTypes.Triggers);
+        Console.Write(trigger.Name + " is registered", LogTypes.Triggers);
         if (NewLevelIsRequired())
         {
             CreateTriggerInNewLevel(trigger);
@@ -251,6 +266,7 @@ public static partial class Triggers
 
     public static void FireTrigger(Trigger trigger)
     {
+        CurrentTrigger = trigger;
         Console.Write(trigger.Name + " is fired", LogTypes.Triggers);
         trigger.Fire();
     }
@@ -270,6 +286,8 @@ public static partial class Triggers
 
         currentStackLevel.RemoveTrigger(currentTrigger);
         currentStackLevel.IsActive = false;
+
+        CurrentTrigger = null;
 
         ResolveTriggers(currentTrigger.TriggerType);
     }
@@ -365,7 +383,7 @@ public static partial class Triggers
 
         public override void PrepareDecision(System.Action callBack)
         {
-            InfoText = "Select a trigger to resolve";
+            DescriptionShort = "Select a trigger to resolve";
 
             List<Trigger> currentTriggersList = Triggers.GetCurrentLevel().GetTriggersByPlayer(Phases.PlayerWithInitiative);
             Players.PlayerNo currentPlayer = (currentTriggersList.Count > 0) ? Phases.PlayerWithInitiative : Roster.AnotherPlayer(Phases.PlayerWithInitiative);

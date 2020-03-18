@@ -13,8 +13,7 @@ namespace UpgradesList.SecondEdition
                 "Pattern Analyzer",
                 UpgradeType.Tech,
                 cost: 5,
-                abilityType: typeof(Abilities.SecondEdition.PatternAnalyzerAbility)//,
-                //seImageNumber: 69
+                abilityType: typeof(Abilities.SecondEdition.PatternAnalyzerAbility)
             );
 
             ImageUrl = "https://sb-cdn.fantasyflightgames.com/card_images/en/ace963fc4fe9d97f64ab8564dc4beae7.png";
@@ -38,7 +37,7 @@ namespace Abilities.SecondEdition
 
         private void RegisterPatternAnalyzer(GenericShip ship)
         {
-            if (HostShip.GetLastManeuverColor() == MovementComplexity.Complex)
+            if (HostShip.GetLastManeuverColor() == MovementComplexity.Complex && (HostShip.AssignedManeuver.Speed == 0 || !HostShip.IsBumped) && !BoardTools.Board.IsOffTheBoard(HostShip))
             {
                 RegisterAbilityTrigger(TriggerTypes.OnMovementExecuted, UsePatternAnalyzer);
             }
@@ -47,7 +46,13 @@ namespace Abilities.SecondEdition
         private void UsePatternAnalyzer(object sender, System.EventArgs e)
         {
             List<GenericAction> actions = Selection.ThisShip.GetAvailableActions();
-            HostShip.AskPerformFreeAction(actions, Triggers.FinishTrigger);
+            HostShip.AskPerformFreeAction(
+                actions,
+                Triggers.FinishTrigger,
+                HostUpgrade.UpgradeInfo.Name,
+                "While you fully execute a red maneuver, before the Check Difficulty step, you may perform 1 action",
+                HostUpgrade
+            );
         }
     }
 }

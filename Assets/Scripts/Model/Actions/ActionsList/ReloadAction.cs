@@ -45,15 +45,25 @@ namespace ActionsList
         {
             int result = 0;
 
-            int discardedOrdnance = Selection.ThisShip.UpgradeBar.GetUpgradesOnlyDiscarded().Count(n => n.HasType(UpgradeType.Missile) || n.HasType(UpgradeType.Torpedo));
-            result = discardedOrdnance * 30;
+            if (Edition.Current is Editions.FirstEdition)
+            {
+                // Ordinance is discarded when used in First Edition.
+                int discardedOrdnance = Selection.ThisShip.UpgradeBar.GetUpgradesOnlyDiscarded().Count(n => n.HasType(UpgradeType.Missile) || n.HasType(UpgradeType.Torpedo));
+                result = discardedOrdnance * 30;
+            }
+            else
+            {
+                // Only perform a reload if the upgradeable ordinance has less than their maximum charges.
+                // Consider reloading if we have any munitions that need it.  Increase the odds of reloading if more than one munitions card needs reloaded, as it means this ship relies heavily on munitions.
+                result = GetReloadableUpgrades().Count * 30;
+            }
 
             return result;
         }
 
         private static List<GenericUpgrade> GetReloadableUpgrades()
         {
-            return Selection.ThisShip.UpgradeBar.GetRechargableUpgrades(new List<UpgradeType> { UpgradeType.Torpedo, UpgradeType.Missile, UpgradeType.Bomb });
+            return Selection.ThisShip.UpgradeBar.GetRechargableUpgrades(new List<UpgradeType> { UpgradeType.Torpedo, UpgradeType.Missile, UpgradeType.Device });
         }
 
         public static void RestoreOneCharge()
@@ -67,21 +77,21 @@ namespace ActionsList
             else if (rechargableUpgrades.Count == 1)
             {
                 rechargableUpgrades[0].State.RestoreCharge();
-                Messages.ShowInfo("Reload: One charge of \"" + rechargableUpgrades[0].UpgradeInfo.Name + "\" is restored");
+                Messages.ShowInfo(Selection.ThisShip.PilotInfo.PilotName + " recharges 1 charge of " + rechargableUpgrades[0].UpgradeInfo.Name + " and gains a Disarmed token");
                 AssignTokenAndFinish();
             }
             else
             {
-                Messages.ShowError("No upgrades to restore charge");
+                Messages.ShowError("This ship has no upgrades that can have their charges restored");
                 Phases.CurrentSubPhase.CallBack();
             }
         }
 
         private static void StartDecisionSubphase()
         {
-            ReloadDecisionSubphase subphase = Phases.StartTemporarySubPhaseNew<ReloadDecisionSubphase>("Choose device to reload", AssignTokenAndFinish);
+            ReloadDecisionSubphase subphase = Phases.StartTemporarySubPhaseNew<ReloadDecisionSubphase>("Choose one device to reload", AssignTokenAndFinish);
 
-            subphase.InfoText = "Choose device to restore one charge";
+            subphase.DescriptionShort = "Reload: Choose one device to regain one charge";
             subphase.RequiredPlayer = Selection.ThisShip.Owner.PlayerNo;
             subphase.DecisionViewType = DecisionViewTypes.ImagesUpgrade;
 
@@ -95,15 +105,15 @@ namespace ActionsList
             subphase.Start();
         }
 
-        private static void AssignTokenAndFinish()
+        protected static void AssignTokenAndFinish()
         {
             Selection.ThisShip.Tokens.AssignToken(typeof(WeaponsDisabledToken), Phases.CurrentSubPhase.CallBack);
         }
 
-        private static void RechargeUpgrade(GenericUpgrade upgrage)
+        private static void RechargeUpgrade(GenericUpgrade upgrade)
         {
-            upgrage.State.RestoreCharge();
-            Messages.ShowInfo("Reload: One charge of \"" + upgrage.UpgradeInfo.Name + "\" is restored");
+            upgrade.State.RestoreCharge();
+            Messages.ShowInfo("Reload: One charge of \"" + upgrade.UpgradeInfo.Name + "\" is restored");
 
             DecisionSubPhase.ConfirmDecision();
         }

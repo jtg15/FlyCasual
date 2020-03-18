@@ -6,6 +6,7 @@ using Upgrade;
 using Ship;
 using System.Linq;
 using SubPhases;
+using Bombs;
 
 namespace UpgradesList.FirstEdition
 {
@@ -15,7 +16,7 @@ namespace UpgradesList.FirstEdition
         {
             UpgradeInfo = new UpgradeCardInfo(
                 "Cluster Mines",
-                UpgradeType.Bomb,
+                UpgradeType.Device,
                 cost: 4
             );
 
@@ -40,7 +41,7 @@ namespace UpgradesList.FirstEdition
                 });
         }
 
-        public override void PlayDetonationAnimSound(GameObject bombObject, Action callBack)
+        public override void PlayDetonationAnimSound(GenericDeviceGameObject bombObject, Action callBack)
         {
             int random = UnityEngine.Random.Range(1, 8);
             Sounds.PlayBombSound(bombObject, "Explosion-" + random);
@@ -77,7 +78,7 @@ namespace SubPhases
             {
                 foreach (Die die in CurrentDiceRoll.DiceList)
                 {
-                    if (die.Side == DieSide.Crit) die.SetSide(DieSide.Success);
+                    if (die.Side == DieSide.Crit) die.TrySetSide(DieSide.Success);
                 }
 
                 SufferDamage();
@@ -91,7 +92,7 @@ namespace SubPhases
 
         private void SufferDamage()
         {
-            Messages.ShowError("Cluster Mines: ship suffered damage");
+            Messages.ShowInfo("Cluster Mines: The attacked ship suffered damage");
 
             DamageSourceEventArgs clustermineDamage = new DamageSourceEventArgs()
             {
@@ -104,7 +105,7 @@ namespace SubPhases
 
         private void NoDamage()
         {
-            Messages.ShowInfoToHuman("No damage");
+            Messages.ShowInfoToHuman("The attacked ship suffered no damage");
             CallBack();
         }
     }

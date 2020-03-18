@@ -55,7 +55,7 @@ namespace Abilities.SecondEdition
             if (HostUpgrade.State.Charges > 0 && TargetsForAbilityExist(FilterAbilityTarget))
             {
                 Selection.ChangeActiveShip(HostShip);
-                Messages.ShowInfoToHuman("Jabba the Hutt: Select 1 ship to recover 1 charge on an illicit upgrade.");
+                Messages.ShowInfoToHuman("Jabba the Hutt: Select 1 ship to recover 1 charge on an illicit upgrade");
 
                 SelectTargetForAbility(
                     SelectAbilityTarget,
@@ -63,7 +63,7 @@ namespace Abilities.SecondEdition
                     GetAiAbilityPriority,
                     HostShip.Owner.PlayerNo,
                     HostName,
-                    "Select 1 ship to recover 1 charge on an illicit upgrade.",
+                    "Select 1 ship to recover 1 charge on an illicit upgrade",
                     HostUpgrade
                 );
             }
@@ -89,6 +89,7 @@ namespace Abilities.SecondEdition
                     Phases.CurrentSubPhase.CallBack();
                 });
             phase.TargetShip = TargetShip;
+            phase.SourceUpgrade = HostUpgrade;
             phase.Start();
         }
 
@@ -103,10 +104,13 @@ namespace Abilities.SecondEdition
         protected class JabbaTheHuttDecisionSubphase : DecisionSubPhase
         {
             public GenericShip TargetShip;
+            public GenericUpgrade SourceUpgrade;
 
             public override void PrepareDecision(Action callBack)
             {
-                InfoText = "Jabba the Hutt: Select upgrade to recover 1 charge";
+                DescriptionShort = "Jabba the Hutt";
+                DescriptionLong = "Select upgrade to recover 1 charge";
+                ImageSource = SourceUpgrade;
 
                 DecisionViewType = DecisionViewTypes.ImagesUpgrade;
 

@@ -7,12 +7,13 @@ using Upgrade;
 using Players;
 using System.Linq;
 using ActionsList;
+using BoardTools;
 
 namespace Abilities
 {
     public abstract class GenericAbility
     {
-        public string Name { get; private set; }
+        public virtual string Name { get; private set; }
 
         /// <summary>
         /// Set to true if ability applies condition card. Is checked by Thweek.
@@ -41,7 +42,7 @@ namespace Abilities
         public GenericShip HostShip
         {
             get { return hostShip; }
-            private set { hostShip = value; }
+            protected set { hostShip = value; }
         }
 
         private GenericUpgrade hostUpgrade;
@@ -76,6 +77,8 @@ namespace Abilities
             }
         }
 
+        private Func<GenericShip, bool> FilterDockableShips;
+
         public virtual void Initialize(GenericShip hostShip)
         {
             InitializeForSquadBuilder(hostShip);
@@ -86,7 +89,7 @@ namespace Abilities
         {
             HostReal = hostShip;
             HostShip = hostShip;
-            Name = HostShip.PilotInfo.PilotName + "'s ability";
+            Name = Name ?? HostShip.PilotInfo.PilotName + "'s ability";
 
             ActivateAbilityForSquadBuilder();
         }
@@ -96,7 +99,7 @@ namespace Abilities
             HostReal = hostUpgrade;
             HostShip = hostUpgrade.HostShip;
             HostUpgrade = hostUpgrade;
-            Name = hostUpgrade.UpgradeInfo.Name + "'s ability";
+            Name = Name ?? hostUpgrade.UpgradeInfo.Name + "'s ability";
 
             ActivateAbilityForSquadBuilder();
         }
@@ -128,7 +131,7 @@ namespace Abilities
         /// <summary>
         /// Register trigger of ability
         /// </summary>
-        protected Trigger RegisterAbilityTrigger(TriggerTypes triggerType, EventHandler eventHandler, System.EventArgs e = null)
+        protected Trigger RegisterAbilityTrigger(TriggerTypes triggerType, EventHandler eventHandler, System.EventArgs e = null, bool isSkippable = false)
         {
             var trigger = new Trigger()
             {
@@ -137,7 +140,8 @@ namespace Abilities
                 TriggerOwner = HostShip.Owner.PlayerNo,
                 EventHandler = eventHandler,
                 Sender = hostReal,
-                EventArgs = e
+                EventArgs = e,
+                Skippable = isSkippable
             };
             Triggers.RegisterTrigger(trigger);
             return trigger;
@@ -153,7 +157,7 @@ namespace Abilities
         /// <summary>
         /// Shows "Take a decision" window for ability with Yes / No / [Always] buttons
         /// </summary>
-        protected void AskToUseAbility(Func<bool> useByDefault, EventHandler useAbility, EventHandler dontUseAbility = null, Action callback = null, bool showAlwaysUseOption = false, string infoText = null, bool showSkipButton = true)
+        protected void AskToUseAbility(string descriptionShort, Func<bool> useByDefault, EventHandler useAbility, EventHandler dontUseAbility = null, Action callback = null, bool showAlwaysUseOption = false, string descriptionLong = null, IImageHolder imageHolder = null, bool showSkipButton = true, PlayerNo requiredPlayer = PlayerNo.PlayerNone)
         {
             if (dontUseAbility == null) dontUseAbility = DontUseAbility;
 
@@ -165,9 +169,11 @@ namespace Abilities
                 callback
             );
 
-            pilotAbilityDecision.InfoText = infoText ?? "Use " + Name + "?";
+            pilotAbilityDecision.DescriptionShort = descriptionShort ?? "Use " + Name + "?";
+            pilotAbilityDecision.DescriptionLong = descriptionLong;
+            pilotAbilityDecision.ImageSource = imageHolder;
 
-            pilotAbilityDecision.RequiredPlayer = HostShip.Owner.PlayerNo;
+            pilotAbilityDecision.RequiredPlayer = (requiredPlayer == PlayerNo.PlayerNone) ? HostShip.Owner.PlayerNo : requiredPlayer;
 
             pilotAbilityDecision.AddDecision("Yes", useAbility);
             pilotAbilityDecision.AddDecision("No", dontUseAbility);
@@ -193,7 +199,7 @@ namespace Abilities
                 Triggers.FinishTrigger
             );
 
-            opponentDecision.InfoText = infoText ?? "Allow to use " + Name + "?";
+            opponentDecision.DescriptionShort = infoText ?? "Allow to use " + Name + "?";
 
             opponentDecision.RequiredPlayer = Roster.AnotherPlayer(HostShip.Owner.PlayerNo);
 
@@ -243,14 +249,16 @@ namespace Abilities
         /// <summary>
         /// Starts "Select ship for ability" subphase
         /// </summary>
-        protected void SelectTargetForAbility(Action selectTargetAction, Func<GenericShip, bool> filterTargets, Func<GenericShip, int> getAiPriority, PlayerNo subphaseOwnerPlayerNo, string name = null, string description = null, IImageHolder imageSource = null, bool showSkipButton = true)
+        protected void SelectTargetForAbility(Action selectTargetAction, Func<GenericShip, bool> filterTargets, Func<GenericShip, int> getAiPriority, PlayerNo subphaseOwnerPlayerNo, string name = null, string description = null, IImageHolder imageSource = null, bool showSkipButton = true, Action callback = null)
         {
+            if (callback == null) callback = Triggers.FinishTrigger;
+
             Selection.ChangeActiveShip("ShipId:" + HostShip.ShipId);
 
             SelectShipSubPhase selectTargetSubPhase = (SelectShipSubPhase)Phases.StartTemporarySubPhaseNew(
                 name,
                 typeof(AbilitySelectTarget),
-                Triggers.FinishTrigger
+                callback
             );
 
             selectTargetSubPhase.PrepareByParameters(
@@ -291,9 +299,24 @@ namespace Abilities
 
             if ((Phases.CurrentSubPhase as SelectShipSubPhase) == null || (Phases.CurrentSubPhase as SelectShipSubPhase).CanMeasureRangeBeforeSelection)
             {
-                BoardTools.DistanceInfo distanceInfo = new BoardTools.DistanceInfo(hostShip, ship);
+                DistanceInfo distanceInfo = new DistanceInfo(hostShip, ship);
                 if (distanceInfo.Range < minRange) return false;
                 if (distanceInfo.Range > maxRange) return false;
+            }
+
+            return result;
+        }
+
+        protected bool FilterTargetsByRangeInArc(GenericShip ship, int minRange, int maxRange)
+        {
+            bool result = true;
+
+            if ((Phases.CurrentSubPhase as SelectShipSubPhase) == null || (Phases.CurrentSubPhase as SelectShipSubPhase).CanMeasureRangeBeforeSelection)
+            {
+                ShotInfo shotInfo = new ShotInfo(hostShip, ship, hostShip.PrimaryWeapons);
+                if (!shotInfo.InArc) return false;
+                if (shotInfo.Range < minRange) return false;
+                if (shotInfo.Range > maxRange) return false;
             }
 
             return result;
@@ -396,7 +419,7 @@ namespace Abilities
 
         // DICE MODIFICATIONS
 
-        protected enum DiceModificationType
+        public enum DiceModificationType
         {
             Reroll,
             Change,
@@ -404,7 +427,7 @@ namespace Abilities
             Add
         }
 
-        private GenericShip.EventHandlerShip DiceModification;
+        private List<Action> DiceModificationRemovers = new List<Action>();
 
         /// <summary>
         /// Adds available dice modification
@@ -463,7 +486,7 @@ namespace Abilities
         {
             if (sidesCanBeSelected == null) sidesCanBeSelected = new List<DieSide>() { DieSide.Blank, DieSide.Focus, DieSide.Success, DieSide.Crit };
 
-            DiceModification = (ship) =>
+            GenericShip.EventHandlerShip DiceModification = (ship) =>
             {
                 CustomDiceModification diceModification = new CustomDiceModification()
                 {
@@ -505,22 +528,26 @@ namespace Abilities
                 };
                 ship.AddAvailableDiceModification(diceModification);
             };
-
+            
             if (!isGlobal)
             {
                 switch (timing)
                 {
                     case DiceModificationTimingType.AfterRolled:
                         HostShip.OnGenerateDiceModificationsAfterRolled += DiceModification;
+                        DiceModificationRemovers.Add(() => HostShip.OnGenerateDiceModificationsAfterRolled -= DiceModification);
                         break;
                     case DiceModificationTimingType.Normal:
                         HostShip.OnGenerateDiceModifications += DiceModification;
+                        DiceModificationRemovers.Add(() => HostShip.OnGenerateDiceModifications -= DiceModification);
                         break;
                     case DiceModificationTimingType.Opposite:
                         HostShip.OnGenerateDiceModificationsOpposite += DiceModification;
+                        DiceModificationRemovers.Add(() => HostShip.OnGenerateDiceModificationsOpposite -= DiceModification);
                         break;
                     case DiceModificationTimingType.CompareResults:
                         HostShip.OnGenerateDiceModificationsCompareResults += DiceModification;
+                        DiceModificationRemovers.Add(() => HostShip.OnGenerateDiceModificationsCompareResults -= DiceModification);
                         break;
                     default:
                         break;
@@ -532,15 +559,19 @@ namespace Abilities
                 {
                     case DiceModificationTimingType.AfterRolled:
                         GenericShip.OnGenerateDiceModificationsAfterRolledGlobal += DiceModification;
+                        DiceModificationRemovers.Add(() => GenericShip.OnGenerateDiceModificationsAfterRolledGlobal -= DiceModification);
                         break;
                     case DiceModificationTimingType.Normal:
                         GenericShip.OnGenerateDiceModificationsGlobal += DiceModification;
+                        DiceModificationRemovers.Add(() => GenericShip.OnGenerateDiceModificationsGlobal -= DiceModification);
                         break;
                     case DiceModificationTimingType.Opposite:
                         GenericShip.OnGenerateDiceModificationsOppositeGlobal += DiceModification;
+                        DiceModificationRemovers.Add(() => GenericShip.OnGenerateDiceModificationsOppositeGlobal -= DiceModification);
                         break;
                     case DiceModificationTimingType.CompareResults:
                         GenericShip.OnGenerateDiceModificationsCompareResultsGlobal += DiceModification;
+                        DiceModificationRemovers.Add(() => GenericShip.OnGenerateDiceModificationsCompareResultsGlobal -= DiceModification);
                         break;
                     default:
                         break;
@@ -624,7 +655,7 @@ namespace Abilities
             }
             else
             {
-                Messages.ShowErrorToHuman("0 dice can be rerolled");
+                Messages.ShowErrorToHuman("No dice are eligible to be rerolled");
                 callback();
             }
         }
@@ -640,6 +671,8 @@ namespace Abilities
             }
 
             //DiceRoll.CurrentDiceRoll.OrganizeDicePositions();
+
+            callback();
         }
 
         public void DiceModificationAdd(Action callBack, Func<int> getCount, DieSide side)
@@ -653,18 +686,11 @@ namespace Abilities
         }
 
         /// <summary>
-        /// Removes available dice modification
+        /// Removes available dice modifications
         /// </summary>
         protected void RemoveDiceModification()
         {
-            HostShip.OnGenerateDiceModifications -= DiceModification;
-            GenericShip.OnGenerateDiceModificationsGlobal -= DiceModification;
-
-            HostShip.OnGenerateDiceModificationsOpposite -= DiceModification;
-            GenericShip.OnGenerateDiceModificationsOppositeGlobal -= DiceModification;
-
-            HostShip.OnGenerateDiceModificationsCompareResults -= DiceModification;
-            GenericShip.OnGenerateDiceModificationsCompareResultsGlobal -= DiceModification;
+            DiceModificationRemovers.ForEach(remove => remove());
         }
 
         private class ShipDamageEventArgs : EventArgs
@@ -672,6 +698,11 @@ namespace Abilities
             public GenericShip Ship;
             public int Damage;
             public bool IsCritical;
+        }
+
+        protected void DealDamageToShip(GenericShip ship, int damage, bool isCritical, Action callback)
+        {
+            DealDamageToShips(new List<GenericShip> { ship }, damage, isCritical, callback);
         }
 
         protected void DealDamageToShips(List<GenericShip> ships, int damage, bool isCritical, Action callback)
@@ -692,7 +723,7 @@ namespace Abilities
             var damage = args.IsCritical ? 0 : args.Damage;
             var critDamage = args.IsCritical ? args.Damage : 0;
 
-            Messages.ShowInfo(ship.PilotInfo.PilotName + " is dealt Critical Hit by " + HostName);
+            Messages.ShowInfo(ship.PilotInfo.PilotName + " has been dealt a " + (args.IsCritical ? "Critical " : "")  + "Hit by " + HostName);
 
             DamageSourceEventArgs damageArgs = new DamageSourceEventArgs()
             {
@@ -701,6 +732,136 @@ namespace Abilities
             };
 
             ship.Damage.TryResolveDamage(damage, damageArgs, Triggers.FinishTrigger, critDamage: critDamage);
+        }
+
+        // DOCKING
+
+        protected void ActivateDocking(Func<GenericShip, bool> filterDockableShips, Func<Direction, bool> filterUndockDirection = null)
+        {
+            FilterDockableShips = filterDockableShips;
+            HostShip.FilterUndockDirection = filterUndockDirection ?? HostShip.FilterUndockDirection;
+
+            Phases.Events.OnSetupStart += CheckInitialDockingAbility;
+            HostShip.OnCheckSystemsAbilityActivation += CheckPotentialDockingShips;
+            HostShip.OnSystemsAbilityActivation += RegisterDockingShips;
+        }
+
+        protected void DeactivateDocking()
+        {
+            Phases.Events.OnSetupStart -= CheckInitialDockingAbility;
+            HostShip.OnCheckSystemsAbilityActivation -= CheckPotentialDockingShips;
+            HostShip.OnSystemsAbilityActivation -= RegisterDockingShips;
+        }
+
+        private void CheckInitialDockingAbility()
+        {
+            if (GetDockableShips().Count > 0)
+            {
+                RegisterAbilityTrigger(TriggerTypes.OnSetupStart, AskInitialDocking);
+            }
+        }
+
+        private List<GenericShip> GetDockableShips()
+        {
+            return HostShip.Owner.Ships
+                .Where(s => FilterDockableShips(s.Value))
+                .Select(n => n.Value)
+                .ToList();
+        }
+
+        private void AskInitialDocking(object sender, EventArgs e)
+        {
+            Selection.ChangeActiveShip(HostShip);
+
+            AskToUseAbility(
+                "Docking",
+                AlwaysUseByDefault,
+                StartInitialDocking,
+                descriptionLong: "Do you want to dock a ship?"
+            );
+        }
+
+        private void StartInitialDocking(object sender, EventArgs e)
+        {
+            DecisionSubPhase.ConfirmDecisionNoCallback();
+
+            List<GenericShip> dockableShips = GetDockableShips();
+            if (dockableShips.Count == 1)
+            {
+                Rules.Docking.Dock(HostShip, dockableShips.First());
+                Triggers.FinishTrigger();
+            }
+            else
+            {
+                // Ask what ships to dock
+                Triggers.FinishTrigger();
+            }
+        }
+
+        private void CheckPotentialDockingShips(GenericShip thisShip, ref bool flag)
+        {
+            foreach (GenericShip ship in hostShip.Owner.Ships.Values)
+            {
+                if (FilterDockableShips(ship))
+                {
+                    DistanceInfo distInfo = new DistanceInfo(HostShip, ship);
+                    Vector2 dockingRange = ship.GetDockingRange(HostShip);
+                    if (dockingRange.x <= distInfo.Range && distInfo.Range <= dockingRange.y)
+                    {
+                        flag = true;
+                    }
+                }
+            }
+        }
+
+        private void RegisterDockingShips(GenericShip thisShip)
+        {
+            foreach (GenericShip ship in hostShip.Owner.Ships.Values)
+            {
+                if (FilterDockableShips(ship))
+                {
+                    DistanceInfo distInfo = new DistanceInfo(HostShip, ship);
+                    Vector2 dockingRange = ship.GetDockingRange(HostShip);
+                    if (dockingRange.x <= distInfo.Range && distInfo.Range <= dockingRange.y)
+                    {
+                        PrepareAskToDock(ship);
+                    }
+                }
+            }
+        }
+
+        private void PrepareAskToDock(GenericShip ship)
+        {
+            Triggers.RegisterTrigger(
+                new Trigger()
+                {
+                    Name = "Ask to Dock",
+                    TriggerOwner = ship.Owner.PlayerNo,
+                    TriggerType = TriggerTypes.OnSystemsAbilityActivation,
+                    EventHandler = AskToDock,
+                    Sender = ship
+                }
+            );
+        }
+
+        private void AskToDock(object sender, EventArgs e)
+        {
+            GenericShip dockingShip = sender as GenericShip;
+
+            AskToUseAbility(
+                "Docking",
+                NeverUseByDefault,
+                delegate { ConfirmDocking(dockingShip, HostShip); },
+                descriptionLong: "Do you want to dock to " + HostShip.PilotInfo.PilotName + "?"
+            );
+        }
+
+        private void ConfirmDocking(GenericShip dockingShip, GenericShip chosenHostShip)
+        {
+            DecisionSubPhase.ConfirmDecisionNoCallback();
+
+            Rules.Docking.Dock(chosenHostShip, dockingShip);
+            Triggers.FinishTrigger();
         }
     }
 }

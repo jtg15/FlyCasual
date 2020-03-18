@@ -39,6 +39,18 @@ namespace Upgrade
                 {
                     weaponType = WeaponTypes.Turret;
                 }
+                else if (UpgradeInfo.HasType(UpgradeType.Illicit))
+                {
+                    weaponType = WeaponTypes.Illicit;
+                }
+                else if (UpgradeInfo.HasType(UpgradeType.Talent))
+                {
+                    weaponType = WeaponTypes.Talent;
+                }
+                else if (UpgradeInfo.HasType(UpgradeType.ForcePower))
+                {
+                    weaponType = WeaponTypes.Force;
+                }
 
                 return weaponType;
             }
@@ -69,7 +81,9 @@ namespace Upgrade
             if (range < MinRangeUpdated) return false;
             if (range > MaxRangeUpdated) return false;
 
-            if (WeaponInfo.RequiresToken == typeof(BlueTargetLockToken))
+            Type tokenRequirement = HostShip.GetWeaponAttackRequirement(this, isSilent: true);
+
+            if (tokenRequirement == typeof(BlueTargetLockToken))
             {
                 List<GenericToken> waysToPay = new List<GenericToken>();
 
@@ -81,10 +95,9 @@ namespace Upgrade
 
                 if (waysToPay.Count == 0) return false;
             }
-
-            if (WeaponInfo.RequiresToken == typeof(FocusToken))
+            else if (tokenRequirement != null)
             {
-                if (!HostShip.Tokens.HasToken(typeof(FocusToken))) return false;
+                if (!HostShip.Tokens.HasToken(tokenRequirement)) return false;
             }
 
             return result;
@@ -114,7 +127,9 @@ namespace Upgrade
 
         private void PayTokenCost(Action callBack)
         {
-            if (WeaponInfo.RequiresToken == typeof(BlueTargetLockToken))
+            Type tokenRequirement = HostShip.GetWeaponAttackRequirement(this, isSilent: false);
+
+            if (tokenRequirement == typeof(BlueTargetLockToken))
             {
                 List<GenericToken> waysToPay = new List<GenericToken>();
 
@@ -149,7 +164,7 @@ namespace Upgrade
                     subphase.Start();
                 }
             }
-            else if (WeaponInfo.RequiresToken == typeof(FocusToken) && WeaponInfo.SpendsToken == typeof(FocusToken))
+            else if (tokenRequirement == typeof(FocusToken) && WeaponInfo.SpendsToken == typeof(FocusToken))
             {
                 Combat.Attacker.Tokens.SpendToken(typeof(FocusToken), callBack);
             }
@@ -172,7 +187,7 @@ namespace SubPhases
 
         public override void PrepareDecision(System.Action callBack)
         {
-            InfoText = "Choose how to pay attack cost";
+            DescriptionShort = "Choose how to pay attack cost";
 
             List<GenericToken> waysToPay = new List<GenericToken>();
 
@@ -209,7 +224,8 @@ namespace SubPhases
                 }
             }
 
-            DefaultDecisionName = GetDecisions().First().Name;
+            List<Decision> decision = GetDecisions();
+            if (decision != null) DefaultDecisionName = GetDecisions().First().Name;
 
             callBack();
         }

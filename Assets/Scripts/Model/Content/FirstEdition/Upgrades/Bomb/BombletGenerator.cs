@@ -6,6 +6,7 @@ using Upgrade;
 using Ship;
 using System.Linq;
 using SubPhases;
+using Bombs;
 
 namespace UpgradesList.FirstEdition
 {
@@ -17,8 +18,8 @@ namespace UpgradesList.FirstEdition
                 "Bomblet Generator",
                 types: new List<UpgradeType>()
                 {
-                    UpgradeType.Bomb,
-                    UpgradeType.Bomb
+                    UpgradeType.Device,
+                    UpgradeType.Device
                 },
                 cost: 3,
                 isLimited: true
@@ -38,7 +39,7 @@ namespace UpgradesList.FirstEdition
             sufferBombletDamageSubphase.Start();
         }
 
-        public override void PlayDetonationAnimSound(GameObject bombObject, Action callBack)
+        public override void PlayDetonationAnimSound(GenericDeviceGameObject bombObject, Action callBack)
         {
             int random = UnityEngine.Random.Range(1, 8);
             Sounds.PlayBombSound(bombObject, "Explosion-" + random);
@@ -82,7 +83,7 @@ namespace SubPhases.FirstEdition
 
         private void SufferDamage()
         {
-            Messages.ShowError("Bomblet: ship suffered damage");
+            Messages.ShowInfo("Bomblet: The attacked ship suffered damage");
 
             DamageSourceEventArgs bombletDamage = new DamageSourceEventArgs()
             {

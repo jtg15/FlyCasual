@@ -1,5 +1,6 @@
 ﻿using BoardTools;
 using Ship;
+using System.Collections.Generic;
 using System.Linq;
 using Tokens;
 using Upgrade;
@@ -33,6 +34,7 @@ namespace Abilities.SecondEdition
     public class CluseterMissilesAbility : GenericAbility
     {
         private GenericShip OriginalDefender;
+        private List<GenericShip> TargetsInRange;
 
         public override void ActivateAbility()
         {
@@ -51,6 +53,13 @@ namespace Abilities.SecondEdition
         private void SaveOriginalDefender()
         {
             OriginalDefender = Combat.Defender;
+            TargetsInRange = new List<GenericShip>();
+
+            foreach (GenericShip ship in Roster.AllShips.Values)
+            {
+                DistanceInfo distInfo = new DistanceInfo(OriginalDefender, ship);
+                if (distInfo.Range < 2) TargetsInRange.Add(ship);
+            }
         }
 
         private void CheckClusterMissilesAbility(GenericShip ship)
@@ -74,13 +83,8 @@ namespace Abilities.SecondEdition
         {
             bool result = false;
 
-            foreach (var ship in OriginalDefender.Owner.Ships.Values)
+            foreach (var ship in TargetsInRange)
             {
-                if (ship.ShipId == OriginalDefender.ShipId) continue;
-
-                DistanceInfo distInfo = new DistanceInfo(ship, OriginalDefender);
-                if (distInfo.Range > 1) continue;
-
                 ShotInfo shotInfo = new ShotInfo(HostShip, ship, HostUpgrade as IShipWeapon);
                 if (shotInfo.IsShotAvailable) return true;
             }
@@ -90,46 +94,71 @@ namespace Abilities.SecondEdition
 
         private void UseClusterMissilesAbility(object sender, System.EventArgs e)
         {
-            // TODOREVERT
-            // (HostUpgrade as UpgradesList.SecondEdition.ClusterMissiles).RequiresTargetLockOnTargetToShoot = false;
+            if (!HostShip.IsCannotAttackSecondTime)
+            {
+                (HostUpgrade as UpgradesList.SecondEdition.ClusterMissiles).WeaponInfo.RequiresToken = null;
 
-            Messages.ShowInfo(HostShip.PilotInfo.PilotName + " can perform second Cluster Missiles attack");
+                Messages.ShowInfo(HostShip.PilotInfo.PilotName + " can perform a second Cluster Missiles attack");
 
-            Combat.StartAdditionalAttack(
-                HostShip,
-                FinishAdditionalAttack,
-                IsClusterMissilesShotToNeighbour,
-                HostUpgrade.UpgradeInfo.Name,
-                "You may perform second Cluster Missiles attack.",
-                HostUpgrade
-            );
+                HostShip.IsCannotAttackSecondTime = true;
+
+                Combat.StartSelectAttackTarget(
+                    HostShip,
+                    FinishAdditionalAttack,
+                    IsClusterMissilesShotToNeighbour,
+                    HostUpgrade.UpgradeInfo.Name,
+                    "You may perform a second Cluster Missiles attack",
+                    HostUpgrade
+                );
+            }
+            else
+            {
+                Messages.ShowErrorToHuman(HostShip.PilotInfo.PilotName + " cannot perform a second Cluster Missiles attack");
+                Triggers.FinishTrigger();
+            }
         }
 
         private bool IsClusterMissilesShotToNeighbour(GenericShip defender, IShipWeapon weapon, bool isSilent)
         {
             bool result = false;
-
-            if (weapon == HostUpgrade && defender.ShipId != OriginalDefender.ShipId)
+            string TargetingFailure = "The attack can be performed";
+            if (weapon == HostUpgrade)
             {
-                DistanceInfo distInfo = new DistanceInfo(OriginalDefender, defender);
-                if (distInfo.Range < 2)
+                if (defender.ShipId != OriginalDefender.ShipId)
                 {
-                    result = true;
+                    if (TargetsInRange.Contains(defender))
+                    {
+                        result = true;
+                    }
+                    else
+                    {
+                        TargetingFailure = "The attack cannot be performed. The new target is further than range 1 from the original target";
+                    }
+                }
+                else
+                {
+                    TargetingFailure = "The attack cannot be performed. You cannot attack the original target of Cluster Missiles with the second attack";
                 }
             }
+            else
+            {
+                TargetingFailure = "The attack cannot be performed: Weapon " + HostUpgrade.UpgradeInfo.Name + " is not equipped";
+            }
 
-            if (result == false && !isSilent) Messages.ShowErrorToHuman("Attack cannot be perfromed: Wrong conditions");
+            if (result == false && !isSilent) Messages.ShowErrorToHuman(TargetingFailure);
 
             return result;
         }
 
         private void FinishAdditionalAttack()
         {
-            // TODOREVERT
-            //(HostUpgrade as UpgradesList.SecondEdition.ClusterMissiles).RequiresTargetLockOnTargetToShoot = true;
+            (HostUpgrade as UpgradesList.SecondEdition.ClusterMissiles).WeaponInfo.RequiresToken = typeof(BlueTargetLockToken);
 
             // If attack is skipped, set this flag, otherwise regular attack can be performed second time
             Selection.ThisShip.IsAttackPerformed = true;
+
+            //if bonus attack was skipped, allow bonus attacks again
+            if (Selection.ThisShip.IsAttackSkipped) Selection.ThisShip.IsCannotAttackSecondTime = false;
 
             Triggers.FinishTrigger();
         }

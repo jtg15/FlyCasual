@@ -10,7 +10,7 @@ namespace UpgradesList.FirstEdition
         {
             UpgradeInfo = new UpgradeCardInfo(
                 "Fire-Control System",
-                UpgradeType.System,
+                UpgradeType.Sensor,
                 cost: 2,
                 abilityType: typeof(Abilities.FirstEdition.FireControlSystemAbility)
             );
@@ -37,7 +37,7 @@ namespace Abilities.FirstEdition
         {
             if (Combat.Attacker.ShipId == HostShip.ShipId)
             {
-                if (!(Combat.Defender.IsDestroyed || Combat.Defender.IsReadyToBeDestroyed))
+                if (!Combat.Defender.IsDestroyed)
                 {
                     RegisterAbilityTrigger(TriggerTypes.OnAttackFinish, AskAcquireTargetLock);
                 }
@@ -46,12 +46,19 @@ namespace Abilities.FirstEdition
 
         private void AskAcquireTargetLock(object sender, System.EventArgs e)
         {
-            AskToUseAbility(AlwaysUseByDefault, AcquireTargetLock, null, null, true);
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                AlwaysUseByDefault,
+                AcquireTargetLock,
+                descriptionLong: "Do you want to acquire a Target Lock on the defender?",
+                imageHolder: HostUpgrade,
+                showAlwaysUseOption: true
+            );
         }
 
         private void AcquireTargetLock(object sender, System.EventArgs e)
         {
-            Messages.ShowInfo("Fire-Control System: Free Target Lock");
+            Messages.ShowInfo("Fire-Control System grants " + Combat.Attacker.PilotInfo.PilotName + " a free Target Lock on " + Combat.Defender.PilotInfo.PilotName);
             ActionsHolder.AcquireTargetLock(Combat.Attacker, Combat.Defender, DecisionSubPhase.ConfirmDecision, DecisionSubPhase.ConfirmDecision);
         }
     }

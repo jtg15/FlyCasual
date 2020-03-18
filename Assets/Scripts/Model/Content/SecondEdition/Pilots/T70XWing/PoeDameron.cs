@@ -64,27 +64,32 @@ namespace Abilities.SecondEdition
 
         private void PerformAction(object sender, System.EventArgs e)
         {
-            Messages.ShowInfoToHuman("Poe Dameron: you may spend 1 charge to perform a white action as a red action");
-
-            HostShip.BeforeFreeActionIsPerformed += PayChargeCost;
+            HostShip.BeforeActionIsPerformed += PayChargeCost;
 
             List<GenericAction> actions = Selection.ThisShip.GetAvailableActions();
             List<GenericAction> whiteActionBarActionsAsRed = actions
                 .Where(n => !n.IsRed)
                 .Select(n => n.AsRedAction)
                 .ToList();
-            HostShip.AskPerformFreeAction(whiteActionBarActionsAsRed, CleanUp);
+
+            HostShip.AskPerformFreeAction(
+                whiteActionBarActionsAsRed,
+                CleanUp,
+                HostShip.PilotInfo.PilotName,
+                "After you perform an action, you may spend 1 Charge to perform a white action, treating it as red",
+                HostShip
+            );
         }
 
-        private void PayChargeCost(GenericAction action)
+        private void PayChargeCost(GenericAction action, ref bool isFreeAction)
         {
             HostShip.State.Charges--;
-            HostShip.BeforeFreeActionIsPerformed -= PayChargeCost;
+            HostShip.BeforeActionIsPerformed -= PayChargeCost;
         }
 
         private void CleanUp()
         {
-            HostShip.BeforeFreeActionIsPerformed -= PayChargeCost;
+            HostShip.BeforeActionIsPerformed -= PayChargeCost;
             Triggers.FinishTrigger();
         }
 

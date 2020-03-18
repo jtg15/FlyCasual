@@ -16,7 +16,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Lieutenant Tavson",
                     3,
-                    62,
+                    64,
                     isLimited: true,
                     charges: 2,
                     regensCharges: true,
@@ -58,24 +58,30 @@ namespace Abilities.SecondEdition
 
             Messages.ShowInfoToHuman(HostName + ": you may spend 1 charge to perform an action");
 
-            HostShip.BeforeFreeActionIsPerformed += SpendCharge;
+            HostShip.BeforeActionIsPerformed += SpendCharge;
 
-            HostShip.AskPerformFreeAction(HostShip.GetAvailableActions(), delegate
-            {
-                Selection.ThisShip = previousSelectedShip;
-                CleanUp();
-            });
+            HostShip.AskPerformFreeAction(
+                HostShip.GetAvailableActions(),
+                delegate
+                {
+                    Selection.ThisShip = previousSelectedShip;
+                    CleanUp();
+                },
+                HostShip.PilotInfo.PilotName,
+                "After you suffer damage, you may spend 1 Charge to perform an action",
+                HostShip
+            );
         }
 
-        private void SpendCharge(GenericAction action)
+        private void SpendCharge(GenericAction action, ref bool isFreeAction)
         {
-            HostShip.BeforeFreeActionIsPerformed -= SpendCharge;
+            HostShip.BeforeActionIsPerformed -= SpendCharge;
             HostShip.SpendCharge();
         }
 
         private void CleanUp()
         {
-            HostShip.BeforeFreeActionIsPerformed -= SpendCharge;
+            HostShip.BeforeActionIsPerformed -= SpendCharge;
             Triggers.FinishTrigger();
         }
     }

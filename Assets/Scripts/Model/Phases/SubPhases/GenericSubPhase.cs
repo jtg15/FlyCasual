@@ -23,6 +23,10 @@ namespace SubPhases
 
         public Action CallBack;
 
+        public string DescriptionShort;
+        public string DescriptionLong;
+        public IImageHolder ImageSource;
+
         public bool IsTemporary;
 
         public bool IsReadyForCommands { get; set; }
@@ -41,7 +45,7 @@ namespace SubPhases
             set { theShip = value; }
         }
 
-        public int RequiredPilotSkill;
+        public int RequiredInitiative;
         public PlayerNo RequiredPlayer = PlayerNo.Player1;
 
         protected const int PILOTSKILL_MIN = 0;
@@ -76,13 +80,13 @@ namespace SubPhases
         public virtual bool ThisShipCanBeSelected(GenericShip ship, int mouseKeyIsPressed)
         {
             bool result = false;
-            if ((ship.Owner.PlayerNo == RequiredPlayer) && (ship.State.Initiative == RequiredPilotSkill) && (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(Players.HumanPlayer)))
+            if ((ship.Owner.PlayerNo == RequiredPlayer) && (ship.State.Initiative == RequiredInitiative) && (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(Players.HumanPlayer)))
             {
                 result = true;
             }
             else
             {
-                Messages.ShowErrorToHuman("Ship cannot be selected:\n Need " + Phases.CurrentSubPhase.RequiredPlayer + " and pilot skill " + Phases.CurrentSubPhase.RequiredPilotSkill);
+                Messages.ShowErrorToHuman("This ship cannot be selected: The ship must be owned by " + Phases.CurrentSubPhase.RequiredPlayer + " and have a pilot skill of " + Phases.CurrentSubPhase.RequiredInitiative);
             }
             return result;
         }
@@ -90,7 +94,7 @@ namespace SubPhases
         public virtual bool AnotherShipCanBeSelected(GenericShip targetShip, int mouseKeyIsPressed)
         {
             bool result = false;
-            Messages.ShowErrorToHuman("Ship of another player");
+            Messages.ShowErrorToHuman(targetShip.PilotInfo.PilotName + " is owned by another player!");
             return result;
         }
 
@@ -142,7 +146,7 @@ namespace SubPhases
         public void ShowSubphaseDescription(string title, string description, IImageHolder imageSource = null)
         {
             HideSubphaseDescription();
-            if (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(HumanPlayer))
+            if (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(HumanPlayer) && title != null)
             {
                 GameObject subphaseDescriptionGO = GameObject.Find("UI").transform.Find("CurrentSubphaseDescription" + ((imageSource != null) ? "" : "NoImage")).gameObject; 
                  

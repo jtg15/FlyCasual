@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using SubPhases;
 
 public static class DirectionsMenu
 {
@@ -18,31 +19,36 @@ public static class DirectionsMenu
 
     private static GameObject DirectionsWindow;
 
-    public static void Show(Action<string> callback, Func<string, bool> filter = null)
+    public static void Show(Action<string> doWithSelectedManeuver, Action callback, Func<string, bool> filter = null, bool isRegularPlanning = false)
     {
-        DeleteOldDirectionsMenu();
-
-        Callback = callback;
+        PrepareSubphase(doWithSelectedManeuver, callback);
 
         GameObject prefab = (GameObject)Resources.Load("Prefabs/UI/DirectionsWindow", typeof(GameObject));
         DirectionsWindow = MonoBehaviour.Instantiate(prefab, GameObject.Find("UI/DirectionsPanel").transform);
 
-        GameObject.Find("UI").transform.Find("ContextMenuPanel").gameObject.SetActive(false);
-        CustomizeDirectionsMenu(filter);
-        CustomizeForStressed();
-        DirectionsWindow.transform.localPosition = FixMenuPosition(
-            DirectionsWindow.transform.gameObject,
-            Input.mousePosition
-        );
+        if (Selection.ThisShip.Owner is Players.HumanPlayer)
+        {
+            GameObject.Find("UI").transform.Find("ContextMenuPanel").gameObject.SetActive(false);
+            CustomizeDirectionsMenu(filter);
+            CustomizeForStressed();
+            DirectionsWindow.transform.localPosition = FixMenuPosition(
+                DirectionsWindow.transform.gameObject,
+                Input.mousePosition
+            );
+        }
+        else
+        {
+            DirectionsMenu.Hide();
+        }
 
         Phases.CurrentSubPhase.IsReadyForCommands = true;
+
+        if (isRegularPlanning) Selection.ThisShip.Owner.AskAssignManeuver();
     }
 
-    public static void ShowForAll(Action<string> callback, Func<string, bool> filter = null)
+    public static void ShowForAll(Action<string> doWithSelectedManeuver, Action callback, Func<string, bool> filter = null)
     {
-        DeleteOldDirectionsMenu();
-
-        Callback = callback;
+        /*PrepareSubphase(doWithSelectedManeuver, callback);
 
         GameObject prefab = (GameObject)Resources.Load("Prefabs/UI/DirectionsWindow", typeof(GameObject));
         DirectionsWindow = MonoBehaviour.Instantiate(prefab, GameObject.Find("UI/DirectionsPanel").transform);
@@ -52,7 +58,41 @@ public static class DirectionsMenu
         DirectionsWindow.transform.localPosition = FixMenuPosition(
             DirectionsWindow.transform.gameObject,
             Input.mousePosition
+        );*/
+    }
+
+    public static void FinishManeuverSelections()
+    {
+        Phases.FinishSubPhase(typeof(ManeuverSelectionSubphase));
+    }
+
+    private static void PrepareSubphase(Action<string> doWithSelectedManeuver, Action callback)
+    {
+        Triggers.RegisterTrigger(
+            new Trigger()
+            {
+                Name = "Assign Maneuver",
+                TriggerType = TriggerTypes.OnAbilityDirect,
+                TriggerOwner = Phases.CurrentSubPhase.RequiredPlayer,
+                EventHandler = delegate { StartAssignManeuverSubphase(doWithSelectedManeuver); }
+            }
         );
+
+        Triggers.ResolveTriggers(TriggerTypes.OnAbilityDirect, callback);
+    }
+
+    private static void StartAssignManeuverSubphase(Action<string> doWithSelectedManeuver)
+    {
+        ManeuverSelectionSubphase subphase = Phases.StartTemporarySubPhaseNew<ManeuverSelectionSubphase>(
+            "Select a maneuver",
+            Triggers.FinishTrigger
+        );
+        subphase.RequiredPlayer = Phases.CurrentSubPhase.RequiredPlayer;
+        subphase.Start();
+
+        DeleteOldDirectionsMenu();
+
+        Callback = doWithSelectedManeuver;
     }
 
     private static void DeleteOldDirectionsMenu()
@@ -250,36 +290,39 @@ public static class DirectionsMenu
         if (maneuverData.Value == MovementComplexity.Complex)
         {
             maneuverColor = Color.red;
-            if (Selection.ThisShip.IsStressed) button.transform.Find("RedBackground").gameObject.SetActive(true);
+            if (Selection.ThisShip != null && Selection.ThisShip.IsStressed) button.transform.Find("RedBackground").gameObject.SetActive(true);
         }
         button.GetComponentInChildren<Text>().color = maneuverColor;
     }
 
     private static Vector3 FixMenuPosition(GameObject menuPanel, Vector3 position)
     {
-        float fixedWidth = 1600;
-        float fixedHeight = 900;
-        float uiScaleX = fixedWidth / Screen.width;
-        float uiScaleY = fixedHeight / Screen.height;
-        position = new Vector3(position.x * uiScaleX, -(Screen.height - position.y) * uiScaleY);
+        float globalUiScale = GameObject.Find("UI").transform.localScale.x;
+
+        Vector3 screenPosition = new Vector3(position.x, position.y);
+        Vector3 newPosition = new Vector3(position.x / globalUiScale, position.y / globalUiScale - Screen.height / globalUiScale);
 
         RectTransform menuRect = menuPanel.GetComponent<RectTransform>();
         float windowHeight = menuRect.sizeDelta.y;
         float windowWidth = menuRect.sizeDelta.x;
 
-        if (position.x + windowWidth * menuRect.localScale.x > fixedWidth)
+        if (newPosition.x + windowWidth > Screen.width / globalUiScale)
         {
-            position = new Vector3(fixedWidth - windowWidth * menuRect.localScale.x - 5, position.y, 0);
+            newPosition = new Vector3(Screen.width / globalUiScale - windowWidth - 5, newPosition.y, 0);
         }
-        if (-position.y + windowHeight * menuRect.localScale.y > fixedHeight)
+        if (-newPosition.y + windowHeight > Screen.height / globalUiScale)
         {
-            position = new Vector3(position.x, - fixedHeight + windowHeight * menuRect.localScale.y + 5, 0);
+            newPosition = new Vector3(newPosition.x, (position.y + windowHeight) / globalUiScale - Screen.height / globalUiScale + 5, 0);
         }
-        if (Selection.ThisShip.IsStressed && -position.y < WarningPanelHeight * menuRect.localScale.y - 5)
+
+        if (Selection.ThisShip != null
+            && Selection.ThisShip.IsStressed
+            && -newPosition.y < WarningPanelHeight * menuRect.localScale.y - 5
+        )
         {
-            position = new Vector3(position.x, - WarningPanelHeight * menuRect.localScale.y - 5, 0);
+            newPosition = new Vector3(newPosition.x, - WarningPanelHeight - 5, 0);
         }
-        return position;
+        return newPosition;
     }
 
     public static void Hide()
@@ -293,6 +336,20 @@ public static class DirectionsMenu
         {
             GameObject warningGO = DirectionsWindow.transform.Find("Warning").gameObject;
             warningGO.SetActive(true);
+        }
+    }
+}
+
+namespace SubPhases
+{
+    public class ManeuverSelectionSubphase : GenericSubPhase
+    {
+        public override List<GameCommandTypes> AllowedGameCommandTypes { get { return new List<GameCommandTypes>() { GameCommandTypes.AssignManeuver }; } }
+
+        public override void Next()
+        {
+            Phases.CurrentSubPhase = PreviousSubPhase;
+            CallBack();
         }
     }
 }

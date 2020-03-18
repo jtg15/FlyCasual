@@ -5,6 +5,7 @@ using ActionsList;
 using Actions;
 using Arcs;
 using Upgrade;
+using UnityEngine;
 
 namespace Ship
 {
@@ -26,7 +27,7 @@ namespace Ship
                     ),
                     new ShipUpgradesInfo(
                         UpgradeType.Title,
-                        UpgradeType.System,
+                        UpgradeType.Sensor,
                         UpgradeType.Cannon,
                         UpgradeType.Modification,
                         UpgradeType.Crew,
@@ -40,7 +41,9 @@ namespace Ship
 
                 ModelInfo = new ShipModelInfo(
                     "Lambda-class Shuttle",
-                    "Default"
+                    "Default",
+                    new Vector3(-4.3f, 8.4f, 5.55f),
+                    4f
                 );
 
                 DialInfo = new ShipDialInfo(

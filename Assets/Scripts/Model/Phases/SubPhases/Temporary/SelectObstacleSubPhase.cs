@@ -20,10 +20,6 @@ namespace SubPhases
         private static Action<GenericObstacle> SelectTargetAction;
         private Func<GenericObstacle, bool> FilterTargets;
 
-        public string AbilityName;
-        public string Description;
-        public IImageHolder ImageSource;
-
         public override void Start()
         {
             IsTemporary = true;
@@ -47,8 +43,8 @@ namespace SubPhases
             FilterTargets = filterTargets;
             RequiredPlayer = subphaseOwnerPlayerNo;
             if (showSkipButton) UI.ShowSkipButton();
-            AbilityName = abilityName;
-            Description = description;
+            DescriptionShort = abilityName;
+            DescriptionLong = description;
             ImageSource = imageSource;
         }
 
@@ -66,7 +62,7 @@ namespace SubPhases
 
         public void HighlightObstacleToSelect()
         {
-            ShowSubphaseDescription(AbilityName, Description, ImageSource);
+            ShowSubphaseDescription(DescriptionShort, DescriptionLong, ImageSource);
             //TODO: Highlight filtered obstacles
         }
 
@@ -115,9 +111,9 @@ namespace SubPhases
                     RaycastHit hitInfo = new RaycastHit();
                     if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo))
                     {
-                        if (hitInfo.transform.tag.StartsWith("Asteroid"))
+                        if (hitInfo.transform.tag.StartsWith("Obstacle"))
                         {
-                            GenericObstacle clickedObstacle = ObstaclesManager.GetObstacleByTransform(hitInfo.transform);
+                            GenericObstacle clickedObstacle = ObstaclesManager.GetChosenObstacle(hitInfo.transform.name);
 
                             if (clickedObstacle.IsPlaced)
                             {
@@ -159,7 +155,7 @@ namespace SubPhases
 
         public static void ConfirmSelectionOfObstacle(string obstacleName)
         {
-            GenericObstacle obstacle = ObstaclesManager.GetObstacleByName(obstacleName);
+            GenericObstacle obstacle = ObstaclesManager.GetChosenObstacle(obstacleName);
             SelectTargetAction(obstacle);
         }
 
@@ -169,6 +165,12 @@ namespace SubPhases
             Phases.FinishSubPhase(Phases.CurrentSubPhase.GetType());
             Phases.CurrentSubPhase.Resume();
             callback();
+        }
+
+        public static void SelectObstacleNoCallback()
+        {
+            Phases.FinishSubPhase(Phases.CurrentSubPhase.GetType());
+            //Phases.CurrentSubPhase.Resume();
         }
     }
 

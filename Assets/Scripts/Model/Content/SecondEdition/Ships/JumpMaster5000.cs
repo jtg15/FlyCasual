@@ -24,6 +24,8 @@ namespace Ship
                 ShipInfo.ActionIcons.AddLinkedAction(new LinkedActionInfo(typeof(TargetLockAction), typeof(RotateArcAction)));
 
                 ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.Torpedo);
+                ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.Gunner);
+                ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.Cannon);
 
                 IconicPilots[Faction.Scum] = typeof(Dengar);
 
@@ -40,6 +42,12 @@ namespace Ship
                 DialInfo.AddManeuver(new ManeuverHolder(ManeuverSpeed.Speed3, ManeuverDirection.Left, ManeuverBearing.SegnorsLoop), MovementComplexity.Complex);
 
                 ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/9/9f/Maneuver_jumpmaster.png";
+
+                // Support for mod
+                if (Mods.ModsManager.Mods[typeof(Mods.ModsList.JumpMasterConfigurationsMod)].IsOn)
+                {
+                    ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.Configuration);
+                }
             }
         }
     }

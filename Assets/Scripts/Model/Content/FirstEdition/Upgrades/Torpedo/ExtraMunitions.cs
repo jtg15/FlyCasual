@@ -44,7 +44,7 @@ namespace Abilities.FirstEdition
         {
             foreach (var upgrade in HostShip.UpgradeBar.GetUpgradesOnlyFaceup())
             {
-                if (upgrade.HasType(UpgradeType.Torpedo) || upgrade.HasType(UpgradeType.Missile) || upgrade.HasType(UpgradeType.Bomb))
+                if (upgrade.HasType(UpgradeType.Torpedo) || upgrade.HasType(UpgradeType.Missile) || upgrade.HasType(UpgradeType.Device))
                 {
                     SetOrdnanceToken(upgrade);
                 }
@@ -79,7 +79,14 @@ namespace Abilities.FirstEdition
         {
             if (!alwaysUseAbility)
             {
-                AskToUseAbility(AlwaysUseByDefault, UseAbilityDecision, null, null, true);
+                AskToUseAbility(
+                    HostUpgrade.UpgradeInfo.Name,
+                    AlwaysUseByDefault,
+                    UseAbilityDecision,
+                    descriptionLong: "Do you want to discard 1 ordnance token instead?",
+                    imageHolder: HostUpgrade,
+                    showAlwaysUseOption: true
+                );
             }
             else
             {
@@ -94,7 +101,7 @@ namespace Abilities.FirstEdition
 
         private void DiscardTokenInstead(Action callback)
         {
-            Messages.ShowInfo("Ordnance token is discarded instead of " + GenericUpgrade.CurrentUpgrade.UpgradeInfo.Name);
+            Messages.ShowInfo("An ordinance token has been discarded instead of " + GenericUpgrade.CurrentUpgrade.UpgradeInfo.Name);
 
             RemoveOrdnanceToken(GenericUpgrade.CurrentUpgrade);
 

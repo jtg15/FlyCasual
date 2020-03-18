@@ -5,6 +5,8 @@ using Movement;
 using System;
 using Obstacles;
 using System.Linq;
+using Bombs;
+using Remote;
 
 namespace Ship
 {
@@ -15,29 +17,36 @@ namespace Ship
         public Vector3 StartingPosition { get; private set; }
 
         public GenericMovement AssignedManeuver { get; private set; }
+        public GenericMovement RevealedManeuver { get; set; }
+
+        public List<GenericRemote> RemotesOverlapped = new List<GenericRemote>();
 
         public bool IsIgnoreObstacles;
         public bool IsIgnoreObstaclesDuringBoost;
         public bool IsIgnoreObstaclesDuringBarrelRoll;
         public bool IsIgnoreObstacleObstructionWhenAttacking;
 
+        public bool IsLandedModel;
+
         public List<GenericObstacle> IgnoreObstaclesList = new List<GenericObstacle>();
         public List<Type> IgnoreObstacleTypes = new List<Type>();
+
+        public EventHandlerBool OnTryCanPerformRedManeuverWhileStressed;
 
         public bool IsLandedOnObstacle
         {
             get
             {
-                return LandedOnObstacles.Any(o => !IgnoreObstaclesList.Contains(o));
+                return ObstaclesLanded.Any(o => !IgnoreObstaclesList.Contains(o));
             }
 
             set
             {
-                if (value == false) LandedOnObstacles = new List<GenericObstacle>();
+                if (value == false) ObstaclesLanded = new List<GenericObstacle>();
             }
         }
 
-        public List<GenericObstacle> LandedOnObstacles = new List<GenericObstacle>();
+        public List<GenericObstacle> ObstaclesLanded = new List<GenericObstacle>();
 
         public bool IsHitObstacles
         {
@@ -54,7 +63,7 @@ namespace Ship
 
         public List<GenericObstacle> ObstaclesHit = new List<GenericObstacle>();
 
-        public List<GameObject> MinesHit = new List<GameObject>();
+        public List<GenericDeviceGameObject> MinesHit = new List<GenericDeviceGameObject>();
 
         public bool IsBumped
         {
@@ -87,7 +96,10 @@ namespace Ship
         public event EventHandlerShip OnMovementFinishUnsuccessfully;
         public event EventHandlerShip OnMovementBumped;
         public static event EventHandlerShip OnMovementFinishGlobal;
+        public static event EventHandlerShip OnMovementFinishSuccessfullyGlobal;
 
+        public event EventHandlerShip OnPositionIsReadyToFinish;
+        public static event EventHandlerShip OnPositionIsReadyToFinishGlobal;
         public event EventHandlerShip OnPositionFinish;
         public static event EventHandlerShip OnPositionFinishGlobal;
 
@@ -108,20 +120,29 @@ namespace Ship
             }
         }
 
-        public void CallManeuverIsRevealed(System.Action callBack)
+        public void CallManeuverIsRevealed(Action callBack, Action whenSkippedCallback)
         {
-            if (Selection.ThisShip.AssignedManeuver != null) Roster.ToggleManeuverVisibility(Selection.ThisShip, true);
+            if (AssignedManeuver != null) Roster.ToggleManeuverVisibility(Selection.ThisShip, true);
 
-            if (Selection.ThisShip.AssignedManeuver != null && Selection.ThisShip.AssignedManeuver.IsRevealDial)
+            if (AssignedManeuver != null && AssignedManeuver.IsRevealDial)
             {
-                if (OnManeuverIsRevealed != null) OnManeuverIsRevealed(this);
-                if (OnManeuverIsRevealedGlobal != null) OnManeuverIsRevealedGlobal(this);
+                // Make a new copy of AssignedManeuver, so changes to it doesn't affect RevealedManeuver
+                RevealedManeuver = ShipMovementScript.MovementFromString(AssignedManeuver.ToString());
 
-                Triggers.ResolveTriggers(TriggerTypes.OnManeuverIsRevealed, callBack);
+                OnManeuverIsRevealed?.Invoke(this);
+                OnManeuverIsRevealedGlobal?.Invoke(this);
+
+                Triggers.ResolveTriggers(
+                    TriggerTypes.OnManeuverIsRevealed,
+                    delegate
+                    {
+                        if (!IsManeuverSkipped) callBack(); else whenSkippedCallback();
+                    }
+                );
             }
             else // For ionized ships
             {
-                if (OnNoManeuverWasRevealedGlobal != null) OnNoManeuverWasRevealedGlobal(this);
+                OnNoManeuverWasRevealedGlobal?.Invoke(this);
 
                 callBack();
             }
@@ -166,11 +187,12 @@ namespace Ship
             if (OnMovementFinishGlobal != null) OnMovementFinishGlobal(this);
             
             // If we didn't bump, or end up off the board then we have succesfully completed our manuever.
-            if (!IsBumped && !BoardTools.Board.IsOffTheBoard(this))
+            if ((Selection.ThisShip.AssignedManeuver.Speed == 0 || !IsBumped) && !BoardTools.Board.IsOffTheBoard(this))
             {
                 if (OnMovementFinishSuccessfully != null) OnMovementFinishSuccessfully(this);
+                if (OnMovementFinishSuccessfullyGlobal != null) OnMovementFinishSuccessfullyGlobal(this);
             }
-            else if(IsBumped)
+            else if (IsBumped)
             {
                 if (OnMovementFinishUnsuccessfully != null) OnMovementFinishUnsuccessfully(this);
 
@@ -184,11 +206,26 @@ namespace Ship
                 TriggerTypes.OnMovementFinish,
                 delegate () {
                     Roster.HideAssignedManeuverDial(this);
-                    Selection.ThisShip.FinishPosition(callback);
-                });
+                    Selection.ThisShip.CallPositionIsReadyToFinish(callback);
+                }
+            );
         }
 
-        public void FinishPosition(System.Action callback)
+        public void CallPositionIsReadyToFinish(System.Action callback)
+        {
+            if (OnPositionIsReadyToFinish != null) OnPositionIsReadyToFinish(this);
+            if (OnPositionIsReadyToFinishGlobal != null) OnPositionIsReadyToFinishGlobal(this);
+
+            Triggers.ResolveTriggers(
+                TriggerTypes.OnPositionIsReadyToFinish,
+                delegate ()
+                {
+                    Selection.ThisShip.CallFinishPosition(callback);
+                }
+            );
+        }
+
+        public void CallFinishPosition(System.Action callback)
         {
             if (OnPositionFinish != null) OnPositionFinish(this);
             if (OnPositionFinishGlobal != null) OnPositionFinishGlobal(this);
@@ -293,6 +330,15 @@ namespace Ship
         public void Rotate90Counterclockwise(Action callBack)
         {
             Phases.StartTemporarySubPhaseOld("Rotate ship -90°", typeof(SubPhases.Rotate90CounterclockwiseSubPhase), callBack);
+        }
+
+        public bool CanPerformRedManeuverWhileStressed()
+        {
+            bool result = false;
+
+            OnTryCanPerformRedManeuverWhileStressed?.Invoke(ref result);
+
+            return result;
         }
     }
 

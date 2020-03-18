@@ -56,13 +56,18 @@ namespace Abilities.FirstEdition
                     Triggers.FinishTrigger
                 );
 
-                selectSpecialOpsTrainingSubPhase.InfoText = "Use " + Name + "?";
+                selectSpecialOpsTrainingSubPhase.DescriptionShort = "Special Ops Training";
+                selectSpecialOpsTrainingSubPhase.DescriptionLong = "How do you want to use ability?";
+                selectSpecialOpsTrainingSubPhase.ImageSource = HostUpgrade;
+
                 selectSpecialOpsTrainingSubPhase.AddDecision("Roll 1 extra die from primary fire arc", RegisterRollExtraDice);
                 selectSpecialOpsTrainingSubPhase.AddTooltip("Roll 1 extra die from primary fire arc", HostShip.ImageUrl);
                 selectSpecialOpsTrainingSubPhase.AddDecision("Get a second attack from rear arc", RegisterExtraAttack);
                 selectSpecialOpsTrainingSubPhase.AddTooltip("Get a second attack from rear arc", HostShip.ImageUrl);
+
                 selectSpecialOpsTrainingSubPhase.DefaultDecisionName = GetDefaultDecision();
                 selectSpecialOpsTrainingSubPhase.ShowSkipButton = true;
+
                 selectSpecialOpsTrainingSubPhase.Start();
             }
             else
@@ -91,7 +96,7 @@ namespace Abilities.FirstEdition
         private void RollExtraDice(ref int count)
         {
             count++;
-            Messages.ShowInfo("TieSF rolls extra die from primary arc");
+            Messages.ShowInfo("TIE/SF rolls an extra die since it is attacking from its primary arc");
             HostShip.AfterGotNumberOfAttackDice -= RollExtraDice;
         }
 
@@ -112,7 +117,7 @@ namespace Abilities.FirstEdition
         private void DoSpecialOpsExtraAttack(object sender, System.EventArgs e)
         {
 
-            Combat.StartAdditionalAttack(
+            Combat.StartSelectAttackTarget(
                 HostShip,
                 delegate {
                     Selection.ThisShip.IsAttackPerformed = true;
@@ -122,7 +127,7 @@ namespace Abilities.FirstEdition
                 },
                 null,
                 HostUpgrade.UpgradeInfo.Name,
-                "You may perform an additional attack from your auxiliary firing arc.",
+                "You may perform an additional attack from your auxiliary firing arc",
                 HostUpgrade
             );
         }

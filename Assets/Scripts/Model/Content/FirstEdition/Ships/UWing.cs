@@ -7,6 +7,7 @@ using Arcs;
 using Upgrade;
 using Mods;
 using Mods.ModsList;
+using UnityEngine;
 
 namespace Ship.FirstEdition.UWing
 {
@@ -29,11 +30,12 @@ namespace Ship.FirstEdition.UWing
                 new ShipUpgradesInfo(
                     UpgradeType.Title,
                     UpgradeType.Modification,
-                    UpgradeType.System,
+                    UpgradeType.Sensor,
                     UpgradeType.Crew,
                     UpgradeType.Crew
                 ),
-                icon: 'u'
+                icon: 'u',
+                description: "The UT-60D U-wing starfighter/support craft also known as the UT-60D, or U-wing, was a transport/gunship model manufactured by Incom Corporation and used by the Alliance to Restore the Republic during the Galactic Civil War. Used to drop troops into battle, and provide cover fire for them, U-wings were pivotal in transport and protection of the Rebel Alliance's ground forces during the Battle of Scarif."
             );
 
             IconicPilots = new Dictionary<Faction, System.Type> {
@@ -43,6 +45,8 @@ namespace Ship.FirstEdition.UWing
             ModelInfo = new ShipModelInfo(
                 "U-wing",
                 "Blue Squadron",
+                new Vector3(-3.25f, 7.16f, 5.55f),
+                2f,
                 wingsPositions: WingsPositions.Closed
             );
 

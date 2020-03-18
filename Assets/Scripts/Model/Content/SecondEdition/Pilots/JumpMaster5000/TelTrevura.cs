@@ -14,7 +14,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Tel Trevura",
                     4,
-                    50,
+                    44,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.TelTrevuraAbility),
                     charges: 1,
@@ -32,26 +32,25 @@ namespace Abilities.SecondEdition
     {
         public override void ActivateAbility()
         {
-            HostShip.OnReadyToBeDestroyed += ActivateAbility;
+            HostShip.OnCheckPreventDestruction += ActivateAbility;
         }
 
         public override void DeactivateAbility()
         {
-            HostShip.OnReadyToBeDestroyed -= ActivateAbility;
+            HostShip.OnCheckPreventDestruction -= ActivateAbility;
         }
 
-        private void ActivateAbility(GenericShip ship)
+        private void ActivateAbility(GenericShip ship, ref bool preventDestruction)
         {
             if (HostShip.State.Charges > 0)
             {
-                Messages.ShowInfo(HostShip.PilotInfo.PilotName + ": Destruction is prevented");
-
                 HostShip.SpendCharge();
 
-                HostShip.OnReadyToBeDestroyed -= ActivateAbility;
+                Messages.ShowInfo(HostShip.PilotInfo.PilotName + " has prevented his own destruction");
 
-                HostShip.PreventDestruction = true;
-
+                HostShip.OnCheckPreventDestruction -= ActivateAbility;
+                preventDestruction = true;
+                HostShip.IsDestroyed = false;
                 Roster.MoveToReserve(HostShip);
 
                 Phases.Events.OnPlanningPhaseStart += RegisterSetup;
@@ -61,8 +60,6 @@ namespace Abilities.SecondEdition
         private void RegisterSetup()
         {
             Phases.Events.OnPlanningPhaseStart -= RegisterSetup;
-
-            HostShip.PreventDestruction = false;
 
             RegisterAbilityTrigger(TriggerTypes.OnPlanningSubPhaseStart, RestoreAndSetup);
         }
@@ -92,15 +89,15 @@ namespace Abilities.SecondEdition
             var subphase = Phases.StartTemporarySubPhaseNew<SetupShipMidgameSubPhase>(
                 "Setup",
                 delegate {
-                    Messages.ShowInfo(HostShip.PilotInfo.PilotName + " returned to the play area");
+                    Messages.ShowInfo(HostShip.PilotInfo.PilotName + " has returned to the play area");
                     Triggers.FinishTrigger();
                 }
             );
 
             subphase.ShipToSetup = HostShip;
             subphase.SetupSide = (HostShip.Owner.PlayerNo == Players.PlayerNo.Player1) ? Direction.Bottom : Direction.Top;
-            subphase.AbilityName = HostShip.PilotInfo.PilotName;
-            subphase.Description = "Place yourself within range 1 of your player edge";
+            subphase.DescriptionShort = HostShip.PilotInfo.PilotName;
+            subphase.DescriptionLong = "Place yourself within range 1 of your player edge.";
             subphase.ImageSource = HostShip;
 
             subphase.Start();

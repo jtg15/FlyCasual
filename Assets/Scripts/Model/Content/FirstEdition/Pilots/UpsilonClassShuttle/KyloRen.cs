@@ -100,7 +100,9 @@ namespace Abilities.FirstEdition
 
             selectPilotCritSubphase.DefaultDecisionName = selectPilotCritSubphase.GetDecisions().First().Name;
 
-            selectPilotCritSubphase.InfoText = "Kylo Ren: Select Damage Card";
+            selectPilotCritSubphase.DescriptionShort = "Kylo Ren";
+            selectPilotCritSubphase.DescriptionLong = "Select a Damage Card to assign";
+            selectPilotCritSubphase.ImageSource = HostShip;
 
             selectPilotCritSubphase.RequiredPlayer = HostShip.Owner.PlayerNo;
 
@@ -109,7 +111,7 @@ namespace Abilities.FirstEdition
 
         protected void SelectDamageCard(GenericDamageCard damageCard)
         {
-            Messages.ShowInfo("Card is selected: " + damageCard.Name);
+            Messages.ShowInfo(damageCard.Name + " has been selected");
 
             AssignedDamageCard = damageCard;
             AssignedDamageCard.IsFaceup = true;
@@ -146,11 +148,11 @@ namespace Abilities.FirstEdition
         {
             if ((e as DamageSourceEventArgs).DamageType == DamageTypes.ShipAttack)
             {
-                Messages.ShowInfo("Kylo Ren: Assigned card is dealt instead");
 
                 isSkipSufferDamage = true;
 
                 GenericShip ship = ShipWithCondition;
+                Messages.ShowInfo("Kylo Ren's premonition comes true: " + ship.PilotInfo.PilotName + " receives " + AssignedDamageCard.Name);
                 Combat.CurrentCriticalHitCard = AssignedDamageCard;
 
                 AssignedDamageCard = null;
@@ -176,7 +178,7 @@ namespace Conditions
     {
         public IllShowYouTheDarkSide(GenericShip host) : base(host)
         {
-            Name = "I'll Show You The Dark Side Condition";
+            Name = ImageName = "I'll Show You The Dark Side Condition";
             Temporary = false;
             Tooltip = "https://raw.githubusercontent.com/guidokessels/xwing-data/master/images/conditions/ill-show-you-the-dark-side.png";
         }
@@ -186,7 +188,7 @@ namespace Conditions
     {
         public IllShowYouTheDarkSideDamageCard(GenericShip host) : base(host)
         {
-            Name = "I'll Show You The Dark Side Damage Card Condition";
+            Name = ImageName = "I'll Show You The Dark Side Damage Card Condition";
             Temporary = false;
         }
     }

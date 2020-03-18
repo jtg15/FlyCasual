@@ -1,10 +1,6 @@
 ﻿using ActionsList;
-using Ship;
 using SubPhases;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Tokens;
 using Upgrade;
 
@@ -38,37 +34,36 @@ namespace Abilities.SecondEdition
 
         public override void ActivateAbility()
         {
-            HostShip.OnActionIsPerformed += CheckBazeAbility;
+            HostShip.BeforeActionIsPerformed += RegisterBazeAbility;
         }
 
         public override void DeactivateAbility()
         {
-            HostShip.OnActionIsPerformed -= CheckBazeAbility;
+            HostShip.BeforeActionIsPerformed -= RegisterBazeAbility;
         }
 
-        private void CheckBazeAbility(GenericAction action)
+        private void RegisterBazeAbility(GenericAction action, ref bool isFree)
         {
-            if(action is FocusAction)
-            {
-                HostShip.OnActionDecisionSubphaseEnd += RegisterBazeAbility;
-            }
-        }
-
-        private void RegisterBazeAbility(GenericShip ship)
-        {
-            ship.OnActionDecisionSubphaseEnd -= RegisterBazeAbility;
-            RegisterAbilityTrigger(TriggerTypes.OnActionIsPerformed, AskToUseBazeAbility);
+            if (action is FocusAction)
+                RegisterAbilityTrigger(TriggerTypes.BeforeActionIsPerformed, AskToUseBazeAbility);
         }
 
         private void AskToUseBazeAbility(object sender, EventArgs e)
         {
             enemyShipsWithinRange = GetEnemyShipsWithinRange();
             Func<bool> useAbility = NeverUseByDefault;
-            if(enemyShipsWithinRange > 0)
+            if (enemyShipsWithinRange > 0)
             {
                 useAbility = AlwaysUseByDefault;
             }
-            AskToUseAbility(useAbility, UseBazeMalbusAbility);
+
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                useAbility,
+                UseBazeMalbusAbility,
+                descriptionLong: "Do you want to treat action as red? If you do, gain 1 additional focus token for each enemy ship at range 0-1, to a maximum of 2.",
+                imageHolder: HostUpgrade
+            );
         }
 
         private void UseBazeMalbusAbility(object sender, EventArgs e)
@@ -79,14 +74,25 @@ namespace Abilities.SecondEdition
                 UpgradesList.SecondEdition.BazeMalbus.MaximumAdditionalFocusTokens : enemyShipsWithinRange);
 
             if (enemyShipsWithinRange > 0) {
-                Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": Gained additional " + additionalFocusTokens + " Focus token(s)");
+                Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + " caused " + HostShip.PilotInfo.PilotName + " to gain " + additionalFocusTokens + " additional Focus token(s)");
             }
+
+            HostShip.OnCheckActionComplexity += TreatActionAsRed;
 
             HostShip.Tokens.AssignTokens(
                 () => new FocusToken(HostShip),
                 additionalFocusTokens,
-                delegate { HostShip.Tokens.AssignToken(typeof(StressToken), Triggers.FinishTrigger); }
+                Triggers.FinishTrigger
             );
+        }
+
+        private void TreatActionAsRed(GenericAction action, ref Actions.ActionColor color)
+        {
+            if (action is FocusAction)
+            {
+                HostShip.OnCheckActionComplexity -= TreatActionAsRed;
+                color = Actions.ActionColor.Red;
+            }
         }
 
         private int GetEnemyShipsWithinRange()

@@ -175,7 +175,7 @@ namespace SubPhases
             }
         }
 
-        private void PerfromBrTemplatePlanning(ActionsHolder.BarrelRollTemplateVariants template)
+        private void PerfromBrTemplatePlanning(Direction direction)
         {
             BarrelRollAction stubAction = new BarrelRollAction{ HostShip = TheShip };
 
@@ -183,7 +183,7 @@ namespace SubPhases
                 "Select position",
                 typeof(BarrelRollPlanningSubPhase),
                 delegate {
-                    FinishTractorBeamMovement(stubAction);
+                    FinishTractorBeamMovement();
                 }
             );
             brPlanning.Name = "Select position";
@@ -193,7 +193,15 @@ namespace SubPhases
             brPlanning.HostAction = stubAction;
 
             brPlanning.IsTractorBeamBarrelRoll = true;
-            brPlanning.SelectTemplate(template);
+            brPlanning.SelectTemplate(
+                new ManeuverTemplate(
+                    Movement.ManeuverBearing.Straight,
+                    Movement.ManeuverDirection.Forward,
+                    Movement.ManeuverSpeed.Speed1,
+                    isSideTemplate: TheShip.ShipInfo.BaseSize != BaseSize.Small
+                ),
+                direction
+            );
 
             Phases.UpdateHelpInfo();
             brPlanning.PerfromTemplatePlanning();
@@ -201,12 +209,12 @@ namespace SubPhases
 
         private void PerfromLeftBrTemplatePlanning()
         {
-            PerfromBrTemplatePlanning(ActionsHolder.BarrelRollTemplateVariants.Straight1Left);
+            PerfromBrTemplatePlanning(Direction.Left);
         }
 
         private void PerfromRightBrTemplatePlanning()
         {
-            PerfromBrTemplatePlanning(ActionsHolder.BarrelRollTemplateVariants.Straight1Right);
+            PerfromBrTemplatePlanning(Direction.Right);
         }
 
         private void PerfromStraightTemplatePlanning()
@@ -217,7 +225,7 @@ namespace SubPhases
                 "Boost",
                 typeof(BoostPlanningSubPhase),
                 delegate {
-                    FinishTractorBeamMovement(stubAction);
+                    FinishTractorBeamMovement();
                 }
             );
             boostPlanning.HostAction = stubAction;
@@ -258,7 +266,9 @@ namespace SubPhases
                 DecisionSubPhase.ConfirmDecision();
             });
 
-            selectTractorDirection.InfoText = "Select tractor beam direction for " + TheShip.PilotInfo.PilotName;
+            selectTractorDirection.DescriptionShort = "Tractor beam";
+            selectTractorDirection.DescriptionLong = "Select direction for " + TheShip.PilotInfo.PilotName;
+
             selectTractorDirection.DefaultDecisionName = selectTractorDirection.GetDecisions().First().Name;
             selectTractorDirection.RequiredPlayer = Assigner.PlayerNo;
             selectTractorDirection.ShowSkipButton = true;
@@ -266,13 +276,88 @@ namespace SubPhases
             selectTractorDirection.Start();
         }
 
-        private void FinishTractorBeamMovement(ActionsList.GenericAction action)
+        private void FinishTractorBeamMovement()
         {
-            TheShip.CallActionIsTaken(action, delegate {
-                // ^ CallActionIsTaken to support interaction with black one, etc
-                Rules.AsteroidHit.CheckDamage(TheShip);
-                Triggers.ResolveTriggers(TriggerTypes.OnMovementFinish, Next);
+            if (Assigner == TheShip.Owner)
+            {
+                CheckObstacles();
+                return;
+            }
+
+            var selectRotateDecision = Phases.StartTemporarySubPhaseNew<DecisionSubPhase>(Name, Triggers.FinishTrigger);
+
+            selectRotateDecision.AddDecision("Left", delegate {
+                DecisionSubPhase.ConfirmDecisionNoCallback();
+                RotateTractoredShip(Direction.Left, CheckObstacles);
             });
+
+            selectRotateDecision.AddDecision("Right", delegate {
+                DecisionSubPhase.ConfirmDecisionNoCallback();
+                RotateTractoredShip(Direction.Right, CheckObstacles);
+            });
+
+            selectRotateDecision.AddDecision("Skip", delegate {
+                DecisionSubPhase.ConfirmDecisionNoCallback();
+                CheckObstacles();
+            });
+
+            selectRotateDecision.DescriptionShort = "Tractor beam";
+            selectRotateDecision.DescriptionLong = "You may rotate tractored ship 90 degrees";
+
+            selectRotateDecision.DefaultDecisionName = SelectAIRotateDecision(TheShip);
+            selectRotateDecision.RequiredPlayer = TheShip.Owner.PlayerNo;
+            selectRotateDecision.ShowSkipButton = true;
+
+            selectRotateDecision.Start();
+        }
+
+        private string SelectAIRotateDecision(GenericShip ship)
+        {
+            var stressPriority = ship.GetAIStressPriority();
+
+            if (!ActionsHolder.HasTarget(ship) || stressPriority >= 50)
+            {
+                var enemies = ship.SectorsInfo.GetEnemiesInAllSectors();
+                var frontPriority = enemies[Arcs.ArcFacing.Front].Sum(s => s.PilotInfo.Cost);
+                var leftPriority = enemies[Arcs.ArcFacing.Left].Sum(s => s.PilotInfo.Cost) + stressPriority;
+                var rightPriority = enemies[Arcs.ArcFacing.Right].Sum(s => s.PilotInfo.Cost) + stressPriority;
+
+                if (leftPriority > 0 && leftPriority > rightPriority && leftPriority > frontPriority)
+                    return "Left";
+                if (rightPriority > 0 && rightPriority > frontPriority)
+                    return "Right";
+            }
+
+            return "Skip";
+        }
+
+        private void RotateTractoredShip(Direction direction, Action callback)
+        {
+            //We need to change Selection.ThisShip before rotating. Making sure that we always change back afterwards
+            var selectedShip = Selection.ThisShip;
+            Selection.ThisShip = TheShip;
+
+            Action resetSelection = () => 
+            {
+                Selection.ThisShip = selectedShip;
+                callback();
+            };
+
+            Action assignStress = () =>
+            {
+                TheShip.Tokens.AssignToken(typeof(StressToken), resetSelection);
+            };
+            
+            if (direction == Direction.Left) TheShip.Rotate90Counterclockwise(assignStress);
+            else if (direction == Direction.Right) TheShip.Rotate90Clockwise(assignStress);
+            else resetSelection();
+        }
+
+        private void CheckObstacles()
+        {
+            Rules.AsteroidHit.CheckHits(TheShip);
+            Rules.AsteroidLanded.CheckLandedOnObstacle(TheShip);
+            Triggers.ResolveTriggers(TriggerTypes.OnMovementFinish, Next);
         }
 
         public override void Next()
@@ -288,9 +373,10 @@ namespace SubPhases
             var prevPhase = Phases.CurrentSubPhase;
             Phases.CurrentSubPhase = this;
             UpdateHelpInfo();
-            if ((prevPhase is BarrelRollPlanningSubPhase) && (prevPhase as BarrelRollPlanningSubPhase).CheckBarrelRollProblems().Count > 0) {
+            // TODO: Check barrel roll problems
+            /*if ((prevPhase is BarrelRollPlanningSubPhase) && (prevPhase as BarrelRollPlanningSubPhase).CheckBarrelRollProblems().Count > 0) {
                 RegisterTractorPlanning();
-            }
+            }*/
         }
 
         protected class TractorBeamDirectionDecisionSubPhase : DecisionSubPhase { }

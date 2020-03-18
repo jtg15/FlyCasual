@@ -8,6 +8,7 @@ public partial class Die
     public bool IsRerolled { get; set; }
     public bool IsShowRerolledLock { get; private set; }
     public bool IsUncancelable { get; set; }
+    public bool IsAddedResult { get; set; }
 
     private bool cannotBeModified { get; set; }
     public bool CannotBeModified
@@ -70,9 +71,35 @@ public partial class Die
         Side = DieSide.Blank;
     }
 
-    public void SetSide(DieSide side)
+    public bool TrySetSide(DieSide newSide, bool isInitial = true)
     {
-        Side = side;
+        // isInitial needs to be set only on the initial roll (or when specific cards want to override the functionality to treat the roll like an initial roll)
+        if (isInitial)
+        {
+            Side = newSide;
+            return true;
+        }
+
+        bool isAllowed = true;
+
+        // Issues: we don't know what the DiceModificationType is when we get into this base level function.
+        Selection.ActiveShip.TryDiceResultModification
+        (
+            this,
+            Abilities.GenericAbility.DiceModificationType.Change,
+            newSide,
+            ref isAllowed
+        );
+
+        if (isAllowed)
+        {
+            Side = newSide;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public DieSide Side

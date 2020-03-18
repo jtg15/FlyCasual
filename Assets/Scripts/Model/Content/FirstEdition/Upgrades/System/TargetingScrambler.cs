@@ -16,7 +16,7 @@ namespace UpgradesList.FirstEdition
         {
             UpgradeInfo = new UpgradeCardInfo(
                 "Targeting Scrambler",
-                UpgradeType.System,
+                UpgradeType.Sensor,
                 cost: 0,
                 abilityType: typeof(Abilities.FirstEdition.TargetingScramblerAbility)
             );
@@ -46,7 +46,13 @@ namespace Abilities.FirstEdition
 
         private void AskToUseTargetingScrambler(object sender, EventArgs e)
         {
-            AskToUseAbility(NeverUseByDefault, SelecScrambledTarget);
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                NeverUseByDefault,
+                SelecScrambledTarget,
+                descriptionLong: "Do you want to receive a Weapons Disabled Token to choose a ship at range 1-3 and assign it the \"Scrambled\" condition?",
+                imageHolder: HostUpgrade
+            );
         }
 
         private void SelecScrambledTarget(object sender, EventArgs e)
@@ -59,14 +65,14 @@ namespace Abilities.FirstEdition
                 GetAiAbilityPriority,
                 HostShip.Owner.PlayerNo,
                 HostUpgrade.UpgradeInfo.Name,
-                "Choose another ship to assign \"Scrambled\" condition to it.\nYou will receive weapons disabled token.",
+                "Choose another ship to assign the \"Scrambled\" condition to,\nyou will receive a weapons disabled token",
                 HostUpgrade
             );
         }
 
         private void AssignScrambledCondition()
         {
-            Messages.ShowInfo(string.Format("\"Scrambled\" condition is assigned to {0}", TargetShip.PilotInfo.PilotName));
+            Messages.ShowInfo(string.Format("The \"Scrambled\" condition is assigned to {0}", TargetShip.PilotInfo.PilotName));
 
             TargetShip.Tokens.AssignCondition(typeof(ScrambledCondition));
             TargetShip.OnTryAddAvailableDiceModification += UseDiceModificationRestriction;
@@ -111,7 +117,7 @@ namespace Conditions
     {
         public ScrambledCondition(GenericShip host) : base(host)
         {
-            Name = "Scrambled Condition";
+            Name = ImageName = "Scrambled Condition";
             Temporary = false;
             Tooltip = "https://raw.githubusercontent.com/guidokessels/xwing-data/master/images/conditions/scrambled.png";
         }

@@ -33,7 +33,7 @@ namespace Abilities.FirstEdition
     //  focus and evade tokens.
     public class OldTerochAbility : GenericAbility
     {
-        protected string AbilityDescription = "Choose a ship. If you are inside its firing arc, it discards all focus and evade tokens.";
+        protected string AbilityDescription = "Choose a ship: if you are inside its firing arc, it discards all focus and evade tokens";
         public override void ActivateAbility()
         {
             Phases.Events.OnCombatPhaseStart_Triggers += CheckOldTerochAbility;
@@ -113,7 +113,7 @@ namespace Abilities.FirstEdition
             }
             else
             {
-                Messages.ShowError(HostShip.PilotInfo.PilotName + " is not within " + TargetShip.PilotInfo.PilotName + " firing arc.");
+                Messages.ShowError(HostShip.PilotInfo.PilotName + " is not within " + TargetShip.PilotInfo.PilotName + "'s firing arc");
             }
         }
 

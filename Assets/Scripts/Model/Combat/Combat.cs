@@ -56,11 +56,15 @@ public static partial class Combat
 
     public static ShotInfo ShotInfo;
 
+    public static Action<Action> PayExtraAttackCost;
+
     public static Func<GenericShip, IShipWeapon, bool, bool> ExtraAttackFilter;
 
     public static bool IsAttackAlreadyCalled;
 
     public static GenericArc ArcForShot;
+
+    public static bool SkipDiceRolls;
 
     public static void Initialize()
     {
@@ -73,6 +77,8 @@ public static partial class Combat
     {
         if (!IsAttackAlreadyCalled)
         {
+            Phases.CurrentSubPhase.IsReadyForCommands = true;
+
             IsAttackAlreadyCalled = true;
 
             JSONObject parameters = new JSONObject();
@@ -104,6 +110,17 @@ public static partial class Combat
         Selection.ChangeActiveShip("ShipId:" + attackerId);
         Selection.ChangeAnotherShip("ShipId:" + defenderId);
 
+        Action callback = Phases.CurrentSubPhase.CallBack;
+        var subphase = Phases.StartTemporarySubPhaseNew(
+            "Extra Attack",
+            typeof(AttackExecutionSubphase),
+            delegate {
+                Phases.FinishSubPhase(typeof(AttackExecutionSubphase));
+                callback();
+            }
+        );
+        subphase.Start();
+
         if (!weaponIsAlreadySelected)
         {
             SelectWeapon();
@@ -124,7 +141,7 @@ public static partial class Combat
         if (weapons.Count > 1)
         {
             Phases.StartTemporarySubPhaseOld(
-                "Choose weapon for attack",
+                "Choose a weapon for this attack.",
                 typeof(WeaponSelectionDecisionSubPhase),
                 delegate { TryPerformAttack(isSilent: false); }
             );
@@ -132,13 +149,11 @@ public static partial class Combat
         else if (weapons.Count == 1)
         {
             Combat.ChosenWeapon = weapons.First();
-            Messages.ShowInfo("Attack with " + Combat.ChosenWeapon.Name);
+            Messages.ShowInfo("Attacking with " + Combat.ChosenWeapon.Name);
 
             Combat.ShotInfo = new ShotInfo(Selection.ThisShip, Selection.AnotherShip, Combat.ChosenWeapon);
 
-            Combat.ShotInfo.CheckObstruction(delegate {
-                TryPerformAttack(isSilent: false);
-            });
+            TryPerformAttack(isSilent: false);
         }
         else
         {
@@ -171,12 +186,15 @@ public static partial class Combat
 
         if (ChosenWeapon != null && Rules.TargetIsLegalForShot.IsLegal(Selection.ThisShip, Selection.AnotherShip, ChosenWeapon, isSilent))
         {
-            UI.HideSkipButton();
-            Roster.AllShipsHighlightOff();
-
-            SetArcAsUsedForAttack();
-            DeclareAttackerAndDefender();
-            CheckFireLineCollisions();
+            if (!DebugManager.NoCinematicCamera)
+            {
+                CommandsList.ShotCamera.ShowShotCamera(Selection.ThisShip, Selection.AnotherShip);
+                GameManagerScript.Wait(3, StartLegalAttack);
+            }
+            else
+            {
+                StartLegalAttack();
+            }
         }
         else
         {
@@ -185,23 +203,29 @@ public static partial class Combat
         }
     }
 
+    private static void StartLegalAttack()
+    {
+        UI.HideSkipButton();
+        Roster.AllShipsHighlightOff();
+
+        SetArcAsUsedForAttack();
+        DeclareAttackerAndDefender();
+        ShotInfo = new ShotInfo(Selection.ThisShip, Selection.AnotherShip, ChosenWeapon);
+        PayAttackCost();
+    }
+
     private static void SetArcAsUsedForAttack()
     {
         Combat.ArcForShot = Combat.ShotInfo.ShotAvailableFromArcs.FirstOrDefault();
         if (ArcForShot != null) ArcForShot.WasUsedForAttackThisRound = true;
     }
 
-    private static void CheckFireLineCollisions()
-    {
-        ShotInfo = new ShotInfo(Selection.ThisShip, Selection.AnotherShip, ChosenWeapon);
-        ShotInfo.CheckObstruction(PayAttackCost);
-    }
-
     // PAY ATTACK COST
 
     private static void PayAttackCost()
     {
-        ChosenWeapon.PayAttackCost(StartAttack);
+        if (PayExtraAttackCost == null) PayExtraAttackCost = callback => callback();
+        ChosenWeapon.PayAttackCost(() => PayExtraAttackCost(StartAttack));
     }
 
     // DECLARE REAL ATTACK
@@ -236,14 +260,25 @@ public static partial class Combat
     {
         Attacker.CallShotStart();
         Defender.CallShotStart();
-        
+
+        Attacker.ShowAttackAnimationAndSound();
+
         Triggers.ResolveTriggers(TriggerTypes.OnShotStart, AttackDiceRoll);
     }
 
     private static void AttackDiceRoll()
     {
-        Selection.ActiveShip = Selection.ThisShip;
-        Phases.StartTemporarySubPhaseOld("Attack dice roll", typeof(AttackDiceRollCombatSubPhase));
+        if (!SkipDiceRolls)
+        {
+            Selection.ActiveShip = Selection.ThisShip;
+            Phases.StartTemporarySubPhaseOld("Attack dice roll", typeof(AttackDiceRollCombatSubPhase));
+        }
+        else
+        {
+            Phases.StartTemporarySubPhaseOld("Compare results", typeof(CompareResultsSubPhase));
+            DiceRollAttack = new DiceRoll(DiceKind.Attack, 0, DiceRollCheckType.Combat, Attacker.Owner.PlayerNo);
+            AttackHit();
+        }
     }
 
     public static void ConfirmAttackDiceResults()
@@ -307,11 +342,13 @@ public static partial class Combat
 
         MovementTemplates.ReturnRangeRuler();
 
-        Phases.StartTemporarySubPhaseOld("Compare results", typeof(CompareResultsSubPhase));
+        Defender.CallAfterModifyDefenseDiceStep(delegate { Phases.StartTemporarySubPhaseOld("Compare results", typeof(CompareResultsSubPhase)); });
     }
 
     public static void CancelHitsByDefenceDice()
     {
+        if (SkipDiceRolls) return;
+
         int crits = DiceRollAttack.CriticalSuccesses;
         DiceRollAttack.CancelHitsByDefence(DiceRollDefence.Successes);
         if (crits > DiceRollAttack.CriticalSuccesses)
@@ -349,7 +386,7 @@ public static partial class Combat
         {
             if (Attacker.AttackIsAlwaysConsideredHit)
             {
-                Messages.ShowInfo("Attack is considered a Hit");
+                Messages.ShowInfo("This attack is always considered a Hit");
                 AttackHit();
             }
             else
@@ -391,7 +428,7 @@ public static partial class Combat
     private static void CheckTwinAttack()
     {
         GenericSpecialWeapon chosenSecondaryWeapon = ChosenWeapon as GenericSpecialWeapon;
-        if (chosenSecondaryWeapon != null && chosenSecondaryWeapon.WeaponInfo.TwinAttack && !(Defender.IsDestroyed || Defender.IsReadyToBeDestroyed))
+        if (chosenSecondaryWeapon != null && chosenSecondaryWeapon.WeaponInfo.TwinAttack && !Defender.IsDestroyed)
         {
             if (attacksCounter == 0)
             {
@@ -487,6 +524,8 @@ public static partial class Combat
         hitsCounter = 0;
         ExtraAttackFilter = null;
         IsAttackAlreadyCalled = false;
+        PayExtraAttackCost = null;
+        SkipDiceRolls = false;
     }
 
     public static void FinishCombatSubPhase()
@@ -496,22 +535,36 @@ public static partial class Combat
 
     // Extra Attacks
 
-    public static void StartAdditionalAttack(GenericShip ship, Action callback, Func<GenericShip, IShipWeapon, bool, bool> extraAttackFilter = null, 
-        string abilityName = null, string description = null, IImageHolder imageSource = null, bool showSkipButton = true)
+    public static void StartSelectAttackTarget(
+        GenericShip ship,
+        Action callback,
+        Func<GenericShip, IShipWeapon, bool, bool> extraAttackFilter = null,
+        string abilityName = null,
+        string description = null,
+        IImageHolder imageSource = null,
+        bool showSkipButton = true,
+        Action<Action> payAttackCost = null
+    )
     {
         Selection.ChangeActiveShip("ShipId:" + ship.ShipId);
         Phases.CurrentSubPhase.RequiredPlayer = ship.Owner.PlayerNo;
 
         ExtraAttackFilter = extraAttackFilter;
+        PayExtraAttackCost = payAttackCost;
 
-        SelectTargetForSecondAttackSubPhase newAttackSubphase = (SelectTargetForSecondAttackSubPhase) Phases.StartTemporarySubPhaseNew(
+        SelectTargetForAttackSubPhase newAttackSubphase = (SelectTargetForAttackSubPhase) Phases.StartTemporarySubPhaseNew(
             "Second attack",
-            typeof(SelectTargetForSecondAttackSubPhase),
-            //delegate { ExtraAttackTargetSelected(callback, extraAttackFilter); }
-            callback
+            typeof(SelectTargetForAttackSubPhase),
+            delegate
+            {
+                ship.CallAfterAttackWindow();
+                Phases.FinishSubPhase(typeof(SelectTargetForAttackSubPhase));
+                CameraScript.RestoreCamera();
+                callback();
+            }
         );
-        newAttackSubphase.AbilityName = abilityName;
-        newAttackSubphase.Description = description;
+        newAttackSubphase.DescriptionShort = abilityName;
+        newAttackSubphase.DescriptionLong = description;
         newAttackSubphase.ImageSource = imageSource;
         newAttackSubphase.ShowSkipButton = showSkipButton;
 
@@ -529,7 +582,7 @@ namespace SubPhases
         {
             List<IShipWeapon> allWeapons = Selection.ThisShip.GetAllWeapons();
 
-            InfoText = "Choose weapon for attack";
+            DescriptionShort = "Choose weapon for attack";
 
             foreach (var weapon in allWeapons)
             {
@@ -563,15 +616,13 @@ namespace SubPhases
         public void PerformAttackWithWeapon(IShipWeapon weapon)
         {
             Tooltips.EndTooltip();
-            Messages.ShowInfo("Attack with " + weapon.Name);
+            Messages.ShowInfo("Attacking with " + weapon.Name);
 
             Combat.ChosenWeapon = weapon;
             Combat.ShotInfo = new ShotInfo(Selection.ThisShip, Selection.AnotherShip, Combat.ChosenWeapon);
 
-            Combat.ShotInfo.CheckObstruction(delegate{
-                Phases.FinishSubPhase(typeof(WeaponSelectionDecisionSubPhase));
-                CallBack();
-            });
+            Phases.FinishSubPhase(typeof(WeaponSelectionDecisionSubPhase));
+            CallBack();
         }
 
     }
@@ -679,10 +730,8 @@ namespace SubPhases
         }
     }
 
-    public class ExtraAttackSubPhase : GenericSubPhase
+    public class AttackExecutionSubphase : GenericSubPhase
     {
-        public override List<GameCommandTypes> AllowedGameCommandTypes { get { return new List<GameCommandTypes>() { GameCommandTypes.DeclareAttack, GameCommandTypes.PressSkip }; } }
-
         public override void Start()
         {
             Name = "Extra Attack";

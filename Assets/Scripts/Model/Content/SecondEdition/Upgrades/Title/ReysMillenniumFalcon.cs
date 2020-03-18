@@ -12,7 +12,7 @@ namespace UpgradesList.SecondEdition
             UpgradeInfo = new UpgradeCardInfo(
                 "Rey's Millennium Falcon",
                 UpgradeType.Title,
-                cost: 5,
+                cost: 2,
                 isLimited: true,
                 restrictions: new UpgradeCardRestrictions(
                     new ShipRestriction(typeof(Ship.SecondEdition.ScavengedYT1300.ScavengedYT1300)),
@@ -38,35 +38,24 @@ namespace Abilities.SecondEdition
         {
             HostShip.OnTokenIsAssigned += UseReysMillenniumFalcon;
             HostShip.OnTokenIsRemoved += UseReysMillenniumFalcon;
-            HostShip.OnManeuverIsReadyToBeRevealed += AllowSegnorsLoop;
-            HostShip.OnMovementFinish += RestoreFlag;
+            HostShip.OnTryCanPerformRedManeuverWhileStressed += AllowRedSegnorsLoopWhileStressed;
         }
 
         public override void DeactivateAbility()
         {
             HostShip.OnTokenIsAssigned -= UseReysMillenniumFalcon;
             HostShip.OnTokenIsRemoved -= UseReysMillenniumFalcon;
-            HostShip.OnManeuverIsReadyToBeRevealed -= AllowSegnorsLoop;
-            HostShip.OnMovementFinish -= RestoreFlag;
+            HostShip.OnTryCanPerformRedManeuverWhileStressed -= AllowRedSegnorsLoopWhileStressed;
         }
 
-        private void AllowSegnorsLoop(GenericShip ship)
+        private void AllowRedSegnorsLoopWhileStressed(ref bool isAllowed)
         {
-            if (ship.AssignedManeuver.Bearing == Movement.ManeuverBearing.SegnorsLoop)
+            if ((HostShip.AssignedManeuver != null)
+                && (HostShip.AssignedManeuver.Bearing == Movement.ManeuverBearing.SegnorsLoop)
+                && (HostShip.Tokens.CountTokensByType(typeof(StressToken)) <= 2)
+            )
             {
-                manueversWhileStressedFlag = HostShip.CanPerformRedManeuversWhileStressed;
-                if (HostShip.Tokens.CountTokensByType(typeof(StressToken)) <= 2)
-                {
-                    HostShip.CanPerformRedManeuversWhileStressed = true;
-                }
-            }
-        }
-
-        private void RestoreFlag(GenericShip ship)
-        {
-            if (ship.AssignedManeuver.Bearing == Movement.ManeuverBearing.SegnorsLoop)
-            {
-                HostShip.CanPerformRedManeuversWhileStressed = manueversWhileStressedFlag;
+                isAllowed = true;
             }
         }
 

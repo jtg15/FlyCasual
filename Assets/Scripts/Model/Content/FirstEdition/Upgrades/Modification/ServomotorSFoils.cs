@@ -72,7 +72,13 @@ namespace Abilities.FirstEdition
 
         protected void AskToFlip(object sender, EventArgs e)
         {
-            AskToUseAbility(AIWantsToFlip, DoFlipSide, null, null, false, FlipQuestion);
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                AIWantsToFlip,
+                DoFlipSide,
+                descriptionLong: FlipQuestion,
+                imageHolder: HostUpgrade
+            );
         }
 
         protected void DoFlipSide(object sender, EventArgs e)
@@ -177,6 +183,7 @@ namespace Abilities.FirstEdition
                     GameMode.CurrentGameMode.AssignManeuver(maneuverCode);
                     HostShip.OnMovementFinish += RestoreManuvers;
                 },
+                Triggers.FinishTrigger,
                 TurnOrTallonRoll
             );
         }

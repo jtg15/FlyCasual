@@ -37,30 +37,40 @@ namespace Abilities.FirstEdition
         {
             HostShip.OnMovementFinish -= CheckGeniusAbility;
         }
+        
+        protected virtual string AbilityDescription => "Do you want to discard one of your equipped Bomb Upgrade cards without the \"Action:\" header to drop the corresponding bomb token?";
+
+        protected virtual UpgradeSubType BombTypeRestriction => UpgradeSubType.None;
 
         private void CheckGeniusAbility(GenericShip ship)
         {
             if (HostShip.IsBumped) return;
             if (HostShip.IsBombAlreadyDropped) return;
-            if (!BombsManager.HasBombsToDrop(ship)) return;
+            if (!BombsManager.HasBombsToDrop(ship, BombTypeRestriction)) return;
             if (BoardTools.Board.IsOffTheBoard(ship)) return;
 
-            RegisterAbilityTrigger(TriggerTypes.OnMovementActivation, AskUseGeniusAbility);
+            RegisterAbilityTrigger(TriggerTypes.OnMovementActivationStart, AskUseGeniusAbility);
         }
 
         private void AskUseGeniusAbility(object sender, EventArgs e)
         {
-            AskToUseAbility(NeverUseByDefault, UseGeniusAbility);
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                NeverUseByDefault,
+                UseGeniusAbility,
+                descriptionLong: AbilityDescription,
+                imageHolder: HostUpgrade
+            );
         }
 
         private void UseGeniusAbility(object sender, EventArgs e)
         {
-            List<GenericUpgrade> timedBombsInstalled = BombsManager.GetBombsToDrop(HostShip);
+            List<GenericUpgrade> timedBombsInstalled = BombsManager.GetBombsToDrop(HostShip, BombTypeRestriction);
             DecisionSubPhase.ConfirmDecisionNoCallback();
 
             if (timedBombsInstalled.Count == 1)
             {
-                BombsManager.CurrentBomb = timedBombsInstalled[0] as GenericBomb;
+                BombsManager.CurrentDevice = timedBombsInstalled[0] as GenericBomb;
                 StartDropBombSubphase();
             }
             else
@@ -77,7 +87,7 @@ namespace Abilities.FirstEdition
                 callback
             );
 
-            foreach (var timedBombInstalled in BombsManager.GetBombsToDrop(HostShip))
+            foreach (var timedBombInstalled in BombsManager.GetBombsToDrop(HostShip, BombTypeRestriction))
             {
                 selectBombToDrop.AddDecision(
                     timedBombInstalled.UpgradeInfo.Name,
@@ -85,9 +95,11 @@ namespace Abilities.FirstEdition
                 );
             }
 
-            selectBombToDrop.InfoText = "Select bomb to drop";
+            selectBombToDrop.DescriptionShort = "\"Genius\"";
+            selectBombToDrop.DescriptionLong = "Select a device to drop";
+            selectBombToDrop.ImageSource = HostUpgrade;
 
-            selectBombToDrop.DefaultDecisionName = BombsManager.GetBombsToDrop(HostShip).First().UpgradeInfo.Name;
+            selectBombToDrop.DefaultDecisionName = BombsManager.GetBombsToDrop(HostShip, BombTypeRestriction).First().UpgradeInfo.Name;
 
             selectBombToDrop.RequiredPlayer = HostShip.Owner.PlayerNo;
 
@@ -96,7 +108,7 @@ namespace Abilities.FirstEdition
 
         private void SelectBomb(GenericUpgrade timedBombUpgrade)
         {
-            BombsManager.CurrentBomb = timedBombUpgrade as GenericTimedBomb;
+            BombsManager.CurrentDevice = timedBombUpgrade as GenericTimedBomb;
             DecisionSubPhase.ConfirmDecision();
         }
 
@@ -113,13 +125,13 @@ namespace Abilities.FirstEdition
 
         private void CheckThatBombIsDiscarded()
         {
-            if (BombsManager.CurrentBomb == null || BombsManager.CurrentBomb.IsDiscardedAfterDropped)
+            if (BombsManager.CurrentDevice == null || (BombsManager.CurrentDevice as GenericBomb).IsDiscardedAfterDropped)
             {
                 Triggers.FinishTrigger();
             }
             else
             {
-                BombsManager.CurrentBomb.TryDiscard(Triggers.FinishTrigger);
+                BombsManager.CurrentDevice.TryDiscard(Triggers.FinishTrigger);
             }
         }
     }

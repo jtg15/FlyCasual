@@ -1,5 +1,4 @@
-﻿using System;
-using ActionsList;
+﻿using BoardTools;
 using Ship;
 using SubPhases;
 using Upgrade;
@@ -48,7 +47,7 @@ namespace Abilities.SecondEdition
             if (TargetsForAbilityExist(FilterTargetShip))
             {
                 Selection.ChangeActiveShip(HostShip);
-                SelectTargetForAbility(TargetIsSelected, FilterTargetShip, GetAiPriority, HostShip.Owner.PlayerNo, "Keysu Onyo's Ability", "You may choose 1 enemy ship. That ship does not remove its tractor tokens", HostShip);
+                SelectTargetForAbility(TargetIsSelected, FilterTargetShip, GetAiPriority, HostShip.Owner.PlayerNo, "Keysu Onyo's Ability", "You may choose 1 enemy ship, that ship does not remove its tractor tokens", HostShip);
             }
             else
             {
@@ -66,7 +65,7 @@ namespace Abilities.SecondEdition
 
         }
 
-        void BeforeRemovingTokenInEndPhase(Tokens.GenericToken token, ref bool remove)
+        void BeforeRemovingTokenInEndPhase(GenericShip ship, Tokens.GenericToken token, ref bool remove)
         {
             if (token is Tokens.TractorBeamToken) 
             {
@@ -80,16 +79,18 @@ namespace Abilities.SecondEdition
             TargetShip.OnSystemsPhaseStart -= RemoveEvents;
         }
 
+        private bool FilterTargetShip(GenericShip otherShip)
+        {
+            ShotInfo shotInfo = new ShotInfo(HostShip, otherShip, HostShip.PrimaryWeapons);
 
-        private bool FilterTargetShip(GenericShip otherShip){
-            return otherShip.Owner != HostShip.Owner && otherShip.InPrimaryWeaponFireZone(HostShip, 0, 2)
-                            && otherShip.Tokens.HasToken<Tokens.TractorBeamToken>();
+            return otherShip.Owner != HostShip.Owner
+                && shotInfo.InArc
+                && shotInfo.Range <= 2
+                && otherShip.Tokens.HasToken<Tokens.TractorBeamToken>();
         }
 
         private int GetAiPriority(GenericShip otherShip) {
             return 1;
         }
-
-       
     }
 }

@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using Players;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,6 +8,32 @@ public enum DiceKind
 {
     Attack,
     Defence
+}
+
+public class DieRollEventArg : EventArgs
+{
+    public PlayerNo PlayerNo { get; private set; }
+    public DiceKind DiceKind { get; private set; }
+
+    public DieRollEventArg(PlayerNo playerNo, DiceKind diceKind)
+    {
+        PlayerNo = playerNo;
+        DiceKind = diceKind;
+    }
+}
+
+public class DieResultEventArg: EventArgs
+{
+    public PlayerNo PlayerNo { get; private set; }
+    public DiceKind DiceKind { get; private set; }
+    public DieSide DieSide { get; private set; }
+
+    public DieResultEventArg(PlayerNo playerNo, DiceKind diceKind, DieSide dieSide)
+    {
+        PlayerNo = playerNo;
+        DiceKind = diceKind;
+        DieSide = dieSide;
+    }
 }
 
 public partial class Die
@@ -27,6 +55,7 @@ public partial class Die
     private static int diceIDcounter;
 
     public GameObject Model { get; private set; }
+    public bool IsWaitingForNewResult { get; set; }
 
     public Die(DiceRoll diceRoll, DiceKind type, DieSide side = DieSide.Unknown)
     {
@@ -50,10 +79,12 @@ public partial class Die
         if (side != DieSide.Unknown)
         {
             Side = side;
+            IsAddedResult = true;
         }
         else
         {
-            Side = Sides[Random.Range(0, 8)];
+            Side = Sides[UnityEngine.Random.Range(0, 8)];
+            IsAddedResult = false;
         }
     }
 
@@ -68,7 +99,7 @@ public partial class Die
 
     public void RandomizeRotation()
     {
-        SetInitialRotation(new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
+        SetInitialRotation(new Vector3(UnityEngine.Random.Range(0, 360), UnityEngine.Random.Range(0, 360), UnityEngine.Random.Range(0, 360)));
     }
 
     public void ShowWithoutRoll()
@@ -87,9 +118,13 @@ public partial class Die
     public void Roll()
     {
         if (Model == null) Model = SpawnDice(Type);
+        Model.GetComponentInChildren<Rigidbody>().isKinematic = false;
+        IsWaitingForNewResult = true;
         modelRollingIsFinished = false;
         Model.gameObject.SetActive(true);
         Model.transform.Find("Dice").GetComponent<Rigidbody>().isKinematic = false;
+
+        DiceManager.CallDiceRolled(this, new DieRollEventArg(ParentDiceRoll.PlayerNo, Type));
     }
 
     public void Reroll()

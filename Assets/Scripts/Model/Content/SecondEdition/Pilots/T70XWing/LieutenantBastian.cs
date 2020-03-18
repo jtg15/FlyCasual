@@ -17,7 +17,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Lieutenant Bastian",
                     2,
-                    48,
+                    47,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.LieutenantBastianAbility)
                 );
@@ -59,9 +59,11 @@ namespace Abilities.SecondEdition
         private void AskAcquireTargetLock(object sender, System.EventArgs e)
         {
             AskToUseAbility(
+                HostShip.PilotInfo.PilotName,
                 ShouldAbilityBeUsed,
                 AcquireTargetLock,
-                infoText: HostShip.PilotInfo.PilotName + ": Acquire a Lock on " + ShipToAssignLock.PilotInfo.PilotName + "?"
+                descriptionLong: "Do you want to acquire a Lock on " + ShipToAssignLock.PilotInfo.PilotName + "?",
+                imageHolder: HostShip
             );
         }
 

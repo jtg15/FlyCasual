@@ -4,6 +4,8 @@ using UnityEngine;
 using System;
 using Obstacles;
 using Ship;
+using Bombs;
+using Remote;
 
 namespace Movement
 {
@@ -21,9 +23,10 @@ namespace Movement
             get { return ShipsBumped.Count != 0; }
         }
 
-        public List<Ship.GenericShip> ShipsBumped = new List<Ship.GenericShip>();
+        public List<GenericShip> ShipsBumped = new List<GenericShip>();
+        public List<GenericRemote> RemotesOverlapped = new List<GenericRemote>();
         public List<GenericObstacle> AsteroidsHit = new List<GenericObstacle>();
-        public List<GameObject> MinesHit = new List<GameObject>();
+        public List<GenericDeviceGameObject> MinesHit = new List<GenericDeviceGameObject>();
         public bool IsLandedOnAsteroid { get { return LandedOnObstacles.Count > 0; } }
         public List<GenericObstacle> LandedOnObstacles = new List<GenericObstacle>();
         public float SuccessfullMovementProgress { get; private set; }
@@ -129,6 +132,14 @@ namespace Movement
                             }
                         }
 
+                        foreach (var overlapedRemote in obstacleStayDetector.OverlapedRemotes)
+                        {
+                            if (!RemotesOverlapped.Contains(overlapedRemote))
+                            {
+                                RemotesOverlapped.Add(overlapedRemote);
+                            }
+                        }
+
                         foreach (var asteroidHit in obstacleStayDetector.OverlapedAsteroids)
                         {
                             if (!AsteroidsHit.Contains(asteroidHit))
@@ -139,7 +150,7 @@ namespace Movement
 
                         foreach (var mineHit in obstacleStayDetector.OverlapedMines)
                         {
-                            GameObject MineObject = mineHit.transform.parent.gameObject;
+                            GenericDeviceGameObject MineObject = mineHit.transform.parent.GetComponent<GenericDeviceGameObject>();
                             if (!MinesHit.Contains(MineObject))
                             {
                                 MinesHit.Add(MineObject);
@@ -173,7 +184,7 @@ namespace Movement
                     }
                     foreach (var mineHit in obstacleHitsDetector.OverlapedMines)
                     {
-                        GameObject MineObject = mineHit.transform.parent.gameObject;
+                        GenericDeviceGameObject MineObject = mineHit.transform.parent.GetComponent<GenericDeviceGameObject>();
                         if (!MinesHit.Contains(MineObject))
                         {
                             MinesHit.Add(MineObject);

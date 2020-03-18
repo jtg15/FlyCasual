@@ -1,6 +1,7 @@
 ﻿using Upgrade;
 using Ship;
 using ActionsList;
+using System;
 
 namespace UpgradesList.SecondEdition
 {
@@ -37,16 +38,30 @@ namespace Abilities.SecondEdition
 
         private void RegisterTrigger()
         {
-            RegisterAbilityTrigger(TriggerTypes.OnCombatActivation, UseAbility);
+            if (HostShip.ShipInfo.ArcInfo.IsMobileTurretShip())
+            {
+                RegisterAbilityTrigger(TriggerTypes.OnCombatActivation, UseAbility);
+            }
         }
 
         private void UseAbility(object sender, System.EventArgs e)
         {
             Selection.ChangeActiveShip(HostShip);
 
-            Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": You can rotate your arc");
+            AskToUseAbility(
+                "Agile Gunner",
+                NeverUseByDefault,
+                UseAgileGunnerAbility,
+                descriptionLong: "Do you want to rotate your turret arc indicator?",
+                imageHolder: HostUpgrade,
+                requiredPlayer: HostShip.Owner.PlayerNo
+            );
+        }
 
-            /*HostShip.AskPerformFreeAction(new RotateArcAction() { IsRed = false, CanBePerformedWhileStressed = true }, Triggers.FinishTrigger);*/
+        private void UseAgileGunnerAbility(object sender, EventArgs e)
+        {
+            SubPhases.DecisionSubPhase.ConfirmDecisionNoCallback();
+
             new RotateArcAction().DoOnlyEffect(Triggers.FinishTrigger);
         }
     }

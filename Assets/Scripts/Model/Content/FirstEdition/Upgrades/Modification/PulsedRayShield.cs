@@ -29,7 +29,7 @@ namespace UpgradesList.FirstEdition
         {
             bool result = HostShip.ShipInfo.Shields == 1;
 
-            if (!result) Messages.ShowError("Pulsed Ray Shield cannot be installed on ships where shield value is not 1!");
+            if (!result) Messages.ShowError("Pulsed Ray Shield can only be equipped on ships with a shield value of 1!");
 
             return result;
         }
@@ -63,7 +63,13 @@ namespace Abilities.FirstEdition
             if (HostShip.State.ShieldsCurrent < HostShip.State.ShieldsMax)
             {
                 //Selection.ChangeActiveShip(HostShip);
-                AskToUseAbility(ShouldUseAbility, PulsedRayShieldConfirm);
+                AskToUseAbility(
+                    HostUpgrade.UpgradeInfo.Name,
+                    ShouldUseAbility,
+                    PulsedRayShieldConfirm,
+                    descriptionLong: "Do you want to receive 1 Ion Token to recover 1 shield?",
+                    imageHolder: HostUpgrade
+                );
             }
             else
             {
@@ -119,7 +125,7 @@ namespace Abilities.FirstEdition
 
         private void RestoreShield()
         {
-            if (HostShip.TryRegenShields()) Messages.ShowInfo("Pulsed Ray Shield: Shield is restored");
+            if (HostShip.TryRegenShields()) Messages.ShowInfo("Pulsed Ray Shield restores 1 shield");
             DecisionSubPhase.ConfirmDecision();
         }
     }

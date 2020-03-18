@@ -5,6 +5,7 @@ using Actions;
 using ActionsList;
 using Arcs;
 using Upgrade;
+using UnityEngine;
 
 namespace Ship.FirstEdition.BWing
 {
@@ -26,7 +27,7 @@ namespace Ship.FirstEdition.BWing
                 new ShipUpgradesInfo(
                     UpgradeType.Title,
                     UpgradeType.Modification,
-                    UpgradeType.System,
+                    UpgradeType.Sensor,
                     UpgradeType.Cannon,
                     UpgradeType.Torpedo,
                     UpgradeType.Torpedo
@@ -39,7 +40,9 @@ namespace Ship.FirstEdition.BWing
 
             ModelInfo = new ShipModelInfo(
                 "B-wing",
-                "Teal"
+                "Teal",
+                new Vector3(-3.33f, 6.4f, 5.55f),
+                2f
             );
 
             DialInfo = new ShipDialInfo(

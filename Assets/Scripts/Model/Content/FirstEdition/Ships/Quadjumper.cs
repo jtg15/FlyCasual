@@ -5,6 +5,7 @@ using ActionsList;
 using Actions;
 using Arcs;
 using Upgrade;
+using UnityEngine;
 
 namespace Ship
 {
@@ -29,7 +30,7 @@ namespace Ship
                         UpgradeType.Title,
                         UpgradeType.Modification,
                         UpgradeType.Crew,
-                        UpgradeType.Bomb,
+                        UpgradeType.Device,
                         UpgradeType.Tech,
                         UpgradeType.Illicit
                     )
@@ -41,13 +42,15 @@ namespace Ship
 
                 ModelInfo = new ShipModelInfo(
                     "Quadjumper",
-                    "Quadjumper"
+                    "Quadjumper",
+                    new Vector3(-4f, 8f, 5.55f),
+                    1.75f
                 );
 
                 DialInfo = new ShipDialInfo(
-                    new ManeuverInfo(ManeuverSpeed.Speed1, ManeuverDirection.Left, ManeuverBearing.Reverse, MovementComplexity.Complex),
-                    new ManeuverInfo(ManeuverSpeed.Speed1, ManeuverDirection.Forward, ManeuverBearing.Reverse, MovementComplexity.Complex),
-                    new ManeuverInfo(ManeuverSpeed.Speed1, ManeuverDirection.Right, ManeuverBearing.Reverse, MovementComplexity.Complex),
+                    new ManeuverInfo(ManeuverSpeed.Speed1, ManeuverDirection.Left, ManeuverBearing.ReverseStraight, MovementComplexity.Complex),
+                    new ManeuverInfo(ManeuverSpeed.Speed1, ManeuverDirection.Forward, ManeuverBearing.ReverseStraight, MovementComplexity.Complex),
+                    new ManeuverInfo(ManeuverSpeed.Speed1, ManeuverDirection.Right, ManeuverBearing.ReverseStraight, MovementComplexity.Complex),
 
                     new ManeuverInfo(ManeuverSpeed.Speed1, ManeuverDirection.Left, ManeuverBearing.Turn, MovementComplexity.Normal),
                     new ManeuverInfo(ManeuverSpeed.Speed1, ManeuverDirection.Forward, ManeuverBearing.Straight, MovementComplexity.Normal),

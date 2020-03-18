@@ -83,7 +83,10 @@ public static class GameController
                 command = new PressNextCommand(commandType, subPhase, parameters);
                 break;
             case GameCommandTypes.ActivateAndMove:
-                command = new ActIvateAndMoveCommand(commandType, subPhase, parameters);
+                command = new ActivateAndMoveCommand(commandType, subPhase, parameters);
+                break;
+            case GameCommandTypes.SelectShipToAssignManeuver:
+                command = new SelectShipToAssignManeuverCommand(commandType, subPhase, parameters);
                 break;
             case GameCommandTypes.DeclareAttack:
                 command = new DeclareAttackCommand(commandType, subPhase, parameters);
@@ -126,6 +129,12 @@ public static class GameController
                 break;
             case GameCommandTypes.SelectObstacle:
                 command = new SelectObstacleCommand(commandType, subPhase, parameters);
+                break;
+            case GameCommandTypes.BombPlacement:
+                command = new BombPlacementCommand(commandType, subPhase, parameters);
+                break;
+            case GameCommandTypes.MoveObstacle:
+                command = new MoveObstacleCommand(commandType, subPhase, parameters);
                 break;
             default:
                 Console.Write("Constructor for GameCommand is not found", LogTypes.Errors, true, "red");

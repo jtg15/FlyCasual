@@ -34,7 +34,7 @@ namespace Abilities.SecondEdition
 
         public override void DeactivateAbility()
         {
-            HostShip.OnMovementFinishUnsuccessfully += RegisterAbility;
+            HostShip.OnMovementFinishUnsuccessfully -= RegisterAbility;
         }
 
         private void RegisterAbility(GenericShip ship)
@@ -44,26 +44,27 @@ namespace Abilities.SecondEdition
 
         private void AskToPerformAction(object sender, System.EventArgs e)
         {
-            Messages.ShowInfoToHuman(HostUpgrade.UpgradeInfo.Name + ": You may suffer 1 damage to perform a white action");
-
-            HostShip.BeforeFreeActionIsPerformed += RegisterSufferDamage;
+            HostShip.BeforeActionIsPerformed += RegisterSufferDamage;
 
             HostShip.AskPerformFreeAction(
                 HostShip.GetAvailableActionsWhiteOnly(),
-                FinishAbility
+                FinishAbility,
+                HostUpgrade.UpgradeInfo.Name,
+                "After you partially execute a maneuver, you may suffer 1 damage to perform 1 white action",
+                HostUpgrade
             );
         }
 
-        private void RegisterSufferDamage(GenericAction action)
+        private void RegisterSufferDamage(GenericAction action, ref bool isFreeAction)
         {
-            HostShip.BeforeFreeActionIsPerformed -= RegisterSufferDamage;
+            HostShip.BeforeActionIsPerformed -= RegisterSufferDamage;
 
-            RegisterAbilityTrigger(TriggerTypes.BeforeFreeActionIsPerformed, SufferDamage);
+            RegisterAbilityTrigger(TriggerTypes.BeforeActionIsPerformed, SufferDamage);
         }
 
         private void SufferDamage(object sender, System.EventArgs e)
         {
-            Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": Damage is suffered");
+            Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + " causes " + HostShip.PilotInfo.PilotName + " to suffer 1 Hit");
 
             DamageSourceEventArgs damageArgs = new DamageSourceEventArgs
             {
@@ -76,7 +77,7 @@ namespace Abilities.SecondEdition
 
         private void FinishAbility()
         {
-            HostShip.BeforeFreeActionIsPerformed -= RegisterSufferDamage;
+            HostShip.BeforeActionIsPerformed -= RegisterSufferDamage;
             Triggers.FinishTrigger();
         }
     }

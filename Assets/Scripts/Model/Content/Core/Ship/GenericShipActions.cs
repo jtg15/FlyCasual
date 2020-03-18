@@ -10,10 +10,11 @@ using GameModes;
 using Arcs;
 using Actions;
 using Editions;
+using BoardTools;
 
 namespace Ship
 {
-    public partial class GenericShip
+    public partial class GenericShip : ITargetLockable
     {
         private     List<GenericAction> AvailableActionsList        = new List<GenericAction>();
         private     List<GenericAction> AvailableFreeActionsList    = new List<GenericAction>();
@@ -29,7 +30,7 @@ namespace Ship
         public event EventHandlerShip OnMovementActivationFinish;
 
         public event EventHandlerShip OnGenerateActions;
-        public event EventHandlerActionBool OnTryAddAction;
+        public event EventHandlerShipActionBool OnTryAddAction;
         public static event EventHandlerShipActionBool OnTryAddActionGlobal;
 
         public event EventHandlerShip OnGenerateDiceModifications;
@@ -51,7 +52,7 @@ namespace Ship
 
         public event EventHandlerShip OnActionDecisionSubphaseEnd;
         public event EventHandlerShip OnActionIsSkipped;
-        public event EventHandlerAction BeforeFreeActionIsPerformed;
+        public event EventHandlerActionBool BeforeActionIsPerformed;
         public event EventHandlerAction OnActionIsPerformed;
         public event EventHandlerAction OnActionIsPerformed_System;
 
@@ -69,23 +70,41 @@ namespace Ship
         public event EventHandlerShipType OnConditionIsAssigned;
         public event EventHandlerShipType OnConditionIsRemoved;
 
-        public event EventHandlerShip OnTargetLockIsAcquired;
+        public event EventHandlerTargetLockable OnTargetLockIsAcquired;
+        public static event EventHandlerShipTargetLockable OnTargetLockIsAcquiredGlobal;
 
         public event EventHandlerShip OnCoordinateTargetIsSelected;
         public event EventHandlerShip OnJamTargetIsSelected;        
 
         public event EventHandlerShip OnRerollIsConfirmed;
 
-        public EventHandlerTokenBool BeforeRemovingTokenInEndPhase;
+        public EventHandlerShipTokenBool BeforeRemovingTokenInEndPhase;
+        public static EventHandlerShipTokenBool BeforeRemovingTokenInEndPhaseGlobal;
 
         public event EventHandler OnDecloak;
+        public event EventHandler OnSlam;
 
-        public event EventHandlerActionRef OnCheckActionComplexity;
+        public event EventHandlerActionColor OnCheckActionComplexity;
 
         public event EventHandlerArcFacingList OnGetAvailableArcFacings;
 
         public event EventHandlerFailedAction OnActionIsReadyToBeFailed;
         public event EventHandlerAction OnActionIsReallyFailed;
+
+        public event EventHandlerShipRefBool OnCanBeCoordinated;
+
+        public event EventHandlerShip OnAfterModifyDefenseDiceStep;
+
+        public event EventHandlerShip OnPerformActionStepStart;
+
+        public event EventHandlerActionShip OnActionTargetIsWrong;
+
+        public event EventHandlerCoordinateData OnCheckCoordinateModeModification;
+        public event EventHandlerShipRefBool OnCheckCanCoordinate;
+
+        public event EventHandlerActionBool OnCanPerformActionWhileIonized;
+        public event EventHandlerActionBool OnCanPerformActionWhileStressed;
+        public event EventHandlerBool OnCheckCanPerformActionsWhileStressed;
 
         // ACTIONS
 
@@ -112,6 +131,15 @@ namespace Ship
             return GetAvailableActions().Where(a => !a.IsRed).ToList();
         }
 
+        private GenericAction GetActionAsRed(GenericAction action)
+        {
+            //Make a deep clone to avoid changing the original action to red
+            GenericAction instance = (GenericAction)Activator.CreateInstance(action.GetType());
+            if (instance.IsCritCancelAction) ((CancelCritAction)instance).Initialize(((CancelCritAction)action).CritCard);
+            instance.Color = ActionColor.Red;
+            return instance;
+        }
+
         public List<GenericAction> GetAvailableActionsAsRed()
         {
             List<GenericAction> redActions = new List<GenericAction>();
@@ -120,9 +148,7 @@ namespace Ship
 
             foreach(GenericAction action in AvailableActionsList)
             {
-                GenericAction instance = (GenericAction)Activator.CreateInstance(action.GetType());
-                instance.IsRed = true;
-                redActions.Add(instance);
+                redActions.Add(GetActionAsRed(action));
             }
 
             return redActions;
@@ -136,9 +162,7 @@ namespace Ship
 
             foreach (GenericAction action in AvailableActionsList.Where(n => !n.IsRed))
             {
-                GenericAction instance = (GenericAction)Activator.CreateInstance(action.GetType());
-                instance.IsRed = true;
-                redActions.Add(instance);
+                redActions.Add(GetActionAsRed(action));
             }
 
             return redActions;
@@ -153,7 +177,7 @@ namespace Ship
         {
             if (OnMovementActivationStart != null) OnMovementActivationStart(this);
 
-            Triggers.ResolveTriggers(TriggerTypes.OnMovementActivation, callBack);
+            Triggers.ResolveTriggers(TriggerTypes.OnMovementActivationStart, callBack);
         }
 
         public void CallMovementActivationFinish()
@@ -170,29 +194,41 @@ namespace Ship
 
         public void CallActionIsSkipped()
         {
-            if (OnActionIsSkipped != null) OnActionIsSkipped(this);
+            OnActionIsSkipped?.Invoke(this);
         }
 
         public void CallActionIsTaken(GenericAction action, Action callBack)
         {
-            if (OnActionIsPerformed_System != null) OnActionIsPerformed_System(action);
+            if (!action.IsRealAction)
+            {
+                callBack();
+                return;
+            }
+
+            OnActionIsPerformed_System?.Invoke(action);
 
             Triggers.ResolveTriggers(
                 TriggerTypes.OnActionIsPerformed_System,
                 delegate
                 {
-                    if (OnActionIsPerformed != null) OnActionIsPerformed(action);
+                    OnActionIsPerformed?.Invoke(action);
 
                     Triggers.ResolveTriggers(TriggerTypes.OnActionIsPerformed, callBack);
                 }
             );
         }
 
-        public void CallBeforeFreeActionIsPerformed(GenericAction action, Action callBack)
+        public void CallBeforeActionIsPerformed(GenericAction action, Action callBack, bool isFree)
         {
-            if (BeforeFreeActionIsPerformed != null) BeforeFreeActionIsPerformed(action);
+            if (!action.IsRealAction)
+            {
+                callBack();
+                return;
+            }
 
-            Triggers.ResolveTriggers(TriggerTypes.BeforeFreeActionIsPerformed, callBack);
+            BeforeActionIsPerformed?.Invoke(action, ref isFree);
+
+            Triggers.ResolveTriggers(TriggerTypes.BeforeActionIsPerformed, callBack);
         }
 
         public void GenerateAvailableFreeActionsList(List<GenericAction> freeActions)
@@ -210,7 +246,7 @@ namespace Ship
         {
             bool result = action.IsActionAvailable();
 
-            if (OnTryAddAction != null) OnTryAddAction(action, ref result);
+            if (OnTryAddAction != null) OnTryAddAction(this, action, ref result);
 
             if (OnTryAddActionGlobal != null) OnTryAddActionGlobal(this, action, ref result);
 
@@ -221,20 +257,20 @@ namespace Ship
         {
             bool result = action.IsActionAvailable() && action.CanBePerformedAsAFreeAction;
 
-            if (OnTryAddAction != null) OnTryAddAction(action, ref result);
+            if (OnTryAddAction != null) OnTryAddAction(this, action, ref result);
 
             if (OnTryAddActionGlobal != null) OnTryAddActionGlobal(this, action, ref result);
 
             return result;
         }
 
-        public void AskPerformFreeAction(GenericAction freeAction, Action callback, bool isForced = false)
+        public void AskPerformFreeAction(GenericAction freeAction, Action callback, string descriptionShort, string descriptionLong = null, IImageHolder imageHolder = null, bool isForced = false)
         {
-            AskPerformFreeAction(new List<GenericAction> { freeAction }, callback, isForced);
+            AskPerformFreeAction(new List<GenericAction> { freeAction }, callback, descriptionShort, descriptionLong, imageHolder, isForced);
         }
 
         // TODO: move actions list into subphase
-        public void AskPerformFreeAction(List<GenericAction> freeActions, Action callback, bool isForced = false)
+        public void AskPerformFreeAction(List<GenericAction> freeActions, Action callback, string descriptionShort, string descriptionLong = null, IImageHolder imageHolder = null, bool isForced = false)
         {
             foreach (GenericAction freeAction in freeActions)
             {
@@ -277,6 +313,10 @@ namespace Ship
                         newSubPhase.DecisionOwner = this.Owner;
                         newSubPhase.ShowSkipButton = !isForced;
                         newSubPhase.IsForced = isForced;
+                        newSubPhase.DescriptionShort = descriptionShort;
+                        newSubPhase.DescriptionLong = descriptionLong;
+                        newSubPhase.ImageSource = imageHolder;
+
                         newSubPhase.Start();
                     }
                 }
@@ -295,7 +335,7 @@ namespace Ship
         {
             if (CanPerformAction(action))
             {
-                if (!AvailableActionsList.Any(n => n.GetType() == action.GetType() && n.IsRed == action.IsRed))
+                if (!AvailableActionsList.Any(n => n.Name == action.Name && n.IsRed == action.IsRed))
                 {
                     AvailableActionsList.Add(action);
                 }
@@ -306,7 +346,7 @@ namespace Ship
         {
             if (CanPerformFreeAction(action))
             {
-                if (!AvailableFreeActionsList.Any(n => n.GetType() == action.GetType() && n.IsRed == action.IsRed))
+                if (!AvailableFreeActionsList.Any(n => n.Name == action.Name && n.IsRed == action.IsRed))
                 {
                     AvailableFreeActionsList.Add(action);
                 }
@@ -315,7 +355,7 @@ namespace Ship
 
         public void AddAlreadyExecutedAction(GenericAction action)
         {
-            AlreadyExecutedActions.Add(action);
+            if (action.IsRealAction) AlreadyExecutedActions.Add(action);
         }
 
         public void ClearAlreadyExecutedActions()
@@ -323,13 +363,13 @@ namespace Ship
             AlreadyExecutedActions = new List<GenericAction>();
         }
 
-        public void RemoveAlreadyExecutedAction(System.Type type)
+        public void RemoveAlreadyExecutedAction(GenericAction action)
         {
             List<GenericAction> keys = new List<GenericAction>(AlreadyExecutedActions);
 
             foreach (var executedAction in keys)
             {
-                if (executedAction.GetType() == type)
+                if (executedAction.Name == action.Name)
                 {
                     AlreadyExecutedActions.Remove(executedAction);
                     return;
@@ -337,24 +377,22 @@ namespace Ship
             }
         }
 
-        public bool IsAlreadyExecutedAction(System.Type type)
+        public bool IsAlreadyExecutedAction(GenericAction action)
         {
             bool result = false;
-            foreach (var executedAction in AlreadyExecutedActions)
+
+            if (action.IsRealAction)
             {
-                if (executedAction.GetType() == type)
+                foreach (var executedAction in AlreadyExecutedActions)
                 {
-                    result = true;
-                    break;
+                    if (executedAction.Name == action.Name)
+                    {
+                        result = true;
+                        break;
+                    }
                 }
             }
-            return result;
-        }
 
-        public bool IsAlreadyExecutedAction<T>() where T : GenericAction
-        {
-            bool result = false;
-            result = AlreadyExecutedActions.Any(a => a is T);            
             return result;
         }
 
@@ -438,8 +476,8 @@ namespace Ship
 
         private bool NotAlreadyAddedSameDiceModification(GenericAction action)
         {
-            // Returns true if AvailableActionEffects doesn't contain action of the same type
-            return AvailableDiceModifications.FirstOrDefault(n => n.GetType() == action.GetType()) == null;
+            // Returns true if AvailableActionEffects doesn't contain action with the same name
+            return !AvailableDiceModifications.Any(n => n.Name == action.Name);
         }
 
         public bool CanUseDiceModification(GenericAction action)
@@ -482,7 +520,7 @@ namespace Ship
 
         public void RemoveAlreadyUsedDiceModification(GenericAction action)
         {
-            AlreadUsedDiceModifications.RemoveAll(a => a.GetType() == action.GetType());
+            AlreadUsedDiceModifications.RemoveAll(a => a.Name == action.Name);
         }
 
         public void ClearAlreadyUsedDiceModifications()
@@ -523,9 +561,10 @@ namespace Ship
 
         public void CallOnTokenIsAssigned(GenericToken token, Action callback)
         {
-            if (OnTokenIsAssigned != null) OnTokenIsAssigned(this, token.GetType());
+            TokensChangePanel.CreateTokensChangePanel(this, token, isAssigned: true);
 
-            if (OnTokenIsAssignedGlobal != null) OnTokenIsAssignedGlobal(this, token.GetType());
+            OnTokenIsAssigned?.Invoke(this, token.GetType());
+            OnTokenIsAssignedGlobal?.Invoke(this, token.GetType());
 
             Tokens.TokenToAssign = null;
 
@@ -553,16 +592,18 @@ namespace Ship
             return result;
         }
 
-        public void CallOnRemoveTokenEvent(System.Type tokenType)
+        public void CallOnRemoveTokenEvent(GenericToken token)
         {
-            if (OnTokenIsRemoved != null) OnTokenIsRemoved(this, tokenType);
+            TokensChangePanel.CreateTokensChangePanel(this, token, isAssigned: false);
 
-            if (OnTokenIsRemovedGlobal != null) OnTokenIsRemovedGlobal(this, tokenType);
+            OnTokenIsRemoved?.Invoke(this, token.GetType());
+            OnTokenIsRemovedGlobal?.Invoke(this, token.GetType());
         }
 
-        public void CallOnTargetLockIsAcquiredEvent(GenericShip target, Action callback)
+        public void CallOnTargetLockIsAcquiredEvent(ITargetLockable target, Action callback)
         {
-            if (OnTargetLockIsAcquired != null) OnTargetLockIsAcquired(target);
+            OnTargetLockIsAcquired?.Invoke(target);
+            OnTargetLockIsAcquiredGlobal?.Invoke(this, target);
 
             Triggers.ResolveTriggers(TriggerTypes.OnTargetLockIsAcquired, callback);
         }
@@ -579,7 +620,7 @@ namespace Ship
                 });
 
             selectTargetLockSubPhase.RequiredPlayer = Owner.PlayerNo;
-            selectTargetLockSubPhase.AbilityName = abilityName;
+            selectTargetLockSubPhase.DescriptionShort = abilityName;
             selectTargetLockSubPhase.ImageSource = imageSource;
             selectTargetLockSubPhase.Start();
         }
@@ -596,7 +637,8 @@ namespace Ship
         public bool ShouldRemoveTokenInEndPhase(GenericToken token)
         {
             var remove = token.Temporary;
-            if (BeforeRemovingTokenInEndPhase != null) BeforeRemovingTokenInEndPhase(token, ref remove);
+            BeforeRemovingTokenInEndPhaseGlobal?.Invoke(this, token, ref remove);
+            BeforeRemovingTokenInEndPhase?.Invoke(this, token, ref remove);
             return remove;
         }
 
@@ -636,9 +678,19 @@ namespace Ship
             Triggers.ResolveTriggers(TriggerTypes.OnDecloak, callback);
         }
 
-        public void CallOnCheckActionComplexity(ref GenericAction action)
+        // SLAM
+
+        public void CallSlam(Action callback)
         {
-            if (OnCheckActionComplexity != null) OnCheckActionComplexity(ref action);
+            if (OnSlam != null) OnSlam();
+
+            Triggers.ResolveTriggers(TriggerTypes.OnSlam, callback);
+        }
+
+        public ActionColor CallOnCheckActionComplexity(GenericAction action, ref ActionColor color)
+        {
+            OnCheckActionComplexity?.Invoke(action, ref color);
+            return color;
         }
 
         // ArcFacing
@@ -685,7 +737,7 @@ namespace Ship
             {
                 if (action.IsRed)
                 {
-                    if (!isDefaultFailOverwritten) Messages.ShowError("Red action is failed: Stress token is assigned");
+                    if (!isDefaultFailOverwritten) Messages.ShowError("The attempted red action has failed, this ship gains a stress token");
                     this.Tokens.AssignToken(
                         typeof(StressToken),
                         delegate
@@ -696,7 +748,7 @@ namespace Ship
                 }
                 else
                 {
-                    if (!isDefaultFailOverwritten) Messages.ShowError("Action is failed");
+                    if (!isDefaultFailOverwritten) Messages.ShowError("The attempted action has failed");
                     CallResolveActionIsReallyFailed(action, isDefaultFailOverwritten, hasSecondChance);
                 }
             }
@@ -722,6 +774,88 @@ namespace Ship
             }
         }
 
+        public void CallAfterModifyDefenseDiceStep(Action callback)
+        {
+            if (OnAfterModifyDefenseDiceStep != null) OnAfterModifyDefenseDiceStep(this);
+
+            Triggers.ResolveTriggers(TriggerTypes.OnAfterModifyDefenseDiceStep, callback);
+        }
+
+        public void CallPerformActionStepStart()
+        {
+            OnPerformActionStepStart?.Invoke(this);
+        }
+
+        // ITargetLockable
+
+        public int GetRangeToShip(GenericShip ship)
+        {
+            DistanceInfo distanceInfo = new DistanceInfo(ship, this);
+            return distanceInfo.Range;
+        }
+
+        public void AssignToken(RedTargetLockToken token, Action callback)
+        {
+            Tokens.AssignToken(token, callback);
+        }
+
+        public List<char> GetTargetLockLetterPairsOn(ITargetLockable targetShip)
+        {
+            return Tokens.GetTargetLockLetterPairsOn(targetShip);
+        }
+
+        public GenericTargetLockToken GetAnotherToken(Type oppositeType, char letter)
+        {
+            return Tokens.GetToken(oppositeType, letter) as GenericTargetLockToken;
+        }
+
+        public void RemoveToken(GenericToken otherTargetLockToken)
+        {
+            Tokens.GetAllTokens().Remove(otherTargetLockToken);
+        }
+
+        public void CallActionTargetIsWrong(GenericAction action, GenericShip wrongTarget, Action callback)
+        {
+            OnActionTargetIsWrong?.Invoke(action, wrongTarget);
+
+            Triggers.ResolveTriggers(TriggerTypes.OnAbilityDirect, callback);
+        }
+
+        public CoordinateActionData CallCheckCoordinateModeModification()
+        {
+            CoordinateActionData coordinateActionData = new CoordinateActionData(this);
+            OnCheckCoordinateModeModification?.Invoke(ref coordinateActionData);
+            return coordinateActionData;
+        }
+
+        public bool CallCheckCanCoordinate(GenericShip ship)
+        {
+            bool result = true;
+            OnCheckCanCoordinate?.Invoke(ship, ref result);
+            return result;
+        }
+
+        public bool CallCanPerformActionWhileIonized(GenericAction action)
+        {
+            bool canPerformActionsWhileIonized = false;
+            OnCanPerformActionWhileIonized?.Invoke(action, ref canPerformActionsWhileIonized);
+            return canPerformActionsWhileIonized;
+        }
+
+        public bool CallCanPerformActionWhileStressed(GenericAction action)
+        {
+            bool canPerformActionsWhileStressed = false;
+            OnCanPerformActionWhileStressed?.Invoke(action, ref canPerformActionsWhileStressed);
+            return canPerformActionsWhileStressed;
+        }
+
+        // Only notify to don't skip action step
+        public bool CallCheckCanPerformActionsWhileStressed()
+        {
+            bool canPerformActionsWhileStressed = false;
+            OnCheckCanPerformActionsWhileStressed?.Invoke(ref canPerformActionsWhileStressed);
+            return canPerformActionsWhileStressed;
+        }
     }
 
 }

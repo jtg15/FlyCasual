@@ -42,7 +42,13 @@ namespace Abilities.FirstEdition
 
         private void AskUseCountermeasuresAbility(object sender, System.EventArgs e)
         {
-            AskToUseAbility(AIShouldUseAbility, ActivateCountermeasures);
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                AIShouldUseAbility,
+                ActivateCountermeasures,
+                descriptionLong: "Do you want to discard this card? (If you do, increase your agility value by 1 until the end of the round and remove 1 enemy target lock from your ship)",
+                imageHolder: HostUpgrade
+            );
         }
 
         private bool AIShouldUseAbility()
@@ -53,7 +59,7 @@ namespace Abilities.FirstEdition
 
         private void ActivateCountermeasures(object sender, System.EventArgs e)
         {
-            Messages.ShowInfo(string.Format("{0} used Countermeasures", HostShip.PilotInfo.PilotName));
+            Messages.ShowInfo(string.Format("{0} used Countermeasures.", HostShip.PilotInfo.PilotName));
 
             HostShip.ChangeAgilityBy(+1);
             Phases.Events.OnRoundEnd += DeactivateCountermeasures;
@@ -96,7 +102,9 @@ namespace Abilities.FirstEdition
                 }
             }
 
-            selectTargetLockToDiscardDecision.InfoText = "Select target lock to remove";
+            selectTargetLockToDiscardDecision.DescriptionShort = "Countermeasures";
+            selectTargetLockToDiscardDecision.DescriptionLong = "Select target lock to remove";
+            selectTargetLockToDiscardDecision.ImageSource = HostUpgrade;
 
             selectTargetLockToDiscardDecision.DefaultDecisionName = selectTargetLockToDiscardDecision.GetDecisions().First().Name;
 

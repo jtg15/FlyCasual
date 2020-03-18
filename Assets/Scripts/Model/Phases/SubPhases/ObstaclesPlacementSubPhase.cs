@@ -42,12 +42,13 @@ namespace SubPhases
 
         public override void Initialize()
         {
-            Board.ToggleObstaclesHolder(true);
+            ShowObstaclesHolder();
 
             MinBoardEdgeDistance = Board.BoardIntoWorld(2 * Board.RANGE_1);
             MinObstaclesDistance = Board.BoardIntoWorld(Board.RANGE_1);
 
             RequiredPlayer = Roster.AnotherPlayer(Phases.PlayerWithInitiative); // Will be changed in Next
+            ChosenObstacle = null;
 
             foreach (GenericPlayer player in Roster.Players)
             {
@@ -55,6 +56,22 @@ namespace SubPhases
             }
 
             Next();
+        }
+
+        private void ShowObstaclesHolder()
+        {
+            Board.ToggleObstaclesHolder(true);
+
+            int asteroidCount = 1;
+
+            for (int i = 1; i < 3; i++)
+            {
+                foreach (GenericObstacle obstacle in Roster.GetPlayer(i).ChosenObstacles)
+                {
+                    GameObject obstacleHolder = Board.GetObstacleHolder().Find("Obstacle" + asteroidCount++).gameObject;
+                    obstacle.Spawn(obstacle.Name + " " + asteroidCount, obstacleHolder.transform);
+                }
+            }
         }
 
         public override void Next()
@@ -351,17 +368,17 @@ namespace SubPhases
                     // If an asteroid wasn't found and we're on touch, see if the user tapped right next to an asteroid
                     // Since the asteroid can be small, they can be hard to touch and this helps with that
                     if (CameraScript.InputTouchIsEnabled && 
-                        (!castHit || !hitInfo.transform.tag.StartsWith("Asteroid"))) {
+                        (!castHit || !hitInfo.transform.tag.StartsWith("Obstacle"))) {
                        
                         castHit = Physics.SphereCast(ray, 0.1f, out hitInfo, 10f);
                     }
 
 
                     // Select the obstacle found if it's valid
-                    if (castHit && hitInfo.transform.tag.StartsWith("Asteroid"))
+                    if (castHit && hitInfo.transform.tag.StartsWith("Obstacle"))
                     {
                         GameObject obstacleGO = hitInfo.transform.parent.gameObject;
-                        GenericObstacle clickedObstacle = ObstaclesManager.GetObstacleByName(obstacleGO.name);
+                        GenericObstacle clickedObstacle = ObstaclesManager.GetChosenObstacle(obstacleGO.transform.name);
 
                         if (!clickedObstacle.IsPlaced)
                         {
@@ -403,7 +420,7 @@ namespace SubPhases
             if (IsEnteredPlacementZone && !IsPlacementBlocked)
             {
                 GameCommand command = GeneratePlaceObstacleCommand(
-                    ChosenObstacle.ObstacleGO.name,
+                    ChosenObstacle.Name,
                     ChosenObstacle.ObstacleGO.transform.position,
                     ChosenObstacle.ObstacleGO.transform.eulerAngles
                 );
@@ -412,7 +429,7 @@ namespace SubPhases
             }
             else
             {
-                Messages.ShowError("Obstacle cannot be placed");
+                Messages.ShowError("The obstacle cannot be placed");
                 return false;
             }
         }
@@ -421,8 +438,8 @@ namespace SubPhases
         {
             JSONObject parameters = new JSONObject();
             parameters.AddField("name", obstacleName);
-            parameters.AddField("positionX", position.x); parameters.AddField("positionY", position.y); parameters.AddField("positionZ", position.z);
-            parameters.AddField("rotationX", angles.x); parameters.AddField("rotationY", angles.y); parameters.AddField("rotationZ", angles.z);
+            parameters.AddField("positionX", position.x.ToString()); parameters.AddField("positionY", "0"); parameters.AddField("positionZ", position.z.ToString());
+            parameters.AddField("rotationX", angles.x.ToString()); parameters.AddField("rotationY", angles.y.ToString()); parameters.AddField("rotationZ", angles.z.ToString());
             return GameController.GenerateGameCommand(
                 GameCommandTypes.ObstaclePlacement,
                 typeof(ObstaclesPlacementSubPhase),
@@ -430,11 +447,11 @@ namespace SubPhases
             );
         }
 
-        public static void PlaceObstacle(string obstacleName, Vector3 position, Vector3 angles)
+        public static void PlaceObstacle(string obstacleName,  Vector3 position, Vector3 angles)
         {
             Phases.CurrentSubPhase.IsReadyForCommands = false;
 
-            ChosenObstacle = ObstaclesManager.GetObstacleByName(obstacleName);
+            ChosenObstacle = ObstaclesManager.GetChosenObstacle(obstacleName);
             ChosenObstacle.ObstacleGO.transform.position = position;
             ChosenObstacle.ObstacleGO.transform.eulerAngles = angles;
 

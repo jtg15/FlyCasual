@@ -10,7 +10,7 @@ namespace UpgradesList.SecondEdition
         public BT1() : base()
         {
             UpgradeInfo = new UpgradeCardInfo(
-                "R2-D2",
+                "BT-1",
                 UpgradeType.Gunner,
                 cost: 2,
                 isLimited: true,
@@ -49,7 +49,7 @@ namespace UpgradesList.SecondEdition
 
                 if (result != true)
                 {
-                    Messages.ShowError("BT-1 cannot be in Imperial squad without Darth Vader");
+                    Messages.ShowError("BT-1 cannot be in an Imperial squad without Darth Vader");
                 }
             }
 

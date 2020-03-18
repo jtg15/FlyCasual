@@ -85,31 +85,26 @@ namespace Abilities.FirstEdition
         {
             if (!HostShip.IsCannotAttackSecondTime)
             {
-                // Temporary fix
-                if (HostShip.IsDestroyed)
-                {
-                    Triggers.FinishTrigger();
-                    return;
-                }
-
                 // Save his "is already attacked" flag
                 isPerformedRegularAttack = HostShip.IsAttackPerformed;
 
                 // Plan to set IsAbilityUsed only after attack that was successfully started
                 HostShip.OnAttackStartAsAttacker += MarkAbilityAsUsed;
 
-                Combat.StartAdditionalAttack(
+                HostShip.IsCannotAttackSecondTime = true;
+
+                Combat.StartSelectAttackTarget(
                     HostShip,
                     FinishExtraAttack,
                     CounterAttackFilter,
                     HostShip.PilotInfo.PilotName,
-                    "You may perform an additional attack against " + shipToPunish.PilotInfo.PilotName + ".",
+                    "You may perform an additional attack against " + shipToPunish.PilotInfo.PilotName,
                     HostShip
                 );
             }
             else
             {
-                Messages.ShowErrorToHuman(string.Format("{0} cannot attack one more time", HostShip.PilotInfo.PilotName));
+                Messages.ShowErrorToHuman(string.Format("{0} cannot attack an additional time", HostShip.PilotInfo.PilotName));
                 Triggers.FinishTrigger();
             }
         }
@@ -122,6 +117,9 @@ namespace Abilities.FirstEdition
             // Set IsAbilityUsed only after attack that was successfully started
             HostShip.OnAttackStartAsAttacker -= MarkAbilityAsUsed;
 
+            //if bonus attack was skipped, allow bonus attacks again
+            if (HostShip.IsAttackSkipped) HostShip.IsCannotAttackSecondTime = false;
+
             Triggers.FinishTrigger();
         }
 
@@ -131,7 +129,7 @@ namespace Abilities.FirstEdition
 
             if (targetShip != shipToPunish)
             {
-                if (!isSilent) Messages.ShowErrorToHuman(string.Format("{0} can attack only {1}", HostShip.PilotInfo.PilotName, shipToPunish.PilotInfo.PilotName));
+                if (!isSilent) Messages.ShowErrorToHuman(string.Format("{0} can only attack {1}", HostShip.PilotInfo.PilotName, shipToPunish.PilotInfo.PilotName));
                 result = false;
             }
 

@@ -15,11 +15,13 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "\"Chopper\"",
                     2,
-                    70,
+                    68,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.ChopperPilotAbility),
                     seImageNumber: 75
                 );
+
+                ShipInfo.ActionIcons.SwitchToDroidActions();
             }
         }
     }
@@ -35,8 +37,8 @@ namespace Abilities.SecondEdition
             {
                 GenericShip shipToAssignStress = shipsToAssignStress[0];
                 shipsToAssignStress.Remove(shipToAssignStress);
-                Messages.ShowErrorToHuman(shipToAssignStress.PilotInfo.PilotName + " is bumped into \"Chopper\" and gets a jam token.");
-                shipToAssignStress.Tokens.AssignTokens(() => new JamToken(shipToAssignStress), 2, AssignStressTokenRecursive);
+                Messages.ShowErrorToHuman(shipToAssignStress.PilotInfo.PilotName + " is at range 0 of \"Chopper\" and gains a jam token");
+                shipToAssignStress.Tokens.AssignTokens(() => new JamToken(shipToAssignStress, HostShip.Owner), 2, AssignStressTokenRecursive);
             }
             else
             {

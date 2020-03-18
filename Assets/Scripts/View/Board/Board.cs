@@ -13,11 +13,14 @@ namespace BoardTools
         public static Transform BoardTransform;
 
         public static Transform RulersHolderTransform;
+        public static Transform ObstacleHolderTransform;
 
         public static GameObject StartingZone1;
         public static GameObject StartingZone2;
         public static GameObject StartingZone3;
+        public static GameObject StartingZone3a;
         public static GameObject StartingZone4;
+        public static GameObject StartingZone4a;
         public static GameObject StartingZone5;
 
         public static readonly float SIZE_ANY = 91.44f;
@@ -34,16 +37,18 @@ namespace BoardTools
         {
             BoardTransform = GameObject.Find("SceneHolder/Board").transform;
             RulersHolderTransform = BoardTransform.Find("RulersHolder");
+            ObstacleHolderTransform = BoardTransform.Find("ObstaclesZone/ObstaclesHolder");
             StartingZone1 = BoardTransform.Find("Playmat/StaringZone1").gameObject;
             StartingZone2 = BoardTransform.Find("Playmat/StaringZone2").gameObject;
             StartingZone3 = BoardTransform.Find("Playmat/StaringZone3").gameObject;
+            StartingZone3a = BoardTransform.Find("Playmat/StaringZone3a").gameObject;
             StartingZone4 = BoardTransform.Find("Playmat/StaringZone4").gameObject;
+            StartingZone4a = BoardTransform.Find("Playmat/StaringZone4a").gameObject;
             StartingZone5 = BoardTransform.Find("Playmat/StaringZone5").gameObject;
 
             MovementTemplates.PrepareMovementTemplates();
 
             SetPlaymatScene();
-            SetObstacles();
         }
 
         private static void SetPlaymatScene()
@@ -91,7 +96,7 @@ namespace BoardTools
             DynamicGI.UpdateEnvironment();
         }
 
-        public static void SetShipPreSetup(GenericShip ship, int count = 1)
+        public static void SetShipPreSetup(GenericShip ship, int count = 1, float? rotation = null)
         {
             float distance = CalculateDistance(ship.Owner.Ships.Count);
             float side = (ship.Owner.PlayerNo == Players.PlayerNo.Player1) ? -1 : 1;
@@ -106,10 +111,12 @@ namespace BoardTools
                 )
             );
 
+            if (rotation == null) rotation = (ship.Owner.PlayerNo == Players.PlayerNo.Player1) ? 0 : 180;
+
             ship.SetAngles(
                 new Vector3(
                     ship.GetAngles().x,
-                    (ship.Owner.PlayerNo == Players.PlayerNo.Player1) ? 0 : 180,
+                    rotation.Value,
                     ship.GetAngles().z
                 )
             );
@@ -124,7 +131,17 @@ namespace BoardTools
         public static void HighlightStartingZones(Direction direction)
         {
             TurnOffStartingZones();
-            GetStartingZone(direction).gameObject.SetActive(true);
+            if (direction != Direction.All)
+            {
+                GetStartingZone(direction).gameObject.SetActive(true);
+            }
+            else
+            {
+                GetStartingZone(Direction.Left, isSmall: true).gameObject.SetActive(true);
+                GetStartingZone(Direction.Right, isSmall: true).gameObject.SetActive(true);
+                GetStartingZone(Direction.Top).gameObject.SetActive(true);
+                GetStartingZone(Direction.Bottom).gameObject.SetActive(true);
+            }
         }
 
         public static void TurnOffStartingZones()
@@ -132,7 +149,9 @@ namespace BoardTools
             StartingZone1.SetActive(false);
             StartingZone2.SetActive(false);
             StartingZone3.SetActive(false);
+            StartingZone3a.SetActive(false);
             StartingZone4.SetActive(false);
+            StartingZone4a.SetActive(false);
             StartingZone5.SetActive(false);
         }
 
@@ -160,12 +179,17 @@ namespace BoardTools
             return RulersHolderTransform;
         }
 
+        public static Transform GetObstacleHolder()
+        {
+            return ObstacleHolderTransform;
+        }
+
         public static Transform GetStartingZone(Players.PlayerNo playerNo)
         {
             return (playerNo == Players.PlayerNo.Player1) ? StartingZone1.transform : StartingZone2.transform;
         }
 
-        public static Transform GetStartingZone(Direction side)
+        public static Transform GetStartingZone(Direction side, bool isSmall = false)
         {
             Transform result = null;
 
@@ -178,12 +202,13 @@ namespace BoardTools
                     result = StartingZone1.transform;
                     break;
                 case Direction.Left:
-                    result = StartingZone3.transform;
+                    result = (isSmall) ? StartingZone3a.transform : StartingZone3.transform;
                     break;
                 case Direction.Right:
-                    result = StartingZone4.transform;
+                    result = (isSmall) ? StartingZone4a.transform : StartingZone4.transform;
                     break;
                 case Direction.None:
+                case Direction.All:
                     result = StartingZone5.transform;
                     break;
                 default:
@@ -356,17 +381,9 @@ namespace BoardTools
             return ships;
         }
 
-        private static void SetObstacles()
-        {
-            for (int i = 1; i <= 6; i++)
-            {
-                Objects.Add(GameObject.Find("SceneHolder/Board/ObstaclesHolder/A" + i + "/A" + i + "model").GetComponent<MeshCollider>());
-            }
-        }
-
         public static void ToggleObstaclesHolder(bool isActive)
         {
-            BoardTransform.Find("ObstaclesHolder").gameObject.SetActive(isActive);
+            BoardTransform.Find("ObstaclesZone").gameObject.SetActive(isActive);
         }
 
         public static void ToggleDiceHolders(bool isActive)

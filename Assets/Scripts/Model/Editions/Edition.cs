@@ -39,7 +39,11 @@ namespace Editions
 
         public virtual void ActionIsFailed(GenericShip ship, GenericAction action, bool overWrittenInstead = false, bool hasSecondChance = false)
         {
-            if (!overWrittenInstead && !hasSecondChance) ship.RemoveAlreadyExecutedAction(action.GetType());
+            if (!overWrittenInstead && !hasSecondChance)
+            {
+                ship.RemoveAlreadyExecutedAction(action);
+                ActionsHolder.CurrentAction = null;
+            }
             action.RevertActionOnFail(hasSecondChance);
         }
 
@@ -66,9 +70,15 @@ namespace Editions
         public virtual void AdaptPilotToRules(GenericShip ship) { }
         public virtual void AdaptUpgradeToRules(GenericUpgrade upgrade) { }
         public virtual void AdaptArcsToRules(GenericShip ship) { }
-        public virtual void RotateMobileFiringArc(ArcFacing facing) { }
-        public virtual void RotateMobileFiringArcAlt(ArcFacing facing) { }
+        public virtual void RotateMobileFiringArc(GenericArc arc, ArcFacing facing) { }
+        public virtual void RotateMobileFiringArcAlt(GenericArc arc, ArcFacing facing) { }
         public virtual void SubScribeToGenericShipEvents(GenericShip ship) { }
         public virtual void WhenIonized(GenericShip ship) { }
+
+        public abstract string FactionToXws(Faction faction);
+        public abstract Faction XwsToFaction(string factionXWS);
+
+        public abstract string UpgradeTypeToXws(UpgradeType faction);
+        public abstract UpgradeType XwsToUpgradeType(string upgradeXWS);
     }
 }

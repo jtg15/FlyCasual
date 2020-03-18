@@ -13,7 +13,7 @@ namespace UpgradesList.SecondEdition
             UpgradeInfo = new UpgradeCardInfo(
                 "Leia Organa",
                 UpgradeType.Crew,
-                cost: 2,
+                cost: 7,
                 isLimited: true,
                 restriction: new FactionRestriction(Faction.Rebel),
                 charges: 3,
@@ -51,11 +51,17 @@ namespace Abilities.SecondEdition
         {
             if (HostUpgrade.State.Charges >= 3)
             {
-                AskToUseAbility(NeverUseByDefault, UseLeiaAbility);
+                AskToUseAbility(
+                    HostUpgrade.UpgradeInfo.Name,
+                    NeverUseByDefault,
+                    UseLeiaAbility,
+                    descriptionLong: "Do you want to spend 3 Charges to allow each friendly ship to reduce the difficulty of its red maneuvers during this phase?",
+                    imageHolder: HostUpgrade
+                );
             }
             else
             {
-                Messages.ShowError(HostUpgrade.UpgradeInfo.Name + ": Not enough charges");
+                Messages.ShowError(HostUpgrade.UpgradeInfo.Name + " does not have enough charges to activate");
                 Triggers.FinishTrigger();
             }
         }
@@ -64,7 +70,7 @@ namespace Abilities.SecondEdition
         {
             HostUpgrade.State.SpendCharges(3);
 
-            Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": Ability was activated");
+            Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + "'s ability was successfully activated");
 
             GenericShip.OnManeuverIsReadyToBeRevealedGlobal += CheckReduceComplexity;
             Phases.Events.OnRoundEnd += ClearAbility;

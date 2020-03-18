@@ -37,7 +37,7 @@ namespace Abilities.FirstEdition
 
         private void TryAddTestPilotBlackoutAbility()
         {
-            if (Combat.ShotInfo.IsObstructedByAsteroid)
+            if (Combat.ShotInfo.IsObstructedByObstacle)
             {
                 Combat.Defender.AfterGotNumberOfDefenceDice += DecreaseDiceResult;
             }
@@ -45,7 +45,7 @@ namespace Abilities.FirstEdition
 
         private void DecreaseDiceResult(ref int count)
         {
-            Messages.ShowInfo("Test Pilot \"Blackout\":\nDefender rolls 2 fewer dice");
+            Messages.ShowInfo("Test Pilot \"Blackout\"'s attack is obstructed,\n the defender rolls 2 fewer defense dice");
             count -= 2;
             Combat.Defender.AfterGotNumberOfDefenceDice -= DecreaseDiceResult;
         }

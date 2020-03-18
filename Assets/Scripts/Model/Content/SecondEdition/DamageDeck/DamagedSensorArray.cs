@@ -30,14 +30,14 @@ namespace DamageDeckCardSE
         {
             base.DiscardEffect();
 
-            Messages.ShowInfo("You can perform actions as usual");
+            Messages.ShowInfo("Damaged Sensor Array has been repaired,  " + Host.PilotInfo.PilotName + " can perform actions as usual");
             Host.Tokens.RemoveCondition(typeof(Tokens.DamagedSensorArraySECritToken));
 
             Host.OnTryAddAction -= OnlyCancelCritActionsOrFocus;
             Host.OnGenerateActions -= CallAddCancelCritAction;
         }
 
-        private void OnlyCancelCritActionsOrFocus(GenericAction action, ref bool result)
+        private void OnlyCancelCritActionsOrFocus(GenericShip ship, GenericAction action, ref bool result)
         {
             if (!action.IsCritCancelAction && !(action is FocusAction))
             {

@@ -22,6 +22,8 @@ namespace Ship
                     extraUpgradeIcon: UpgradeType.Talent,
                     seImageNumber: 13
                 );
+
+                PilotNameCanonical = "norrawexley-btla4ywing";
             }
         }
     }
@@ -47,7 +49,7 @@ namespace Abilities.SecondEdition
 
             if (Combat.AttackStep == CombatStep.Defence && Combat.Defender == HostShip && enemyShipsAtRangeOne > 0)
             {
-                Messages.ShowInfo("Norra Wexley: add evade dice enemy range 1.");
+                Messages.ShowInfo("Norra Wexley gains 1 Evade die because at least one enemy is at range 1 of her");
                 roll.AddDice(DieSide.Success).ShowWithoutRoll();
                 roll.OrganizeDicePositions();
             }

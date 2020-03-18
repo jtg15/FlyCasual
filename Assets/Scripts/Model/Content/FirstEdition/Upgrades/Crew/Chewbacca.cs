@@ -55,13 +55,16 @@ namespace Abilities.FirstEdition
             Selection.ActiveShip = sender as GenericShip;
 
             AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
                 AiForChewbaccaCrewAbility,
                 UseChewbaccaCrewAbility,
                 null,
                 delegate {
                     Selection.ActiveShip = previousShip;
                     Triggers.FinishTrigger();
-                }
+                },
+                descriptionLong: "Do you want to immediately discard this Damage card and recover 1 shield?",
+                imageHolder: HostUpgrade
             );
         }
 
@@ -77,11 +80,17 @@ namespace Abilities.FirstEdition
         private void UseChewbaccaCrewAbility(object sender, System.EventArgs e)
         {
             Sounds.PlayShipSound("Chewbacca");
-            Messages.ShowInfo("Chewbacca (crew) is used");
+            Messages.ShowInfo("Chewbacca (crew) has been used");
 
             Combat.CurrentCriticalHitCard = null;
-            if (Selection.ActiveShip.TryRegenShields()) Messages.ShowInfo("Shield is restored");
-
+            if (Selection.ActiveShip.TryRegenShields())
+            {
+                Messages.ShowInfo("1 shield has been restored");
+            }
+            else
+            {
+                Messages.ShowInfo("No shields could be restored");
+            }
             HostUpgrade.TryDiscard(DecisionSubPhase.ConfirmDecision);
         }
 

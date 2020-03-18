@@ -22,7 +22,7 @@ namespace UpgradesList.FirstEdition
                 abilityType: typeof(Abilities.FirstEdition.DirectorKrennicAbility)
             );
 
-            Avatar = new AvatarInfo(Faction.Imperial, new Vector2(53, 1));
+            Avatar = new AvatarInfo(Faction.Imperial, new Vector2(71, 1));
         }        
     }
 }
@@ -35,7 +35,7 @@ namespace Abilities.FirstEdition
         {
             get
             {
-                return "Choose Galactic Empire ship with 3 or fewer Shields.\nIt gets Optimized Prototype condition.";
+                return "Choose Galactic Empire ship with 3 or fewer Shields:\nIt gets Optimized Prototype condition";
             }
         }
 
@@ -82,7 +82,7 @@ namespace Abilities.FirstEdition
 
         protected virtual void AssignOptimizedPrototype()
         {
-            TargetShip.Tokens.AssignCondition(typeof(OptimizedPrototype));
+            TargetShip.Tokens.AssignCondition(new OptimizedPrototype(TargetShip) { SourceUpgrade = HostUpgrade });
             SelectShipSubPhase.FinishSelection();
         }
 
@@ -120,12 +120,19 @@ namespace Abilities.FirstEdition
 
         private void AskAcquireTargetLock(object sender, System.EventArgs e)
         {
-            AskToUseAbility(AlwaysUseByDefault, AcquireTargetLock, null, null, true, string.Format("Does {0} want to acquire target lock on {1}?", HostShip.PilotInfo.PilotName, Combat.Defender.PilotInfo.PilotName));
+            AskToUseAbility(
+                HostUpgrade.UpgradeInfo.Name,
+                AlwaysUseByDefault,
+                AcquireTargetLock,
+                descriptionLong: string.Format("Does {0} want to acquire a Target Lock on {1}?", HostShip.PilotInfo.PilotName, Combat.Defender.PilotInfo.PilotName),
+                imageHolder: HostUpgrade,
+                showAlwaysUseOption: true
+            );
         }
 
         private void AcquireTargetLock(object sender, System.EventArgs e)
         {
-            Messages.ShowInfo(string.Format("Optimized Prototype: {0} gets target lock on {1}", HostShip.PilotInfo.PilotName, Combat.Defender.PilotInfo.PilotName));
+            Messages.ShowInfo(string.Format("Optimized Prototype: {0} gets a Target Lock on {1}.", HostShip.PilotInfo.PilotName, Combat.Defender.PilotInfo.PilotName));
             ActionsHolder.AcquireTargetLock(HostShip, Combat.Defender, DecisionSubPhase.ConfirmDecision, DecisionSubPhase.ConfirmDecision);
         }
     }
@@ -135,9 +142,11 @@ namespace Conditions
 {
     public class OptimizedPrototype : GenericToken
     {
+        public GenericUpgrade SourceUpgrade;
+
         public OptimizedPrototype(GenericShip host) : base(host)
         {
-            Name = "Optimized Prototype Condition";
+            Name = ImageName = "Optimized Prototype Condition";
             Temporary = false;
             Tooltip = "https://raw.githubusercontent.com/guidokessels/xwing-data/master/images/conditions/optimized-prototype.png";
         }
@@ -172,7 +181,8 @@ namespace Conditions
         {
             OptimizedPrototypeAction action = new OptimizedPrototypeAction()
             {
-                HostShip = Host
+                HostShip = Host,
+                SourceUpgrade = SourceUpgrade
             };
 
             Host.AddAvailableDiceModification(action);
@@ -184,6 +194,8 @@ namespace ActionsList
 {
     public class OptimizedPrototypeAction : GenericAction
     {
+        public GenericUpgrade SourceUpgrade;
+
         public OptimizedPrototypeAction()
         {
             Name = DiceModificationName = "Optimized Prototype";
@@ -207,8 +219,11 @@ namespace ActionsList
         {
             var newSubPhase = Phases.StartTemporarySubPhaseNew<OptimizedPrototypeDecisionSubPhase>(Name, callBack);
 
+            newSubPhase.DescriptionShort = "Director Krennic's Optimized Prototype";
+            newSubPhase.DescriptionShort = "Do you want ot spend a die result to make the defender lose a shield?";
+            newSubPhase.ImageSource = SourceUpgrade;
+
             newSubPhase.RequiredPlayer = HostShip.Owner.PlayerNo;
-            newSubPhase.InfoText = "Spend die result to make defender lose a shield?";
             newSubPhase.ShowSkipButton = true;
             newSubPhase.OnSkipButtonIsPressed = DontUseOptimizedPrototype;
 

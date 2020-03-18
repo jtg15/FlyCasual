@@ -13,7 +13,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Torani Kulda",
                     4,
-                    50,
+                    48,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.ToraniKuldaAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -34,11 +34,19 @@ namespace Abilities.SecondEdition
         {
             Selection.ThisShip = (GenericShip)sender;
 
-            Phases.StartTemporarySubPhaseOld(
+            ToraniKuldaAbilityDecisionSubPhaseSE subphase = Phases.StartTemporarySubPhaseNew<ToraniKuldaAbilityDecisionSubPhaseSE>(
                 "Select effect of Torani Kulda's ability",
-                typeof(ToraniKuldaAbilityDecisionSubPhaseSE),
-                Triggers.FinishTrigger
+                delegate {
+                    Selection.ThisShip = HostShip;
+                    Triggers.FinishTrigger();
+                }
             );
+
+            subphase.DescriptionShort = "Torani Kulda";
+            subphase.DescriptionLong = Selection.ThisShip.ShipId + ": " + "Select effect of Torani Kulda's ability";
+            subphase.ImageSource = HostShip;
+
+            subphase.Start();
         }
     }
 }
@@ -49,7 +57,6 @@ namespace SubPhases
     {
         public override void PrepareCustomDecisions()
         {
-            InfoText = Selection.ThisShip.ShipId + ": " + "Select effect of Torani Kulda's ability";
             DecisionOwner = Selection.ThisShip.Owner;
 
             AddDecision("Suffer 1 damage.", SufferDamage);

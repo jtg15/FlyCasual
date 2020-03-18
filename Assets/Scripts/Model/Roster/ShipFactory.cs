@@ -1,6 +1,8 @@
 ﻿using Editions;
+using Remote;
 using Ship;
 using SquadBuilderNS;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -21,22 +23,16 @@ public static class ShipFactory {
     }
 
 	//TODO: REWRITE ASAP
-	public static GenericShip SpawnShip(SquadBuilderShip shipConfig) {
-
-        //temporary
-        int id = 1;
+	public static GenericShip SpawnShip(SquadBuilderShip shipConfig)
+    {
         Vector3 position = Vector3.zero;
 
         GenericShip newShipContainer = shipConfig.Instance;
-        newShipContainer.InitializeGenericShip(shipConfig.List.PlayerNo, id, position);
-
-        Roster.SubscribeSelectionByInfoPanel(newShipContainer.InfoPanel.transform.Find("ShipInfo").gameObject);
-        Roster.SubscribeUpgradesPanel(newShipContainer, newShipContainer.InfoPanel);
+        newShipContainer.InitializeGenericShip(shipConfig.List.PlayerNo, ShipFactory.lastId++, position);
 
         //TODO: Rework this
         newShipContainer.AfterGotNumberOfAttackDice += Rules.DistanceBonus.CheckAttackDistanceBonus;
         newShipContainer.AfterGotNumberOfDefenceDice += Rules.DistanceBonus.CheckDefenceDistanceBonus;
-        newShipContainer.AfterGotNumberOfDefenceDice += Rules.AsteroidObstruction.CheckDefenceObstructionBonus;
         newShipContainer.OnTryAddAction += Rules.Stress.CanPerformActions;
         newShipContainer.OnTryAddAction += Rules.Actions.CanPerformActions;
         newShipContainer.OnMovementStart += MovementTemplates.ApplyMovementRuler;
@@ -46,10 +42,15 @@ public static class ShipFactory {
         newShipContainer.OnGenerateDiceModifications += Rules.Force.AddForceAction;
         newShipContainer.OnRoundEnd += Rules.Force.RegenerateForce;
         newShipContainer.OnRoundEnd += Rules.Charge.RegenerateCharge;
-        newShipContainer.OnRoundEnd += Rules.BonusAttack.ResetCanBonusAttack;
-        newShipContainer.OnShipIsDestroyed += Rules.TargetLocks.RegisterRemoveTargetLocksOnDestruction;
-        newShipContainer.OnActionIsPerformed_System += Rules.Actions.RedActionCheck;
+        newShipContainer.OnShipIsRemoved += Rules.Destruction.WhenShipIsRemoved;
+        newShipContainer.OnActionIsPerformed_System += Rules.Actions.ActionColorCheck;
         newShipContainer.OnActionIsPerformed += Rules.Actions.CheckLinkedAction;
+        newShipContainer.AfterGotNumberOfDefenceDice += Rules.Strain.CheckForStrainedDebuff;
+        newShipContainer.AfterGotNumberOfPrimaryWeaponAttackDice += Rules.Deplete.CheckForDepletedDebuff;
+        newShipContainer.OnAttackFinishAsDefender += Rules.Strain.TryRemoveStrainTokenAfterAttack;
+        newShipContainer.OnAttackFinishAsAttacker += Rules.Deplete.TryRemoveDepleteTokenAfterAttack;
+        newShipContainer.OnMovementExecuted += Rules.Strain.TryRemoveStrainTokenAfterManeuver;
+        newShipContainer.OnMovementExecuted += Rules.Deplete.TryRemoveDepleteTokenAfterManeuver;
 
         newShipContainer.OnTokenIsAssigned += Roster.UpdateTokensIndicator;
         newShipContainer.OnTokenIsRemoved += Roster.UpdateTokensIndicator;
@@ -64,4 +65,19 @@ public static class ShipFactory {
         return newShipContainer;
 	}
 
+    public static void SpawnRemove(GenericRemote remote, Vector3 position, Quaternion rotation)
+    {
+        remote.SpawnModel(ShipFactory.lastId++, position, rotation);
+
+        remote.AfterGotNumberOfDefenceDice += Rules.DistanceBonus.CheckDefenceDistanceBonus;
+        remote.OnPositionFinish += Rules.OffTheBoard.CheckOffTheBoard;
+        remote.OnShipIsRemoved += Rules.Destruction.WhenShipIsRemoved;
+
+        remote.BeforeTokenIsAssigned += Rules.Remotes.AllowOnlyLocks;
+        remote.OnTokenIsAssigned += Roster.UpdateTokensIndicator;
+        remote.OnTokenIsRemoved += Roster.UpdateTokensIndicator;
+        remote.AfterAssignedDamageIsChanged += Roster.UpdateRosterHullDamageIndicators;
+        remote.AfterAssignedDamageIsChanged += Roster.UpdateRosterShieldsDamageIndicators;
+        remote.AfterStatsAreChanged += Roster.UpdateShipStats;
+    }
 }

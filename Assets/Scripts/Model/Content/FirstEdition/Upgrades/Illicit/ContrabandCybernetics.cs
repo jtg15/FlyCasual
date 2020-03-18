@@ -1,4 +1,5 @@
-﻿using Ship;
+﻿using ActionsList;
+using Ship;
 using SubPhases;
 using System;
 using Tokens;
@@ -24,9 +25,6 @@ namespace Abilities.FirstEdition
 {
     public class ContrabandCyberneticsAbility : GenericAbility
     {
-        private bool CanPerformActionsWhileStressedOriginal;
-        private bool CanPerformRedManeuversWhileStressedOriginal;
-
         public override void ActivateAbility()
         {
             HostShip.OnMovementActivationStart += RegisterTrigger;
@@ -44,7 +42,7 @@ namespace Abilities.FirstEdition
                 Triggers.RegisterTrigger(new Trigger()
                 {
                     Name = Name,
-                    TriggerType = TriggerTypes.OnMovementActivation,
+                    TriggerType = TriggerTypes.OnMovementActivationStart,
                     TriggerOwner = HostShip.Owner.PlayerNo,
                     EventHandler = AskUseContrabandCybernetics
                 });
@@ -60,7 +58,13 @@ namespace Abilities.FirstEdition
         {
             if (IsAbilityCanBeUsed())
             {
-                AskToUseAbility(NeverUseByDefault, ActivateContrabandCyberneticsAbility);
+                AskToUseAbility(
+                    HostUpgrade.UpgradeInfo.Name,
+                    NeverUseByDefault,
+                    ActivateContrabandCyberneticsAbility,
+                    descriptionLong: "Do you want to spend 1 Charge? (If you do, until the end of the round, you can perform actions and execute red maneuvers, even while stressed)",
+                    imageHolder: HostUpgrade
+                );
             }
             else
             {
@@ -70,7 +74,6 @@ namespace Abilities.FirstEdition
 
         public void ActivateContrabandCyberneticsAbility(object sender, System.EventArgs e)
         {
-            HostShip.OnMovementActivationStart -= RegisterTrigger;
             Phases.Events.OnEndPhaseStart_NoTriggers += DeactivateContrabandCyberneticsAbility;
 
             PayActivationCost(RemoveRestrictions);
@@ -85,15 +88,28 @@ namespace Abilities.FirstEdition
         {
             DecisionSubPhase.ConfirmDecisionNoCallback();
 
-            Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": You can perform actions and red maneuvers, even while stressed");
+            Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + " allows " + HostShip.PilotInfo.PilotName + " to perform actions and red maneuvers even while stressed");
 
-            CanPerformActionsWhileStressedOriginal = HostShip.CanPerformActionsWhileStressed;
-            HostShip.CanPerformActionsWhileStressed = true;
-
-            CanPerformRedManeuversWhileStressedOriginal = HostShip.CanPerformRedManeuversWhileStressed;
-            HostShip.CanPerformRedManeuversWhileStressed = true;
+            HostShip.OnCheckCanPerformActionsWhileStressed += ConfirmThatIsPossible;
+            HostShip.OnCanPerformActionWhileStressed += AllowRedActionsWhileStressed;
+            HostShip.OnTryCanPerformRedManeuverWhileStressed += AllowRedManeuversWhileStressed;
 
             FinishAbility();
+        }
+
+        private void AllowRedManeuversWhileStressed(ref bool isAllowed)
+        {
+            isAllowed = true;
+        }
+
+        private void ConfirmThatIsPossible(ref bool isAllowed)
+        {
+            isAllowed = true;
+        }
+
+        private void AllowRedActionsWhileStressed(GenericAction action, ref bool isAllowed)
+        {
+            isAllowed = true;
         }
 
         protected virtual void FinishAbility()
@@ -105,8 +121,9 @@ namespace Abilities.FirstEdition
         {
             Phases.Events.OnEndPhaseStart_NoTriggers -= DeactivateContrabandCyberneticsAbility;
 
-            HostShip.CanPerformActionsWhileStressed = CanPerformActionsWhileStressedOriginal;
-            HostShip.CanPerformRedManeuversWhileStressed = CanPerformRedManeuversWhileStressedOriginal;
+            HostShip.OnCheckCanPerformActionsWhileStressed -= ConfirmThatIsPossible;
+            HostShip.OnCanPerformActionWhileStressed -= AllowRedActionsWhileStressed;
+            HostShip.OnTryCanPerformRedManeuverWhileStressed -= AllowRedManeuversWhileStressed;
         }
     }
 }

@@ -16,18 +16,16 @@ namespace UpgradesList.SecondEdition
                 cost: 10,
                 isLimited: true,
                 restriction: new FactionRestriction(Faction.Scum),
-                abilityType: typeof(Abilities.SecondEdition.BosskGunnerability),
+                abilityType: typeof(Abilities.SecondEdition.BosskGunnerAbility),
                 seImageNumber: 139
             );
-
-            Avatar = new AvatarInfo(Faction.Scum, new Vector2(47, 1));
         }        
     }
 }
 
 namespace Abilities.SecondEdition
 {
-    public class BosskGunnerability : GenericAbility
+    public class BosskGunnerAbility : GenericAbility
     {
         bool attackIsPrimaryWeapon = false;
         GenericShip theShipAttacked;
@@ -57,7 +55,7 @@ namespace Abilities.SecondEdition
         {
             if (!HostShip.Tokens.HasToken(typeof(StressToken)) && attackIsPrimaryWeapon && !HostShip.IsCannotAttackSecondTime)
             {
-                Messages.ShowInfoToHuman("Bossk says: GRRRRAAARR, you will receive a stress token and perform another primary attack.");
+                Messages.ShowInfoToHuman("Bossk: You will receive a stress token and perform another primary attack");
                 HostShip.OnCombatCheckExtraAttack += RegisterBosskAbility;
             }
         }
@@ -71,12 +69,14 @@ namespace Abilities.SecondEdition
 
         private void UseBosskAbility(object sender, System.EventArgs e)
         {
-            Combat.StartAdditionalAttack(
+            HostShip.IsCannotAttackSecondTime = true;
+
+            Combat.StartSelectAttackTarget(
                 HostShip,
                 Cleanup,
                 IsPrimaryWeaponShot,
                 "Bossk",
-                "You must perform an additional primary attack.",
+                "You must perform an additional primary attack",
                 HostShip,
                 false
             );
@@ -85,7 +85,9 @@ namespace Abilities.SecondEdition
         private void Cleanup()
         {
             theShipAttacked = null;
-            HostShip.IsCannotAttackSecondTime = true;
+            HostShip.IsAttackPerformed = true;
+            //if bonus attack was skipped, allow bonus attacks again
+            if (HostShip.IsAttackSkipped) HostShip.IsCannotAttackSecondTime = false;
             Triggers.FinishTrigger();
         }
 
@@ -95,9 +97,14 @@ namespace Abilities.SecondEdition
             {
                 return true;
             }
+            else if(weapon.WeaponType != WeaponTypes.PrimaryWeapon)
+            {
+                Messages.ShowError("Bossk's bonus attack must be performed using Bossk's primary weapon");
+                return false;
+            }
             else
             {
-                Messages.ShowError("Bossk bonus attack must be performed with a primary weapon and be the same target.");
+                Messages.ShowError("Bossk's bonus attack must target " + ship.PilotInfo.PilotName);
                 return false;
             }
         }

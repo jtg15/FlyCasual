@@ -16,11 +16,12 @@ namespace Ship
                     0,
                     6,
                     isLimited: true,
-                    abilityType: typeof(Abilities.SecondEdition.NdruSuhlakAbility),
                     extraUpgradeIcon: UpgradeType.Illicit,
                     factionOverride: Faction.Scum,
                     seImageNumber: 171
                 );
+
+                ModelInfo.SkinName = "Nashtah Pup";
 
                 ShipAbilities.Add(new Abilities.SecondEdition.EscapeCraftSE());
             }
@@ -38,7 +39,7 @@ namespace Ship
                     }
                 }
 
-                Messages.ShowError("You need YV-666 ship with Hound's Tooth title\nto use Nashtah Pup in squad");
+                Messages.ShowError("You need YV-666 ship with the Hound's Tooth title\nto use Nashtah Pup in a squad");
                 return false;
             }
         }
@@ -52,12 +53,26 @@ namespace Abilities.SecondEdition
         public override void ActivateAbility()
         {
             Rules.Docking.Dock(FindHoundsTooth, GetThisShip);
+            HostShip.OnDocked += StartDenyUndocking;
             HostShip.OnUndocked += OnUndocked;
         }
 
         public override void DeactivateAbility()
         {
+            HostShip.OnDocked -= StartDenyUndocking;
             HostShip.OnUndocked -= OnUndocked;
+
+            if (HostShip.DockingHost != null) HostShip.DockingHost.OnCanReleaseDockedShipRegular -= DenyRelease;
+        }
+
+        private void StartDenyUndocking(GenericShip ship)
+        {
+            ship.OnCanReleaseDockedShipRegular += DenyRelease;
+        }
+
+        private void DenyRelease(ref bool canRelease)
+        {
+            canRelease = false;
         }
 
         private GenericShip GetThisShip()
@@ -86,6 +101,8 @@ namespace Abilities.SecondEdition
 
         private void OnUndocked(GenericShip dockingHost)
         {
+            dockingHost.OnCanReleaseDockedShipRegular -= DenyRelease;
+
             HostShip.PilotInfo = new PilotCardInfo(
                 dockingHost.PilotInfo.PilotName,
                 dockingHost.PilotInfo.Initiative,
@@ -96,9 +113,13 @@ namespace Abilities.SecondEdition
             );
 
             Type pilotAbilityType = dockingHost.PilotInfo.AbilityType;
-            GenericAbility pilotAbility = (GenericAbility)System.Activator.CreateInstance(pilotAbilityType);
-            pilotAbility.Initialize(HostShip);
-            HostShip.PilotAbilities.Add(pilotAbility);
+            if (pilotAbilityType != null)
+            {
+                GenericAbility pilotAbility = (GenericAbility)System.Activator.CreateInstance(pilotAbilityType);
+                pilotAbility.Initialize(HostShip);
+                HostShip.PilotAbilities.Add(pilotAbility);
+            }
+            HostShip.InitializeState();
 
             Roster.UpdateShipStats(HostShip);
         }

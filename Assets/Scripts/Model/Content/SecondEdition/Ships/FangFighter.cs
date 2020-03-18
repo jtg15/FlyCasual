@@ -24,8 +24,6 @@ namespace Ship
                 ShipInfo.ActionIcons.AddLinkedAction(new LinkedActionInfo(typeof(BoostAction), typeof(FocusAction)));
 
                 ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/b/b4/Maneuver_fang_fighter.png";
-
-                OldShipTypeName = "Protectorate Starfighter";
             }
         }
     }
@@ -38,6 +36,8 @@ namespace Abilities.SecondEdition
 
     public class ConcordiaFaceoffAbility : GenericAbility
     {
+        public override string Name { get { return "Concordia Faceoff"; } }
+
         public override void ActivateAbility()
         {
             AddDiceModification(
@@ -62,7 +62,7 @@ namespace Abilities.SecondEdition
                 Combat.AttackStep == CombatStep.Defence &&
                 Combat.Defender == HostShip &&
                 Combat.ShotInfo.Range == 1 &&
-                Combat.ShotInfo.InPrimaryArc
+                Combat.Attacker.SectorsInfo.IsShipInSector(HostShip, Arcs.ArcType.Front)
             );
         }
 

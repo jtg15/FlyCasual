@@ -21,7 +21,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "\"Dutch\" Vander",
                     4,
-                    39,
+                    40,
                     isLimited: true,
                     abilityType: typeof(DutchVanderAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -36,7 +36,7 @@ namespace Abilities.SecondEdition
 {
     public class DutchVanderAbility : GenericAbility
     {
-        private GenericShip LockedShip;
+        private ITargetLockable LockedShip;
 
         public override void ActivateAbility()
         {
@@ -66,7 +66,7 @@ namespace Abilities.SecondEdition
             LockedShip = GetLockedShip();
             if (LockedShip == null)
             {
-                Messages.ShowError("\"Dutch\" Vander: No Locked Object!");
+                Messages.ShowError("\"Dutch\" Vander doesn't have any locked targets!");
                 Triggers.FinishTrigger();
                 return;
             }
@@ -77,19 +77,19 @@ namespace Abilities.SecondEdition
                 AiPriority,
                 HostShip.Owner.PlayerNo,
                 HostShip.PilotInfo.PilotName,
-                "Choose ship. That ship will acquire a lock on the object you locked.",
+                "Choose a ship, that ship will acquire a lock on the object you locked",
                 HostShip
             );
         }
 
-        private GenericShip GetLockedShip()
+        private ITargetLockable GetLockedShip()
         {
-            GenericShip result = null;
+            ITargetLockable result = null;
 
             BlueTargetLockToken blueTargetLock = HostShip.Tokens.GetToken<BlueTargetLockToken>(letter: '*');
             if (blueTargetLock != null)
             {
-                result = blueTargetLock.OtherTokenOwner;
+                result = blueTargetLock.OtherTargetLockTokenOwner;
             }
 
             return result;
@@ -97,7 +97,15 @@ namespace Abilities.SecondEdition
 
         private void GetTargetLockOnSameTarget()
         {
-            Messages.ShowInfo(TargetShip.PilotInfo.PilotName + " acquired Target Lock on " + LockedShip.PilotInfo.PilotName);
+            if (LockedShip is GenericShip)
+            {
+                Messages.ShowInfo(TargetShip.PilotInfo.PilotName + " acquired a Target Lock on " + (LockedShip as GenericShip).PilotInfo.PilotName);
+            }
+            else
+            {
+                Messages.ShowInfo(TargetShip.PilotInfo.PilotName + " acquired a Target Lock on obstacle");
+            }
+            
             ActionsHolder.AcquireTargetLock(TargetShip, LockedShip, SelectShipSubPhase.FinishSelection, SelectShipSubPhase.FinishSelection, ignoreRange: true);
         }
 
@@ -112,8 +120,11 @@ namespace Abilities.SecondEdition
 
             if (!ship.Tokens.HasToken(typeof(BlueTargetLockToken))) priority += 50;
 
-            BoardTools.ShotInfo shotInfo = new BoardTools.ShotInfo(ship, LockedShip, ship.PrimaryWeapons);
-            if (shotInfo.IsShotAvailable) priority += 40;
+            if (LockedShip is GenericShip)
+            {
+                BoardTools.ShotInfo shotInfo = new BoardTools.ShotInfo(ship, LockedShip as GenericShip, ship.PrimaryWeapons);
+                if (shotInfo.IsShotAvailable) priority += 40;
+            }
 
             priority += ship.State.Firepower * 5;
 

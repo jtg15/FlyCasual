@@ -1,19 +1,42 @@
 ﻿using Actions;
 using ActionsList;
+using BoardTools;
 using RulesList;
 using Ship;
 using SubPhases;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Tokens;
 using UnityEngine;
 
+namespace Actions
+{
+    public class CoordinateActionData : EventArgs
+    {
+        public int MaxTargets { get; set; }
+        public bool SameShipTypeLimit { get; set; }
+        public bool SameActionLimit { get; set; }
+        public bool TreatCoordinatedActionAsRed { get; set; }
+        public GenericShip CoordinateProvider { get; private set; }
+        public GenericAction FirstChosenAction { get; set; }
+
+        public CoordinateActionData(GenericShip coordinateProvider)
+        {
+            CoordinateProvider = coordinateProvider;
+            MaxTargets = 1;
+        }
+    }
+}
+
 namespace ActionsList
 {
 
     public class CoordinateAction : GenericAction
     {
+        CoordinateActionData CoordinateActionData;
+
         public CoordinateAction()
         {
             Name = DiceModificationName = "Coordinate";
@@ -21,12 +44,151 @@ namespace ActionsList
 
         public override void ActionTake()
         {
-            CoordinateTargetSubPhase subphase = Phases.StartTemporarySubPhaseNew<CoordinateTargetSubPhase>(
-                "Select target for Coordinate",
-                Phases.CurrentSubPhase.CallBack
+            CoordinateActionData = HostShip.CallCheckCoordinateModeModification();
+
+            if (CoordinateActionData.MaxTargets == 1)
+            {
+                CoordinateTargetSubPhase subphase = Phases.StartTemporarySubPhaseNew<CoordinateTargetSubPhase>(
+                    "Select target for Coordinate",
+                    Phases.CurrentSubPhase.CallBack
+                );
+                subphase.HostAction = this;
+                subphase.Start();
+            }
+            else
+            {
+                CoordinateMultiTargetSubPhase subphase = Phases.StartTemporarySubPhaseNew<CoordinateMultiTargetSubPhase>(
+                    "Select targets for Coordinate",
+                    Phases.CurrentSubPhase.CallBack
+                );
+                subphase.HostAction = this;
+
+                subphase.RequiredPlayer = HostShip.Owner.PlayerNo;
+
+                subphase.Filter = FilterCoordinateTargets;
+                subphase.MaxToSelect = CoordinateActionData.MaxTargets;
+                subphase.WhenDone = CoordinateTargets;
+                subphase.CoordinateActionData = CoordinateActionData;
+
+                subphase.DescriptionShort = "Coordinate Action";
+                subphase.DescriptionLong = "Select one or more other ships.\nThey will each perform an action.";
+
+                subphase.Start();
+            }
+        }
+
+        private void CoordinateTargets(Action callback)
+        {
+            Phases.CurrentSubPhase.Pause();
+
+            foreach (GenericShip ship in Selection.MultiSelectedShips)
+            {
+                Triggers.RegisterTrigger(
+                    new Trigger()
+                    {
+                        Name = string.Format("Coordinate {0}: {1}", ship.ShipId, ship.PilotInfo.PilotName),
+                        TriggerType = TriggerTypes.OnCoordinateMultiTargetsAreSelected,
+                        TriggerOwner = HostShip.Owner.PlayerNo,
+                        EventHandler = delegate { CoordinateShipForMultiSelection(ship); }
+                    }
+                );
+            }
+
+            Triggers.ResolveTriggers(TriggerTypes.OnCoordinateMultiTargetsAreSelected, callback);
+        }
+
+        private void CoordinateShipForMultiSelection(GenericShip targetShip)
+        {
+            CoordinateActionData.CoordinateProvider.OnCoordinateTargetIsSelected += PrepareToRememberChosenAction;
+            CoordinateActionData.CoordinateProvider.CallCoordinateTargetIsSelected(
+                targetShip,
+                delegate { PerformMultiCoordinateEffect(targetShip); }
             );
-            subphase.HostAction = this;
-            subphase.Start();
+        }
+
+        private void PrepareToRememberChosenAction(GenericShip coordinatedShip)
+        {
+            coordinatedShip.OnActionIsPerformed += RememberChosenAction;
+            coordinatedShip.OnActionIsSkipped += ClearRememberChosenAction;
+        }
+
+        private void ClearRememberChosenAction(GenericShip coordinatedShip)
+        {
+            coordinatedShip.OnActionIsPerformed -= RememberChosenAction;
+            coordinatedShip.OnActionIsSkipped -= ClearRememberChosenAction;
+        }
+
+        private void RememberChosenAction(GenericAction action)
+        {
+            if (CoordinateActionData.FirstChosenAction == null) CoordinateActionData.FirstChosenAction = action;
+            ClearRememberChosenAction(Selection.ThisShip);
+        }
+
+        private void PerformMultiCoordinateEffect(GenericShip targetShip)
+        {
+            Selection.ChangeActiveShip(targetShip);
+            GenericAction currentAction = ActionsHolder.CurrentAction;
+
+            Triggers.RegisterTrigger(
+                new Trigger()
+                {
+                    Name = "Coordinate",
+                    TriggerOwner = Selection.ThisShip.Owner.PlayerNo,
+                    TriggerType = TriggerTypes.OnFreeActionPlanned,
+                    EventHandler = delegate { PerformFreeAction(targetShip); }
+                }
+            );
+
+            MovementTemplates.ReturnRangeRuler();
+
+            Triggers.ResolveTriggers(TriggerTypes.OnFreeActionPlanned, (System.Action)delegate {
+                Selection.ChangeActiveShip(CoordinateActionData.CoordinateProvider);
+                CoordinateActionData.CoordinateProvider.OnCoordinateTargetIsSelected -= PrepareToRememberChosenAction;
+                ActionsHolder.CurrentAction = currentAction;
+                Triggers.FinishTrigger();
+            });
+        }
+
+        protected virtual void PerformFreeAction(GenericShip targetShip)
+        {
+            targetShip.AskPerformFreeAction(
+                GetPossibleActions(), 
+                delegate {
+                    Selection.ChangeActiveShip(CoordinateActionData.CoordinateProvider);
+                    Triggers.FinishTrigger();
+                },
+                "Coordinate action",
+                "You are coordinated by " + CoordinateActionData.CoordinateProvider.PilotInfo.PilotName
+            );
+        }
+
+        protected virtual List<GenericAction> GetPossibleActions()
+        {
+            List<GenericAction> result = new List<GenericAction>();
+            if (!CoordinateActionData.SameActionLimit || CoordinateActionData.FirstChosenAction == null)
+            {
+                result = Selection.ThisShip.GetAvailableActions();
+            }
+            else
+            {
+                result = Selection.ThisShip.GetAvailableActions().Where(n => n.GetType() == CoordinateActionData.FirstChosenAction.GetType()).ToList();
+            }
+
+            if (CoordinateActionData.TreatCoordinatedActionAsRed)
+            {
+                result = result.Select(n => n.AsRedAction).ToList();
+            }
+
+            return result;
+        }
+
+        private bool FilterCoordinateTargets(GenericShip ship)
+        {
+            return ship.Owner.PlayerNo == Selection.ThisShip.Owner.PlayerNo
+                && Board.CheckInRange(CoordinateActionData.CoordinateProvider, ship, 1, 2, RangeCheckReason.CoordinateAction)
+                && ship.CanBeCoordinated
+                && (!CoordinateActionData.SameShipTypeLimit || Selection.MultiSelectedShips.Count == 0 || ship.ShipInfo.ShipName == Selection.MultiSelectedShips.First().ShipInfo.ShipName)
+                && CoordinateActionData.CoordinateProvider.CallCheckCanCoordinate(ship);
         }
 
         public override void RevertActionOnFail(bool hasSecondChance = false)
@@ -50,8 +212,6 @@ namespace SubPhases
 
     public class CoordinateTargetSubPhase : SelectShipSubPhase
     {
-        public GenericAction HostAction { get; set; }
-
         public override void Prepare()
         {
             PrepareByParameters(
@@ -61,7 +221,7 @@ namespace SubPhases
                 Selection.ThisShip.Owner.PlayerNo,
                 false,
                 "Coordinate Action",
-                "Select another ship.\nIt performs free action."
+                "Select another ship.\nIt will perform an action."
             );
         }
 
@@ -95,8 +255,10 @@ namespace SubPhases
 
         private bool FilterCoordinateTargets(GenericShip ship)
         {
-            BoardTools.DistanceInfo distanceInfo = new BoardTools.DistanceInfo(Selection.ThisShip, ship);
-            return ship.Owner.PlayerNo == Selection.ThisShip.Owner.PlayerNo && distanceInfo.Range >= 1 && distanceInfo.Range <= 2;
+            return ship.Owner.PlayerNo == Selection.ThisShip.Owner.PlayerNo
+                && Board.CheckInRange(Selection.ThisShip, ship, 1, 2, RangeCheckReason.CoordinateAction)
+                && ship.CanBeCoordinated
+                && Selection.ThisShip.CallCheckCanCoordinate(ship);
         }
 
         private void SelectCoordinateTarget()
@@ -134,14 +296,24 @@ namespace SubPhases
 
         protected virtual List<GenericAction> GetPossibleActions()
         {
-            return Selection.ThisShip.GetAvailableActions();
+            return Selection.ThisShip.GetAvailableActions().Select(n => n.AsCoordinatedAction).ToList();
         }
 
         protected virtual void PerformFreeAction(object sender, System.EventArgs e)
         {
-            TargetShip.AskPerformFreeAction(GetPossibleActions(), Triggers.FinishTrigger);
+            TargetShip.AskPerformFreeAction(
+                GetPossibleActions(),
+                Triggers.FinishTrigger,
+                "Coordinate action",
+                "You are coordinated"
+            );
         }
 
+    }
+
+    public class CoordinateMultiTargetSubPhase : MultiSelectionSubphase
+    {
+        public CoordinateActionData CoordinateActionData;
     }
 
 }

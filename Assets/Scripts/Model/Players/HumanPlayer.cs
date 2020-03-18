@@ -25,6 +25,8 @@ namespace Players
         {
             UI.ShowSkipButton();
 
+            if (!DebugManager.NoCinematicCamera) CameraScript.RestoreCamera();
+
             base.PerformAttack();
         }
 
@@ -55,18 +57,18 @@ namespace Players
             return true;
         }
 
-        public override void ChangeManeuver(Action<string> callback, Func<string, bool> filter = null)
+        public override void ChangeManeuver(Action<string> doWithManeuverString, Action callback, Func<string, bool> filter = null)
         {
-            base.ChangeManeuver(callback, filter);
+            base.ChangeManeuver(doWithManeuverString, callback, filter);
 
-            DirectionsMenu.Show(callback, filter);
+            DirectionsMenu.Show(doWithManeuverString, callback, filter);
         }
 
-        public override void SelectManeuver(Action<string> callback, Func<string, bool> filter = null)
+        public override void SelectManeuver(Action<string> doWithManeuverString, Action callback, Func<string, bool> filter = null)
         {
-            DirectionsMenu.Show(callback, filter);
+            DirectionsMenu.Show(doWithManeuverString, callback, filter);
 
-            base.SelectManeuver(callback, filter);
+            base.SelectManeuver(doWithManeuverString, callback, filter);
         }
 
         public override void SelectShipForAbility()
@@ -88,6 +90,13 @@ namespace Players
             (Phases.CurrentSubPhase as SetupShipMidgameSubPhase).ShowDescription();
 
             base.SetupShipMidgame();
+        }
+
+        public override void MoveObstacleMidgame()
+        {
+            (Phases.CurrentSubPhase as MoveObstacleMidgameSubPhase).ShowDescription();
+
+            base.MoveObstacleMidgame();
         }
 
         public override void RerollManagerIsPrepared()

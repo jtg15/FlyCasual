@@ -15,7 +15,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Genesis Red",
                     4,
-                    34,
+                    31,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.GenesisRedAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -40,9 +40,12 @@ namespace Abilities.SecondEdition
             HostShip.OnTargetLockIsAcquired -= RegisterTrigger;
         }
 
-        private void RegisterTrigger(GenericShip target)
+        private void RegisterTrigger(ITargetLockable target)
         {
-            RegisterAbilityTrigger(TriggerTypes.OnTargetLockIsAcquired, delegate { GenesisRedAbilityEffect(target); });
+            if (target is GenericShip)
+            {
+                RegisterAbilityTrigger(TriggerTypes.OnTargetLockIsAcquired, delegate { GenesisRedAbilityEffect(target as GenericShip); });
+            }
         }
 
         private void GenesisRedAbilityEffect(GenericShip target)

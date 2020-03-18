@@ -7,15 +7,14 @@ using System;
 using GameModes;
 using BoardTools;
 using GameCommands;
+using Remote;
 
 namespace SubPhases
 {
 
     public class CombatSubPhase : GenericSubPhase
     {
-        public override List<GameCommandTypes> AllowedGameCommandTypes { get { return new List<GameCommandTypes>() { GameCommandTypes.CombatActivation, GameCommandTypes.DeclareAttack, GameCommandTypes.PressSkip, GameCommandTypes.AssignManeuver }; } }
-
-        private Team.Type selectionMode;
+        public override List<GameCommandTypes> AllowedGameCommandTypes { get { return new List<GameCommandTypes>() { GameCommandTypes.CombatActivation, GameCommandTypes.PressSkip }; } }
 
         public override void Start()
         {
@@ -23,15 +22,13 @@ namespace SubPhases
 
             Name = "Combat SubPhase";
 
-            selectionMode = Team.Type.Friendly;
-
             if (DebugManager.DebugPhases) Debug.Log("Combat - Started");
         }
 
         public override void Prepare()
         {
             RequiredPlayer = Phases.PlayerWithInitiative;
-            RequiredPilotSkill = PILOTSKILL_MAX + 1;
+            RequiredInitiative = PILOTSKILL_MAX + 1;
         }
 
         public override void Initialize()
@@ -47,36 +44,44 @@ namespace SubPhases
             MovementTemplates.ReturnRangeRuler();
             Selection.DeselectAllShips();
 
-            bool success = GetNextActivation(RequiredPilotSkill);
-            if (!success)
-            {
-                int nextPilotSkill = GetNextPilotSkill(RequiredPilotSkill);
+            // Try to get any pilot with same inititative, that didn't perform attack
+            bool success = GetNextActivation(RequiredInitiative);
 
-                if (nextPilotSkill != RequiredPilotSkill)
-                {
-                    Phases.Events.CallCombatSubPhaseRequiredPilotSkillIsChanged();
-                }
-
-                if (nextPilotSkill != int.MaxValue)
-                {
-                    success = GetNextActivation(nextPilotSkill);
-                }
-                else
-                {
-                    FinishPhase();
-                }
-            }
-            
             if (success)
             {
-                if (DebugManager.DebugPhases) Debug.Log("Attack time for: " + RequiredPlayer + ", skill " + RequiredPilotSkill);
-
-                UpdateHelpInfo();
-                Roster.HighlightShipsFiltered(FilterShipsToPerfromAttack);
-
-                IsReadyForCommands = true;
-                Roster.GetPlayer(RequiredPlayer).PerformAttack();
+                ReadyForCombatActivation();
             }
+            else
+            {
+                ChangeInitiative();
+            }
+        }
+
+        private void ChangeInitiative()
+        {
+            //Just decrement to pass through all possible Initiative values (SE Han Solo Rebel Gunner, for example)
+            //RequiredInitiative = GetNextPilotSkill(RequiredInitiative);
+            RequiredInitiative--;
+
+            if (RequiredInitiative != -1)
+            {
+                Phases.Events.CallEngagementInitiativeChanged(Next);
+            }
+            else
+            {
+                Phases.Events.CallEngagementInitiativeChanged(FinishPhase);
+            }
+        }
+
+        private void ReadyForCombatActivation()
+        {
+            if (DebugManager.DebugPhases) Debug.Log("Attack time for: " + RequiredPlayer + ", skill " + RequiredInitiative);
+
+            UpdateHelpInfo();
+            Roster.HighlightShipsFiltered(FilterShipsToPerfromAttack);
+
+            IsReadyForCommands = true;
+            Roster.GetPlayer(RequiredPlayer).PerformAttack();
         }
 
         private bool GetNextActivation(int pilotSkill)
@@ -92,7 +97,7 @@ namespace SubPhases
 
             if (pilotSkillResults.Count() > 0)
             {
-                RequiredPilotSkill = pilotSkill;
+                RequiredInitiative = pilotSkill;
 
                 var playerNoResults =
                     from n in pilotSkillResults
@@ -159,31 +164,18 @@ namespace SubPhases
         {
             bool result = false;
 
-            if ((ship.Owner.PlayerNo == RequiredPlayer) && (ship.State.Initiative == RequiredPilotSkill) && (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(Players.HumanPlayer)))
+            if ((ship.Owner.PlayerNo == RequiredPlayer) && (ship.State.Initiative == RequiredInitiative) && (Roster.GetPlayer(RequiredPlayer).GetType() == typeof(Players.HumanPlayer)))
             {
                 if (ship.IsAttackPerformed)
                 {
-                    Messages.ShowErrorToHuman("Ship cannot be selected:\nShip already performed attack");
+                    Messages.ShowErrorToHuman("This ship cannot be selected:\nIt has already performed an attack");
                     return result;
                 }
-
-                if (selectionMode == Team.Type.Any)
-                {
-                    Messages.ShowErrorToHuman("Ship cannot be selected:\nUI is locked");
-                    return result;
-                }
-
-                if (selectionMode == Team.Type.Enemy)
-                {
-                    Messages.ShowErrorToHuman("Ship cannot be selected:\nAttack by activated ship or skip attack");
-                    return result;
-                }
-
                 result = true;
             }
             else
             {
-                Messages.ShowErrorToHuman("Ship cannot be selected:\nNeed " + RequiredPlayer + " and pilot skill " + RequiredPilotSkill);
+                Messages.ShowErrorToHuman("This ship cannot be selected, the ship must be owned by " + Tools.PlayerToInt(RequiredPlayer) + " and have an initiative of " + RequiredInitiative);
             }
 
             return result;
@@ -193,10 +185,10 @@ namespace SubPhases
         {
             Roster.HighlightShipsFiltered(FilterShipsToAttack);
 
-            GameMode.CurrentGameMode.ExecuteCommand(GenerateCombatActicationCommand(ship.ShipId));
+            GameMode.CurrentGameMode.ExecuteCommand(GenerateCombatActivationCommand(ship.ShipId));
         }
 
-        public static GameCommand GenerateCombatActicationCommand(int shipId)
+        public static GameCommand GenerateCombatActivationCommand(int shipId)
         {
             JSONObject parameters = new JSONObject();
             parameters.AddField("id", shipId.ToString());
@@ -210,24 +202,38 @@ namespace SubPhases
         public static void DoCombatActivation(int shipId)
         {
             Selection.ChangeActiveShip("ShipId:" + shipId);
-            Selection.ThisShip.CallCombatActivation(delegate { (Phases.CurrentSubPhase as CombatSubPhase).ChangeSelectionMode(Team.Type.Enemy); });
+
+            Triggers.RegisterTrigger(
+                new Trigger()
+                {
+                    Name = "Select a target to attack",
+                    TriggerOwner = Selection.ThisShip.Owner.PlayerNo,
+                    TriggerType = TriggerTypes.OnSelectTargetForAttackStart_System,
+                    EventHandler = StartSelectTarget
+                }
+            );
+
+            Triggers.ResolveTriggers(
+                TriggerTypes.OnSelectTargetForAttackStart_System,
+                delegate { Phases.CurrentSubPhase.Next(); }
+            );
+        }
+
+        private static void StartSelectTarget(object sender, System.EventArgs e)
+        {
+            Selection.ThisShip.CallCombatActivation(
+                delegate () {
+                    Combat.StartSelectAttackTarget(
+                        Selection.ThisShip,
+                        Triggers.FinishTrigger
+                    );
+                }
+            );
         }
 
         private bool FilterShipsToAttack(GenericShip ship)
         {
             return ship.Owner.PlayerNo != RequiredPlayer;
-        }
-
-        private void LockSelectionMode()
-        {
-            UI.HideSkipButton();
-            selectionMode = Team.Type.Any;
-        }
-
-        public void ChangeSelectionMode(Team.Type type)
-        {
-            UI.ShowSkipButton();
-            selectionMode = type;
         }
 
         public override bool AnotherShipCanBeSelected(GenericShip targetShip, int mouseKeyIsPressed)
@@ -243,12 +249,12 @@ namespace SubPhases
                     }
                     else
                     {
-                        Messages.ShowErrorToHuman("Ship cannot be selected as attack target: Friendly ship");
+                        Messages.ShowErrorToHuman(targetShip.PilotInfo.PilotName + " cannot be selected as a target, it is a friendly ship");
                     }
                 }
                 else
                 {
-                    Messages.ShowErrorToHuman("Ship cannot be selected as attack target:\nFirst select attacker");
+                    Messages.ShowErrorToHuman(targetShip.PilotInfo.PilotName + " cannot be selected as a target, first select the attacking ship");
                 }
             }
             return result;
@@ -268,7 +274,7 @@ namespace SubPhases
                     }
                     else
                     {
-                        Messages.ShowErrorToHuman("Your ship already has attacked");
+                        Messages.ShowErrorToHuman("This ship already has attacked");
                     }
                 }
             }
@@ -277,7 +283,10 @@ namespace SubPhases
 
         private bool FilterShipsToPerfromAttack(GenericShip ship)
         {
-            return ship.State.Initiative == RequiredPilotSkill && !ship.IsAttackPerformed && ship.Owner.PlayerNo == RequiredPlayer;
+            return ship.State.Initiative == RequiredInitiative
+                && !ship.IsAttackPerformed
+                && ship.Owner.PlayerNo == RequiredPlayer
+                && !(ship is GenericRemote);
         }
 
         public override void SkipButton()
@@ -291,7 +300,7 @@ namespace SubPhases
 
                 foreach (var shipHolder in Roster.GetPlayer(Phases.CurrentPhasePlayer).Ships)
                 {
-                    if (shipHolder.Value.State.Initiative == Phases.CurrentSubPhase.RequiredPilotSkill)
+                    if (shipHolder.Value.State.Initiative == Phases.CurrentSubPhase.RequiredInitiative)
                     {
                         shipsToSkipCombat.Add(shipHolder.Value);
                     }
@@ -342,17 +351,17 @@ namespace SubPhases
 
         private void AfterSkippedCombatActivation(GenericShip ship)
         {
-            if (!ship.IsAttackPerformed) ship.CallAfterAttackWindow();
             ship.IsAttackPerformed = true;
 
             Selection.DeselectThisShip();
             Selection.DeselectAnotherShip();
-            ChangeSelectionMode(Team.Type.Friendly);
+            
+            //TODO: From select target to select ship
         }
 
         private void CheckNext()
         {
-            if (Roster.GetPlayer(RequiredPlayer).Ships.Count(n => n.Value.State.Initiative == RequiredPilotSkill && !n.Value.IsAttackPerformed) == 0)
+            if (Roster.GetPlayer(RequiredPlayer).Ships.Count(n => n.Value.State.Initiative == RequiredInitiative && !n.Value.IsAttackPerformed) == 0)
             {
                 Next();
             }
@@ -376,7 +385,7 @@ namespace SubPhases
                 }
                 else
                 {
-                    Messages.ShowErrorToHuman("Your ship already has attacked");
+                    Messages.ShowErrorToHuman("This ship already has attacked");
                 }
             }
             else if (mouseKeyIsPressed == 2)
@@ -384,14 +393,6 @@ namespace SubPhases
                 UI.CheckFiringRangeAndShow();
             }
         }
-
-        public override void Resume()
-        {
-            base.Resume();
-
-            ChangeSelectionMode(Team.Type.Friendly);
-        }
-
     }
 
 }

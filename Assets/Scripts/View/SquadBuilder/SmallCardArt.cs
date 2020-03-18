@@ -28,13 +28,16 @@ public class SmallCardArt : MonoBehaviour {
         {
             Global.Instance.StartCoroutine(ImageManager.GetTexture((texture) =>
             {
-                if (thisGameObject != null && texture != null)
+                if (thisGameObject != null)
                 {
-                    SetObjectSprite(texture, ImageSource, thisGameObject, false);
-                }
-                else
-                {
-                    ShowTextVersionOfCard();
+                    if (texture != null)
+                    {
+                        SetObjectSprite(texture, ImageSource, thisGameObject, false);
+                    }
+                    else
+                    {
+                        ShowTextVersionOfCard();
+                    }
                 }
             }, url)); 
         }
@@ -68,11 +71,20 @@ public class SmallCardArt : MonoBehaviour {
             if (Edition.Current is SecondEdition)
             {
                 if (!textureIsScaled) TextureScale.Bilinear(newTexture, 700, 503);
-                imageRect = new Rect(281, 0, 394, 202);
+
+                if (!(imageSource as GenericUpgrade).HasType(UpgradeType.Configuration))
+                {
+                    imageRect = new Rect(281, 0, 394, 202);
+                }
+                else
+                {
+                    imageRect = new Rect(25, 0, 394, 202);
+                }
             }
             else
             {
-                new Rect(0, 0, 194, 106);
+                if (!textureIsScaled) TextureScale.Bilinear(newTexture, 194, 300);
+                imageRect = new Rect(0, 0, 194, 103);
             }
         }
         if (!SquadBuilder.TextureCache.ContainsKey(textureCacheKey)) SquadBuilder.TextureCache.Add(textureCacheKey, newTexture);
@@ -88,11 +100,16 @@ public class SmallCardArt : MonoBehaviour {
 
         targetObject.transform.GetComponent<Image>().sprite = newSprite;
         targetObject.GetComponent<RectTransform>().sizeDelta = new Vector2(188, 188 / imageRect.width * imageRect.height);
+
         this.gameObject.SetActive(true);
     }
 
     private void ShowTextVersionOfCard()
     {
-        this.gameObject.SetActive(true);
+        try
+        {
+            this.gameObject.SetActive(true);
+        }
+        catch { }
     }
 }

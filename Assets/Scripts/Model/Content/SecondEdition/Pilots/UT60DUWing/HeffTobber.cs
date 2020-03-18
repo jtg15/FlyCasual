@@ -17,7 +17,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Heff Tobber",
                     2,
-                    45,
+                    44,
                     isLimited: true,
                     abilityType: typeof(HeffTobberAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -60,8 +60,6 @@ namespace Abilities.SecondEdition
 
         private void UseHeffTobberAbility(object sender, EventArgs e)
         {
-            Messages.ShowInfo("Heff Tobber can perform free action");
-
             GenericShip previousActiveShip = Selection.ThisShip;
             Selection.ChangeActiveShip(HostShip);
             List<GenericAction> actions = HostShip.GetAvailableActions();
@@ -71,7 +69,10 @@ namespace Abilities.SecondEdition
                 delegate {
                     Selection.ChangeActiveShip(previousActiveShip);
                     Triggers.FinishTrigger();
-                }
+                },
+                HostShip.PilotInfo.PilotName,
+                "After an enemy executes a maneuver, if it is at range 0, you may perform an action",
+                HostShip
             );
         }
     }

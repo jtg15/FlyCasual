@@ -53,7 +53,9 @@ namespace Abilities.FirstEdition
                     Triggers.FinishTrigger
                 );
 
-                pilotAbilityDecision.InfoText = "Use Colonel Jendon's ability?";
+                pilotAbilityDecision.DescriptionShort = "Colonel Jendon";
+                pilotAbilityDecision.DescriptionLong = "Do you want to reassign one of your blue target lock tokens?";
+                pilotAbilityDecision.ImageSource = HostShip;
 
                 var blueTargetLocks = HostShip.Tokens.GetAllTokens()
                    .Where(t => t is Tokens.BlueTargetLockToken)
@@ -66,7 +68,10 @@ namespace Abilities.FirstEdition
                 blueTargetLocks.ForEach(l => {
                     var name = "Target Lock " + l.Letter;
                     pilotAbilityDecision.AddDecision(name, delegate { UseColonelJendonAbility(l.Letter); });
-                    pilotAbilityDecision.AddTooltip(name, l.OtherTokenOwner.ImageUrl);
+                    if (l.OtherTargetLockTokenOwner is GenericShip)
+                    {
+                        pilotAbilityDecision.AddTooltip(name, (l.OtherTargetLockTokenOwner as GenericShip).ImageUrl);
+                    }
                 });
 
                 pilotAbilityDecision.DefaultDecisionName = "No";
@@ -91,7 +96,7 @@ namespace Abilities.FirstEdition
                 GetAiAbilityPriority,
                 HostShip.Owner.PlayerNo,
                 HostShip.PilotInfo.PilotName,
-                "Choose a ship to assign to it one of your Blue Target Lock tokens if it does not have a Blue Target Lock token.",
+                "Choose a ship to assign to it one of your Blue Target Lock tokens if it does not have a Blue Target Lock token",
                 HostShip
             );
         }

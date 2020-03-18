@@ -19,7 +19,6 @@ namespace Ship
                     48,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.CaptainKagiAbility),
-                    extraUpgradeIcon: UpgradeType.Talent,
                     seImageNumber: 142
                 );
             }
@@ -54,7 +53,7 @@ namespace Abilities.SecondEdition
             if (TargetsForAbilityExist(FilterAbilityTarget))
             {
                 Selection.ChangeActiveShip(HostShip);
-                Messages.ShowInfoToHuman("Captain Kagi: Select a target for his ability.");
+                Messages.ShowInfoToHuman("Captain Kagi: Select a target for his ability");
 
                 SelectTargetForAbility(
                     SelectAbilityTarget,
@@ -62,7 +61,7 @@ namespace Abilities.SecondEdition
                     GetAiAbilityPriority,
                     HostShip.Owner.PlayerNo,
                     HostShip.PilotInfo.PilotName,
-                    "Choose a ship to transfer red target lock tokens from.",
+                    "Choose a ship to transfer red target lock tokens from",
                     HostShip
                 );
             }

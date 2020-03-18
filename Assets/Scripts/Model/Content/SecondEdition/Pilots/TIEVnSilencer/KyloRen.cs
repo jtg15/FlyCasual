@@ -19,7 +19,7 @@ namespace Ship
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.KyloRenPilotAbility),
                     force: 2,
-                    extraUpgradeIcon: UpgradeType.Force //,
+                    extraUpgradeIcon: UpgradeType.ForcePower //,
                                                         //seImageNumber: 120
                 );
 
@@ -53,7 +53,13 @@ namespace Abilities.SecondEdition
 
         protected void AskKyloRenAbility(object sender, System.EventArgs e)
         {
-            AskToUseAbility(AlwaysUseByDefault, AssignConditionToAttacker, null, null, false);
+            AskToUseAbility(
+                HostShip.PilotInfo.PilotName,
+                AlwaysUseByDefault,
+                AssignConditionToAttacker,
+                descriptionLong: "Do you want to spend 1 Force to assign the \"I'll Show You The Dark Side\" condition to the attacker?",
+                imageHolder: HostShip
+            );
         }
 
         protected override void AssignConditionToAttacker(object sender, System.EventArgs e)
@@ -101,7 +107,7 @@ namespace Abilities.SecondEdition
 
             selectPilotCritSubphase.DefaultDecisionName = selectPilotCritSubphase.GetDecisions().First().Name;
 
-            selectPilotCritSubphase.InfoText = "Kylo Ren: Select Damage Card";
+            selectPilotCritSubphase.DescriptionShort = "Kylo Ren: Select Damage Card";
 
             selectPilotCritSubphase.RequiredPlayer = HostShip.Owner.PlayerNo;
 

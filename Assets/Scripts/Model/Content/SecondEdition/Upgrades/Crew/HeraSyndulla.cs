@@ -27,14 +27,19 @@ namespace Abilities.SecondEdition
     {
         public override void ActivateAbility()
         {
-            HostShip.CanPerformRedManeuversWhileStressed = true;
+            HostShip.OnTryCanPerformRedManeuverWhileStressed += AllowRedManeuversWhileStressed;
             HostShip.OnMovementFinishSuccessfully += CheckAbility;
         }
 
         public override void DeactivateAbility()
         {
-            HostShip.CanPerformRedManeuversWhileStressed = false;
+            HostShip.OnTryCanPerformRedManeuverWhileStressed -= AllowRedManeuversWhileStressed;
             HostShip.OnMovementFinishSuccessfully -= CheckAbility;
+        }
+
+        private void AllowRedManeuversWhileStressed(ref bool isAllowed)
+        {
+            isAllowed = true;
         }
 
         private void CheckAbility(GenericShip ship)
@@ -46,7 +51,7 @@ namespace Abilities.SecondEdition
         {
             if (HostShip.Tokens.CountTokensByType<StressToken>() >= 3)
             {
-                Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": Stress token is removed, damage is suffered");
+                Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + " removes 1 stress from " + HostShip.PilotInfo.PilotName + " at the cost of 1 damage");
                 HostShip.Tokens.RemoveToken(typeof(StressToken), SufferDamage);
             }
             else

@@ -10,8 +10,9 @@ public class Global : MonoBehaviour {
 
     private static bool isAlreadyInitialized;
 
-    public static string CurrentVersion = "0.7.3";
-    public static int CurrentVersionInt = 100070300;
+    public static string CurrentVersion = "0.9.8";
+    public static int CurrentVersionInt = 100090800;
+    public static int LatestVersionInt = 100090800;
 
     void Awake()
     {
@@ -51,7 +52,8 @@ public class Global : MonoBehaviour {
             AnalyticsEvent.GameStart(new Dictionary<string, object>()
             {
                 { "Edition", Editions.Edition.Current.Name },
-                { "GameMode", GameModes.GameMode.CurrentGameMode.Name }
+                { "GameMode", GameModes.GameMode.CurrentGameMode.Name },
+                { "Version", Global.CurrentVersion }
             });
         }
 

@@ -14,7 +14,9 @@ namespace CommandsList
             Description =   "Shows current subphase and list of previous subphases\n" +
                             "subphase finish - finish current subphase\n" +
                             "subphase resume - resume current subphase\n" +
-                            "subphase back - return to previous subphase";
+                            "subphase callback - call Callback of current subphase\n" +
+                            "subphase back - return to previous subphase\n" +
+                            "subphase ready - set subphase as ready to commands";
 
             Console.AddAvailableCommand(this);
         }
@@ -29,13 +31,33 @@ namespace CommandsList
             {
                 ResumeCurrentSubphase();
             }
+            else if (parameters.ContainsKey("callback"))
+            {
+                CallbackSubphase();
+            }
             else if (parameters.ContainsKey("back"))
             {
                 GoBackSubphase();
             }
+            else if (parameters.ContainsKey("ready"))
+            {
+                ReadySubphase();
+            }
             else
             {
                 TryShowCurrentSubphase();
+            }
+        }
+
+        private void ReadySubphase()
+        {
+            if (Phases.CurrentSubPhase != null)
+            {
+                Phases.CurrentSubPhase.IsReadyForCommands = true;
+            }
+            else
+            {
+                Console.Write("Phases are not initialized yet!", LogTypes.Everything, true, "red");
             }
         }
 
@@ -101,6 +123,18 @@ namespace CommandsList
             if (Phases.CurrentSubPhase != null)
             {
                 Phases.GoBack();
+            }
+            else
+            {
+                Console.Write("Phases are not initialized yet!", LogTypes.Everything, true, "red");
+            }
+        }
+
+        private void CallbackSubphase()
+        {
+            if (Phases.CurrentSubPhase != null)
+            {
+                Phases.CurrentSubPhase.CallBack();
             }
             else
             {

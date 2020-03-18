@@ -35,6 +35,7 @@ public static partial class Phases
     public static void Initialize()
     {
         Events = new PhaseEvents();
+        CurrentSubPhase = null;
     }
 
     public static void StartPhases()
@@ -104,7 +105,7 @@ public static partial class Phases
         if (previousSubPhase != null)
         {
             CurrentSubPhase.RequiredPlayer = previousSubPhase.RequiredPlayer;
-            CurrentSubPhase.RequiredPilotSkill = previousSubPhase.RequiredPilotSkill;
+            CurrentSubPhase.RequiredInitiative = previousSubPhase.RequiredInitiative;
         }
 
         return CurrentSubPhase;
@@ -121,10 +122,12 @@ public static partial class Phases
 
         GameIsEnded = true;
 
-        foreach (var ship in Roster.AllShips.Values)
+        foreach (var ship in Roster.AllUnits.Values)
         {
             ship.DeactivateAllAbilities();
         }
+
+        DiceStatsTracker.Update();
 
         Board.Cleanup();
     }

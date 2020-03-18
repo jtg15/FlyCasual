@@ -60,6 +60,7 @@ namespace Editions
             {
                 return new Dictionary<BaseSize, int>()
                 {
+                    { BaseSize.None,    int.MaxValue },
                     { BaseSize.Small,   1 },
                     { BaseSize.Large,   2 }
                 };
@@ -139,8 +140,8 @@ namespace Editions
 
         public override void TimedBombActivationTime(GenericShip ship)
         {
-            ship.OnManeuverIsRevealed -= BombsManager.CheckBombDropAvailability;
-            ship.OnManeuverIsRevealed += BombsManager.CheckBombDropAvailability;
+            ship.OnManeuverIsRevealed -= BombsManager.CheckBombDropAvailabilityGeneral;
+            ship.OnManeuverIsRevealed += BombsManager.CheckBombDropAvailabilityGeneral;
         }
 
         public override void SquadBuilderIsOpened()
@@ -162,6 +163,118 @@ namespace Editions
         public override string GetUpgradeImageUrl(GenericUpgrade upgrade)
         {
             return RootUrlForImages + "upgrades/" + ImageUrls.FormatUpgradeTypes(upgrade.UpgradeInfo.UpgradeTypes) + "/" + ImageUrls.FormatName(ImageUrls.FormatUpgradeName(upgrade.UpgradeInfo.Name)) + ".png";
+        }
+
+        public override string FactionToXws(Faction faction)
+        {
+            string result = "";
+
+            switch (faction)
+            {
+                case Faction.Rebel:
+                    result = "rebel";
+                    break;
+                case Faction.Imperial:
+                    result = "imperial";
+                    break;
+                case Faction.Scum:
+                    result = "scum";
+                    break;
+                default:
+                    break;
+            }
+
+            return result;
+        }
+
+        public override Faction XwsToFaction(string factionXWS)
+        {
+            Faction result = Faction.None;
+
+            switch (factionXWS)
+            {
+                case "rebel":
+                    result = Faction.Rebel;
+                    break;
+                case "imperial":
+                    result = Faction.Imperial;
+                    break;
+                case "scum":
+                    result = Faction.Scum;
+                    break;
+                default:
+                    break;
+            }
+
+            return result;
+        }
+
+        public override string UpgradeTypeToXws(UpgradeType upgradeType)
+        {
+            string result = "";
+
+            switch (upgradeType)
+            {
+                case UpgradeType.Talent:
+                    result = "ept";
+                    break;
+                case UpgradeType.Device:
+                    result = "bomb";
+                    break;
+                case UpgradeType.Sensor:
+                    result = "system";
+                    break;
+                case UpgradeType.Astromech:
+                    result = "amd";
+                    break;
+                case UpgradeType.SalvagedAstromech:
+                    result = "samd";
+                    break;
+                case UpgradeType.Modification:
+                    result = "mod";
+                    break;
+                default:
+                    result = upgradeType.ToString().ToLower();
+                    break;
+            }
+
+            return result;
+        }
+
+        public override UpgradeType XwsToUpgradeType(string upgradeXws)
+        {
+            UpgradeType result = UpgradeType.Astromech;
+
+            switch (upgradeXws)
+            {
+                case "ept":
+                    result = UpgradeType.Talent;
+                    break;
+                case "bomb":
+                    result = UpgradeType.Device;
+                    break;
+                case "system":
+                    result = UpgradeType.Sensor;
+                    break;
+                case "amd":
+                    result = UpgradeType.Astromech;
+                    break;
+                case "samd":
+                    result = UpgradeType.SalvagedAstromech;
+                    break;
+                case "mod":
+                    result = UpgradeType.Modification;
+                    break;
+                case "tacticalrelay":
+                    result = UpgradeType.TacticalRelay;
+                    break;
+                default:
+                    string capitalizedName = upgradeXws.First().ToString().ToUpper() + upgradeXws.Substring(1);
+                    result = (UpgradeType)Enum.Parse(typeof(UpgradeType), capitalizedName);
+                    break;
+            }
+
+            return result;
         }
     }
 }

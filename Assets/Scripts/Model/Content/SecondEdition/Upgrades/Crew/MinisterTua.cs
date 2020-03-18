@@ -3,6 +3,7 @@ using Upgrade;
 using System.Linq;
 using System.Collections.Generic;
 using ActionsList;
+using Actions;
 
 namespace UpgradesList.SecondEdition
 {
@@ -50,8 +51,11 @@ namespace Abilities.SecondEdition
             {
                 Selection.ThisShip = HostShip;
                 HostShip.AskPerformFreeAction(
-                    new ReinforceAction() { HostShip = HostShip, IsRed = true },
-                    Triggers.FinishTrigger
+                    new ReinforceAction() { HostShip = HostShip, Color = ActionColor.Red },
+                    Triggers.FinishTrigger,
+                    HostUpgrade.UpgradeInfo.Name,
+                    "At the start of the Engagement Phase, if you are damaged, you may perform a red Reinforce action",
+                    HostUpgrade
                 );
             }
             else

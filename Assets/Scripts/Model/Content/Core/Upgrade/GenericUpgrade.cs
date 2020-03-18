@@ -8,6 +8,8 @@ using System.Linq;
 using UnityEngine;
 using Ship;
 using Editions;
+using BoardTools;
+using Movement;
 
 namespace Upgrade
 {
@@ -15,19 +17,21 @@ namespace Upgrade
     {
         public Faction AvatarFaction;
         public Vector2 AvatarOffset;
+        public Vector2 AvatarSize;
 
-        public AvatarInfo(Faction faction, Vector3 offset)
+        public AvatarInfo(Faction faction, Vector2 offset, Vector2 size = default(Vector2))
         {
             AvatarFaction = faction;
             AvatarOffset = offset;
+            AvatarSize = (size != default(Vector2)) ? size : new Vector2(100, 100);
         }
     }
 
     public enum UpgradeType
     {
-        Force,
+        ForcePower,
         Talent,
-        System,
+        Sensor,
         Tech,
         Turret,
         Cannon,
@@ -37,12 +41,22 @@ namespace Upgrade
         Torpedo,
         Astromech,
         SalvagedAstromech,
-        Bomb,
+        Device,
         Illicit,
         Modification,
         Title,
         Configuration,
-        None
+        TacticalRelay,
+        None,
+        Omni // Free Mode Extra Option
+    }
+
+    public enum UpgradeSubType
+    {
+        None,
+        Bomb,
+        Mine,
+        Remote
     }
 
     public abstract class GenericUpgrade : IImageHolder
@@ -157,11 +171,13 @@ namespace Upgrade
         public virtual void PreAttachToShip(GenericShip host)
         {
             HostShip = host;
+            HostShip.UpgradeBar.InstalledUpgradesAll_System.Add(this);
             UpgradeInfo.InstallToShip(this);
         }
 
         public virtual void PreDettachFromShip()
         {
+            HostShip.UpgradeBar.InstalledUpgradesAll_System.Remove(this);
             UpgradeInfo.RemoveFromShip();
         }
 
@@ -223,7 +239,7 @@ namespace Upgrade
             ActivateAbility();
         }
 
-        private void ActivateAbility()
+        public void ActivateAbility()
         {
             foreach (var ability in UpgradeAbilities)
             {
@@ -231,7 +247,7 @@ namespace Upgrade
             }
         }
 
-        private void DeactivateAbility()
+        public void DeactivateAbility()
         {
             foreach (var ability in UpgradeAbilities)
             {
@@ -295,16 +311,31 @@ namespace Upgrade
             Roster.ShowUpgradeAsActive(HostShip, UpgradeInfo.Name);
             ActivateAbility();
 
-            Messages.ShowInfo(UpgradeInfo.Name + " is flipped face up");
+            Messages.ShowInfo(UpgradeInfo.Name + " is flipped face-up");
             HostShip.CallAfterFlipFaceUpUpgrade(this, callback);
         }
 
         public void ReplaceUpgradeBy(GenericUpgrade newUpgrade)
         {
-            Roster.ReplaceUpgrade(HostShip, UpgradeInfo.Name, newUpgrade.UpgradeInfo.Name, newUpgrade.ImageUrl);
+            Roster.ReplaceUpgrade(HostShip, State.Name, newUpgrade.UpgradeInfo.Name, newUpgrade.ImageUrl);
 
             Slot.PreInstallUpgrade(newUpgrade, HostShip);
             Slot.TryInstallUpgrade(newUpgrade, HostShip);
+        }
+
+        // Default templates to drop devices
+
+        public virtual List<ManeuverTemplate> GetDefaultDropTemplates()
+        {
+            return new List<ManeuverTemplate>()
+            {
+                new ManeuverTemplate(ManeuverBearing.Straight, ManeuverDirection.Forward, ManeuverSpeed.Speed1, isBombTemplate: true)
+            };
+        }
+
+        public virtual List<ManeuverTemplate> GetDefaultLaunchTemplates()
+        {
+            return new List<ManeuverTemplate>();
         }
     }
 

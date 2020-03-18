@@ -18,6 +18,10 @@ namespace Ship
                     extraUpgradeIcon: UpgradeType.Talent,
                     seImageNumber: 226
                 );
+
+                PilotNameCanonical = "landocalrissian-escapecraft";
+
+                ShipAbilities.Add(new Abilities.SecondEdition.CoPilotAbility());
             }
         }
     }

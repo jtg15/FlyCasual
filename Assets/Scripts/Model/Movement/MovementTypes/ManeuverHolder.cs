@@ -26,6 +26,7 @@ namespace Movement
 
     public enum ManeuverBearing
     {
+        None,
         Straight,
         Bank,
         Turn,
@@ -33,7 +34,8 @@ namespace Movement
         SegnorsLoop,
         TallonRoll,
         Stationary,
-        Reverse,
+        ReverseStraight,
+        ReverseBank,
         SegnorsLoopUsingTurnTemplate
     }
 
@@ -133,7 +135,7 @@ namespace Movement
                     bearing = ManeuverBearing.Turn;
                     break;
                 case "V":
-                    bearing = ManeuverBearing.Reverse;
+                    bearing = ManeuverBearing.ReverseStraight;
                     break;
             }
 
@@ -281,7 +283,7 @@ namespace Movement
                 case ManeuverBearing.Stationary:
                     maneuverString += "S";
                     break;
-                case ManeuverBearing.Reverse:
+                case ManeuverBearing.ReverseStraight:
                     maneuverString += "V";
                     break;
                 default:

@@ -71,15 +71,11 @@ namespace Abilities.SecondEdition
 
             foreach (GenericShip ship in shipsHitByBlast)
             {
-                // Defending ship shouldn't flip the crit.
-                if (ship == Combat.Defender)
-                    continue;
-
                 if (ship.Damage.HasFacedownCards)
                 {
                     Triggers.RegisterTrigger(new Trigger()
                     {
-                        Name = "Concussion Missile exposes damage card",
+                        Name = "Concussion Missile exposes a damage card",
                         TriggerType = TriggerTypes.OnAbilityDirect,
                         TriggerOwner = Combat.Defender.Owner.PlayerNo,
                         EventHandler = delegate {

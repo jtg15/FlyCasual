@@ -18,11 +18,14 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Han Solo",
                     6,
-                    76,
+                    65,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.HanSoloResistancePilotAbility),
                     extraUpgradeIcon: UpgradeType.Talent
                 );
+
+                PilotNameCanonical = "hansolo-scavengedyt1300";
+
                 ImageUrl = "https://sb-cdn.fantasyflightgames.com/card_images/en/5816bd53c272ed50096e22ae1af2b38a.png";
             }
         }
@@ -86,7 +89,7 @@ namespace Abilities.SecondEdition
                 DistanceInfo distInfo = new DistanceInfo(HostShip, placedEnemyShip);
                 if (distInfo.Range <= 3)
                 {
-                    Messages.ShowError("Range to " + placedEnemyShip.PilotInfo.PilotName + " is " + distInfo.Range);
+                    Messages.ShowError("The range to " + placedEnemyShip.PilotInfo.PilotName + " is " + distInfo.Range);
                     return false;
                 }
             }

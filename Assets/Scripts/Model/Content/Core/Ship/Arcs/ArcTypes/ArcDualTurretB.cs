@@ -58,6 +58,20 @@ namespace Arcs
             {
                 new MobileSubArc
                 (
+                    ArcFacing.None,
+                    new Dictionary<Vector3, float>()
+                    {
+                        { new Vector3(-shipBase.HALF_OF_FIRINGARC_SIZE, 0, 0), -40f },
+                        { new Vector3( shipBase.HALF_OF_FIRINGARC_SIZE, 0, 0),  40f }
+                    },
+                    new List<Vector3>()
+                    {
+                        new Vector3(-shipBase.HALF_OF_FIRINGARC_SIZE, 0, 0),
+                        new Vector3( shipBase.HALF_OF_FIRINGARC_SIZE, 0, 0),
+                    }
+                ),
+                new MobileSubArc
+                (
                     ArcFacing.Front,
                     new Dictionary<Vector3, float>()
                     {
@@ -132,7 +146,7 @@ namespace Arcs
         {
             Facing = facing;
             MobileArcPointer.localEulerAngles = new Vector3(0f, MobileArcRotationValues[facing], 0f);
-            Editions.Edition.Current.RotateMobileFiringArcAlt(facing);
+            Editions.Edition.Current.RotateMobileFiringArcAlt(this, facing);
         }
 
         public void ShowMobileArcPointer()

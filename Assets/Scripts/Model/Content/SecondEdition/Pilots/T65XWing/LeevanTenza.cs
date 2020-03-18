@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Actions;
 using ActionsList;
 using Upgrade;
 
@@ -14,7 +15,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Leevan Tenza",
                     3,
-                    46,
+                    44,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.LeevanTenzaAbility),
                     extraUpgradeIcons: new List<UpgradeType>() { UpgradeType.Talent, UpgradeType.Illicit },
@@ -51,7 +52,13 @@ namespace Abilities.SecondEdition
 
         private void AskToUseLeevanTenzaAbility(object sender, System.EventArgs e)
         {
-            HostShip.AskPerformFreeAction(new EvadeAction() { IsRed = true }, Triggers.FinishTrigger);
+            HostShip.AskPerformFreeAction(
+                new EvadeAction() { Color = ActionColor.Red },
+                Triggers.FinishTrigger,
+                HostShip.PilotInfo.PilotName,
+                "After you perform a Barrel Roll or Boost action, you may perform a red Evade action.",
+                HostShip
+            );
         }
     }
 }

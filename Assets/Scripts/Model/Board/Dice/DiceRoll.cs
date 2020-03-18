@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Players;
 
 public enum DiceRollCheckType
 {
@@ -15,23 +16,13 @@ public enum DiceRollCheckType
 
 public partial class DiceRoll
 {
-    public List<Die> DiceList
-    {
-        get;
-        private set;
-    }
+    public List<Die> DiceList { get; private set; }
 
-    public DiceKind Type
-    {
-        get;
-        private set;
-    }
+    public List<Die> DiceRerolled { get; private set; } = new List<Die>();
 
-    public DiceRollCheckType CheckType
-    {
-        get;
-        private set;
-    }
+    public DiceKind Type { get; private set; }
+
+    public DiceRollCheckType CheckType { get; private set; }
 
     public static DiceRoll CurrentDiceRoll;
 
@@ -46,6 +37,9 @@ public partial class DiceRoll
     private DelegateDiceroll callBack;
 
     private bool isRolling;
+
+    public PlayerNo PlayerNo { get; private set; }
+    public List<PlayerNo> ModifiedBy { get; private set; }
 
     public DieSide[] ResultsArray
     {
@@ -65,13 +59,18 @@ public partial class DiceRoll
         }
     }
 
-    public DiceRoll(DiceKind type, int number, DiceRollCheckType checkType)
+    public DiceRoll(DiceKind type, int number, DiceRollCheckType checkType, PlayerNo playerNo = PlayerNo.PlayerNone)
     {
         Type = type;
         CountOfInitialRoll = number;
         CheckType = checkType;
+        PlayerNo = playerNo;
+        ModifiedBy = new List<PlayerNo>();
 
-        if (checkType != DiceRollCheckType.Virtual) SetSpawningPoint();
+        if (checkType != DiceRollCheckType.Virtual)
+        {
+            SetSpawningPoint();
+        }
 
         GenerateDiceRoll();
     }
@@ -294,7 +293,8 @@ public partial class DiceRoll
     {
         WasSelectedCount = SelectedCount;
 
-        foreach (Die die in DiceList.Where(n => n.IsSelected))
+        DiceRerolled = DiceList.Where(n => n.IsSelected).ToList();
+        foreach (Die die in DiceRerolled)
         {
             die.Reroll();
         }
@@ -404,16 +404,19 @@ public partial class DiceRoll
     {
         var changedDiceCount = 0;
         OrganizeDicePositions();
+
         foreach (Die die in DiceList)
         {
             if (die.Side == oldSide)
             {
-                die.SetSide(newSide);
-                die.SetModelSide(newSide);
-                changedDiceCount++;
-                if (cannotBeRerolled) die.IsRerolled = true;
-                if (cannotBeModified) die.CannotBeModified = true;
-                if (onlyOne) return changedDiceCount;
+                if (die.TrySetSide(newSide, isInitial: false))
+                {
+                    die.SetModelSide(newSide);
+                    changedDiceCount++;
+                    if (cannotBeRerolled) die.IsRerolled = true;
+                    if (cannotBeModified) die.CannotBeModified = true;
+                    if (onlyOne) return changedDiceCount;
+                }
             }
         }
 
@@ -593,8 +596,16 @@ public partial class DiceRoll
 
             foreach (Die die in DiceList)
             {
+                die.Model.GetComponentInChildren<Rigidbody>().isKinematic = true;
+
                 DieSide face = die.GetModelFace();
-                die.SetSide(face);
+                die.TrySetSide(face);
+
+                if (die.IsWaitingForNewResult)
+                {
+                    die.IsWaitingForNewResult = false;
+                    DiceManager.CallDiceResult(this, new DieResultEventArg(PlayerNo, Type, die.Side));
+                }
             }
 
             if (IsDiceFacesVisibilityWrong())
@@ -622,7 +633,7 @@ public partial class DiceRoll
 
             if (die.Side != sides[i])
             {
-                die.SetSide(sides[i]);
+                die.TrySetSide(sides[i]);
                 die.SetModelSide(sides[i]);
 
                 wasFixed = true;
@@ -699,6 +710,35 @@ public partial class DiceRoll
         }
     }
 
+    public string CanDieBeSelected(Die die, ref bool canSelect)
+    {
+        if (die.CannotBeModified)
+        {
+            canSelect = false;
+            return "This die cannot be modified";
+        }
+
+        if (die.IsRerolled)
+        {
+            canSelect = false;
+            return "Each die can only be re-rolled once";
+        }
+
+        if (DiceRerollManager.CurrentDiceRerollManager.NumberOfDiceCanBeRerolled == GetSelectedNumber())
+        {
+            canSelect = false;
+            return "Only " + DiceRerollManager.CurrentDiceRerollManager.NumberOfDiceCanBeRerolled + " dice can be selected";
+        }
+
+        if (!DiceRerollManager.CurrentDiceRerollManager.SidesCanBeRerolled.Contains(die.Side))
+        {
+            canSelect = false;
+            return "Dice with this result cannot be rerolled";
+        }
+        Selection.ActiveShip.TrySelectDie(die, ref canSelect);
+        return "";
+    }
+
     public void SelectBySides(List<DieSide> dieSides, int maxCanBeSelected)
     {
         DeselectDice();
@@ -710,12 +750,17 @@ public partial class DiceRoll
             foreach (var dieSide in dieSides)
             {
                 //from blanks to focuses
-                foreach (var dice in DiceList)
+                foreach (var die in DiceList)
                 {
-                    if ((dice.Side == dieSide) && (!dice.IsRerolled))
+                    if (die.Side == dieSide)
                     {
-                        dice.ToggleSelected(true);
-                        alreadySelected++;
+                        bool canSelect = true;
+                        CanDieBeSelected(die, ref canSelect);
+                        if (canSelect)
+                        {
+                            die.ToggleSelected(true);
+                            alreadySelected++;
+                        }
                         if (alreadySelected == maxCanBeSelected)
                         {
                             return;
@@ -746,31 +791,11 @@ public partial class DiceRoll
                     return;
                 }
 
-                if (die.CannotBeModified)
-                {
-                    Messages.ShowErrorToHuman("This die cannot be modified.");
-                    return;
-                }
-
-                if (die.IsRerolled)
-                {
-                    Messages.ShowErrorToHuman("Dice can be rerolled only once");
-                    return;
-                }
-
-                if (DiceRerollManager.CurrentDiceRerollManager.NumberOfDiceCanBeRerolled == GetSelectedNumber())
-                {
-                    Messages.ShowErrorToHuman("Only " + DiceRerollManager.CurrentDiceRerollManager.NumberOfDiceCanBeRerolled + " dice can be selected");
-                    return;
-                }
-
-                if (!DiceRerollManager.CurrentDiceRerollManager.SidesCanBeRerolled.Contains(die.Side))
-                {
-                    Messages.ShowErrorToHuman("Dice with this result cannot be rerolled");
-                    return;
-                }
-
-                die.ToggleSelected(true);
+                // Check If the Die Is Selectable. Show Error Message if exists.
+                bool canSelect = true;
+                string message = CanDieBeSelected(die, ref canSelect);
+                if (canSelect) die.ToggleSelected(true);
+                else if (message.Length > 0) Messages.ShowErrorToHuman(message);
             }
         }
     }
@@ -829,7 +854,7 @@ public partial class DiceRoll
     {
         if (DiceList.Count <= 0)
         {
-            Messages.ShowErrorToHuman("No dice in this roll to change.");
+            Messages.ShowErrorToHuman("There are no dice available to be changed");
             return DieSide.Unknown;
         }
 

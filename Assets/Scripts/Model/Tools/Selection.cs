@@ -3,20 +3,23 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using Ship;
 
 public static class Selection {
 
-    public static Ship.GenericShip ThisShip;
-    public static Ship.GenericShip AnotherShip;
-    public static Ship.GenericShip ActiveShip;
-    public static Ship.GenericShip HoveredShip;
-    	
+    public static GenericShip ThisShip;
+    public static GenericShip AnotherShip;
+    public static GenericShip ActiveShip;
+    public static GenericShip HoveredShip;
+    public static List<GenericShip> MultiSelectedShips { get; private set; }
+
     public static void Initialize()
     {
         ThisShip = null;
         AnotherShip = null;
         ActiveShip = null;
         HoveredShip = null;
+        MultiSelectedShips = new List<GenericShip>();
     }
 
     //TODO: BUG - enemy ship can be selected
@@ -73,7 +76,7 @@ public static class Selection {
         if (tag.StartsWith("ShipId:"))
         {
             TryUnmarkPreviousHoveredShip();
-            HoveredShip = Roster.AllShips[tag];
+            HoveredShip = Roster.AllUnits[tag];
             if ((HoveredShip != ThisShip) && (HoveredShip != AnotherShip))
             {
                 HoveredShip.HighlightAnyHovered();
@@ -103,7 +106,7 @@ public static class Selection {
     {
         bool result = false;
 
-        Ship.GenericShip ship = Roster.GetShipById(shipId);
+        GenericShip ship = Roster.GetShipById(shipId);
         if (ship.Owner.PlayerNo == Phases.CurrentSubPhase.RequiredPlayer)
         {
             result = TryToChangeThisShip(shipId, mouseKeyIsPressed);
@@ -124,7 +127,7 @@ public static class Selection {
     public static bool TryToChangeAnotherShip(string shipId, int mouseKeyIsPressed = 1)
     {
         bool result = false;
-        Ship.GenericShip targetShip = Roster.GetShipById(shipId);
+        GenericShip targetShip = Roster.GetShipById(shipId);
         result = Phases.CurrentSubPhase.AnotherShipCanBeSelected(targetShip, mouseKeyIsPressed);
 
         if (result == true)
@@ -139,7 +142,7 @@ public static class Selection {
     {
         bool result = false;
 
-        Ship.GenericShip ship = Roster.GetShipById(shipId);
+        GenericShip ship = Roster.GetShipById(shipId);
 
         result = Phases.CurrentSubPhase.ThisShipCanBeSelected(ship, mouseKeyIsPressed);
 
@@ -159,10 +162,11 @@ public static class Selection {
         ChangeActiveShipUsingThisShip ();
     }
 
-    public static void ChangeActiveShip(Ship.GenericShip genShip)
+    public static void ChangeActiveShip(GenericShip genShip)
     {
         DeselectThisShip();
         ThisShip = genShip;
+
         ChangeActiveShipUsingThisShip ();
     }
 
@@ -185,6 +189,11 @@ public static class Selection {
             DeselectShip(ThisShip);
             ThisShip = null;
         }
+    }
+
+    public static void ChangeAnotherShip(GenericShip ship)
+    {
+        ChangeAnotherShip("ShipId:" + ship.ShipId);
     }
 
     public static void ChangeAnotherShip(string shipId)
@@ -213,7 +222,7 @@ public static class Selection {
         }
     }
 
-    private static void DeselectShip(Ship.GenericShip ship)
+    private static void DeselectShip(GenericShip ship)
     {
         ship.ToggleCollisionDetection(false);
         Roster.UnMarkShip(ship);
@@ -226,4 +235,31 @@ public static class Selection {
         DeselectAnotherShip();
     }
 
+    public static void ToggleMultiSelection(GenericShip ship)
+    {
+        if (MultiSelectedShips.Contains(ship))
+        {
+            MultiSelectedShips.Remove(ship);
+        }
+        else
+        {
+            MultiSelectedShips.Add(ship);
+        }
+
+        ship.ToggleMultiSelectionProjector();
+    }
+
+    public static void ClearMultiSelection()
+    {
+        HideMultiSelectionHighlight();
+        MultiSelectedShips = new List<GenericShip>();
+    }
+
+    public static void HideMultiSelectionHighlight()
+    {
+        foreach (GenericShip ship in MultiSelectedShips)
+        {
+            ship.TurnOffMultiSelectionProjector();
+        }
+    }
 }

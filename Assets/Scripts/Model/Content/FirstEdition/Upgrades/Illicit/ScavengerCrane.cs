@@ -25,12 +25,12 @@ namespace Abilities.FirstEdition
     {
         public override void ActivateAbility()
         {
-            GenericShip.OnDestroyedGlobal += RegisterScavengerCraneAbility;
+            GenericShip.OnShipIsDestroyedGlobal += RegisterScavengerCraneAbility;
         }
 
         public override void DeactivateAbility()
         {
-            GenericShip.OnDestroyedGlobal -= RegisterScavengerCraneAbility;
+            GenericShip.OnShipIsDestroyedGlobal -= RegisterScavengerCraneAbility;
         }
 
         private void RegisterScavengerCraneAbility(GenericShip destroyedShip, bool isFled)
@@ -49,14 +49,20 @@ namespace Abilities.FirstEdition
         protected void AskUseScavengerCrane(object sender, EventArgs e)
         {
             var phase = Phases.StartTemporarySubPhaseNew<SubPhases.ScavengerCraneDecisionSubPhase>("Select upgrade to recover", Triggers.FinishTrigger);
+
+            phase.DescriptionShort = "Scavenger Crane";
+            phase.DescriptionLong = "Select upgrade to recover";
+            phase.ImageSource = HostUpgrade;
+
             phase.hostUpgrade = HostUpgrade;
             phase.hostAbility = this;
+
             phase.Start();
         }
 
         public GenericUpgrade[] GetRecoverableUpgrades()
         {
-            var allowedTypes = new[] { UpgradeType.Torpedo, UpgradeType.Missile, UpgradeType.Bomb, UpgradeType.Cannon, UpgradeType.Turret, UpgradeType.Modification };
+            var allowedTypes = new[] { UpgradeType.Torpedo, UpgradeType.Missile, UpgradeType.Device, UpgradeType.Cannon, UpgradeType.Turret, UpgradeType.Modification };
             var discardedUpgrades = HostShip.UpgradeBar.GetUpgradesOnlyDiscarded()
                 .Where(upgrade => allowedTypes.Any(type => upgrade.HasType(type)))
                 .ToArray();
@@ -76,7 +82,6 @@ namespace SubPhases
 
         public override void PrepareDecision(System.Action callBack)
         {
-            InfoText = "Select upgrade to recover";
             var discardedUpgrades = hostAbility.GetRecoverableUpgrades();
 
             foreach (var upgrade in discardedUpgrades)

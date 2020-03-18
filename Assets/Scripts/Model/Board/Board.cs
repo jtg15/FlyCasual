@@ -3,39 +3,57 @@ using System.Collections.Generic;
 using UnityEngine;
 using Ship;
 using System;
+using Obstacles;
 
 namespace BoardTools
 {
+    public enum RangeCheckReason
+    {
+        CoordinateAction,
+        UpgradeCard,
+        Other
+    }
 
     public static partial class Board {
 
         public static readonly float PLAYMAT_SIZE = 10;
 
-        public static List<MeshCollider> Objects = new List<MeshCollider>();
+        public static List<Collider> Objects = new List<Collider>();
 
         public static void SetShips()
         {
             int i = 1;
-            foreach (var ship in Roster.ShipsPlayer1.Values)
+            foreach (var ship in Roster.GetPlayer(Players.PlayerNo.Player1).Ships.Values)
             {
                 SetShipPreSetup(ship, i);
-                RegisterBoardObject(ship);
+                RegisterShip(ship);
                 i++;
             }
 
             i = 1;
-            foreach (var ship in Roster.ShipsPlayer2.Values)
+            foreach (var ship in Roster.GetPlayer(Players.PlayerNo.Player2).Ships.Values)
             {
                 SetShipPreSetup(ship, i);
-                RegisterBoardObject(ship);
+                RegisterShip(ship);
                 i++;
             }
         }
 
-        private static void RegisterBoardObject(GenericShip ship)
+        private static void RegisterShip(GenericShip ship)
         {
-            Objects.Add(ship.GetShipAllPartsTransform().Find("ShipBase").GetComponent<MeshCollider>());
-            Objects.Add(ship.GetShipAllPartsTransform().Find("ShipBase/ObstaclesStayDetector").GetComponent<MeshCollider>());
+            Objects.Add(ship.GetShipAllPartsTransform().Find("ShipBase/ShipBaseCollider").GetComponent<MeshCollider>());
+            Objects.Add(ship.GetShipAllPartsTransform().Find("ShipBase/ObstaclesHitsDetector").GetComponent<BoxCollider>());
+            Objects.Add(ship.GetShipAllPartsTransform().Find("ShipBase/ShipBaseCollider/ObstaclesStayDetector").GetComponent<MeshCollider>());
+        }
+
+        public static void RegisterRemote(GenericShip ship)
+        {
+            Objects.Add(ship.GetShipAllPartsTransform().Find("ShipBase/model/RemoteCollider").GetComponent<MeshCollider>());
+        }
+
+        public static void RegisterObstacle(GenericObstacle obstacle)
+        {
+            Objects.Add(obstacle.ObstacleGO.transform.Find(obstacle.Name).GetComponent<MeshCollider>());
         }
 
         public static float CalculateDistance(int countShips)
@@ -115,7 +133,30 @@ namespace BoardTools
 
         public static void Cleanup()
         {
-            Objects = new List<MeshCollider>();
+            Objects = new List<Collider>();
+        }
+
+        public static bool CheckInRange(GenericShip thisShip, GenericShip anotherShip, int minRange, int maxRange, RangeCheckReason reason = RangeCheckReason.Other)
+        {
+            DistanceInfo distInfo = new DistanceInfo(thisShip, anotherShip);
+            bool inRange = distInfo.Range >= minRange && distInfo.Range <= maxRange;
+
+            inRange = thisShip.CallOnCheckRange(anotherShip, minRange, maxRange, reason, inRange);
+
+            return inRange;
+        }
+
+        public static float DistanceToNearestEnemy(GenericShip ship)
+        {
+            float result = float.MaxValue;
+
+            foreach (GenericShip enemyShip in ship.Owner.EnemyShips.Values)
+            {
+                DistanceInfo distInfo = new DistanceInfo(ship, enemyShip);
+                if (distInfo.MinDistance.DistanceReal < result) result = distInfo.MinDistance.DistanceReal;
+            }
+
+            return result;
         }
     
     }

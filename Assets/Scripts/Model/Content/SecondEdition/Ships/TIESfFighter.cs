@@ -42,11 +42,11 @@ namespace Ship
                 DialInfo.ChangeManeuverComplexity(new ManeuverHolder(ManeuverSpeed.Speed3, ManeuverDirection.Right, ManeuverBearing.Turn), MovementComplexity.Normal);
                 DialInfo.AddManeuver(new ManeuverHolder(ManeuverSpeed.Speed5, ManeuverDirection.Forward, ManeuverBearing.Straight), MovementComplexity.Normal);
 
-                IconicPilots[Faction.FirstOrder] = typeof(Backdraft);
+                IconicPilots[Faction.FirstOrder] = typeof(Quickdraw);
 
                 ShipAbilities.Add(new Abilities.SecondEdition.HeavyWeaponTurret());
 
-                // ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/4/44/Maneuver_tie_phantom.png";
+                ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/1/14/Maneuver_tie_sf.png";
             }
         }
     }
@@ -57,6 +57,8 @@ namespace Abilities.SecondEdition
     //After you perform an action, you may perform a red boost action.
     public class HeavyWeaponTurret : GenericAbility
     {
+        public override string Name { get { return "Heavy Weapon Turret"; } }
+
         public override void ActivateAbility()
         {
             HostShip.OnGameStart += RestrictMissileArcRequirements;

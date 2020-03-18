@@ -36,7 +36,6 @@ public class GameManagerScript : MonoBehaviour {
         Combat.Initialize();
         Triggers.Initialize();
         DamageDecks.Initialize();
-        new ObstaclesManager();
 
         AI.Aggressor.NavigationSubSystem.Initialize();
 
@@ -64,7 +63,10 @@ public class GameManagerScript : MonoBehaviour {
 
     private void SetApplicationParameters()
     {
-        Application.targetFrameRate = 100;
+        Application.targetFrameRate = 60;
+
+        QualitySettings.SetQualityLevel(Options.Quality);
+        if (Options.ShowFps) GameObject.Find("UI/PlayersPanel").transform.Find("FpsHolder").gameObject.SetActive(true);
 
         Options.UpdateVolume();
     }

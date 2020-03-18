@@ -9,6 +9,7 @@ using Players;
 using Mods;
 using SquadBuilderNS;
 using Editions;
+using Ship;
 
 public partial class MainMenu : MonoBehaviour {
 
@@ -64,10 +65,16 @@ public partial class MainMenu : MonoBehaviour {
                 UpdatePlayerInfo();
                 break;
             case "OptionsPanel":
-                Options.InitializePanel();
+                OptionsUI.Instance.InitializeOptionsPanel();
+                break;
+            case "StatsPanel":
+                StatsUI.Instance.InitializeStatsPanel();
                 break;
             case "ModsPanel":
                 ModsManager.InitializePanel();
+                break;
+            case "CreditsPanel":
+                CreditsUI.InitializePanel();
                 break;
             case "BrowseRoomsPanel":
                 Network.BrowseMatches();
@@ -104,14 +111,23 @@ public partial class MainMenu : MonoBehaviour {
             case "SaveSquadronPanel":
                 SquadBuilder.PrepareSaveSquadronPanel();
                 break;
-            case "ShipSkinsPanel":
-                SquadBuilder.ShowSkinButtons();
-                break;
             case "AvatarsPanel":
                 InitializePlayerCustomization();
                 break;
             case "EditionPanel":
                 ShowActiveEdition(Options.Edition);
+                break;
+            case "ShipInfoPanel":
+                SquadBuilder.ShowShipInformation();
+                break;
+            case "SkinsPanel":
+                SquadBuilder.ShowSkinsPanel();
+                break;
+            case "ChosenObstaclesPanel":
+                SquadBuilder.ShowChosenObstaclesPanel();
+                break;
+            case "BrowseObstaclesPanel":
+                SquadBuilder.ShowBrowseObstaclesPanel();
                 break;
         }
     }
@@ -168,6 +184,11 @@ public partial class MainMenu : MonoBehaviour {
     public void PreviousPanel()
     {
         CurrentMainMenu.ChangePanel(CurrentMainMenu.PreviousPanelName);
+    }
+
+    public void OpenPatreon()
+    {
+        Application.OpenURL("https://www.patreon.com/Sandrem");
     }
 
 }

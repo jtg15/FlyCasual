@@ -15,7 +15,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Chewbacca",
                     4,
-                    73,
+                    71,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.ChewbaccaRebelPilotAbility),
                     charges: 1,
@@ -56,13 +56,17 @@ namespace Abilities.SecondEdition
             Selection.ActiveShip = sender as GenericShip;
 
             AskToUseAbility(
+                descriptionShort: HostShip.PilotInfo.PilotName,
                 IsShouldUseAbility,
                 UseAbility,
                 delegate
                 {
                     Selection.ActiveShip = previousShip;
                     DecisionSubPhase.ConfirmDecision();
-                });
+                },
+                descriptionLong: "Do you want to spend 1 Charge to be dealt the faceup damage card as facedown instead?",
+                imageHolder: HostShip
+            );
         }
 
         private bool IsShouldUseAbility()

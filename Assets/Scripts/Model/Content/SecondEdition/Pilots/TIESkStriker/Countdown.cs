@@ -52,12 +52,18 @@ namespace Abilities.SecondEdition
 
         private void UseCountdownAbilitySE(object sender, System.EventArgs e)
         {
-            AskToUseAbility(AlwaysUseByDefault, delegate { HostShip.Tokens.AssignToken(typeof(StressToken), BlankDamage); });
+            AskToUseAbility(
+                HostShip.PilotInfo.PilotName,
+                AlwaysUseByDefault,
+                delegate { HostShip.Tokens.AssignToken(typeof(StressToken), BlankDamage); },
+                descriptionLong: "Do you want to suffer 1 damage and gain 1 stress token to cancel all dice results?",
+                imageHolder: HostShip
+            );
         }
 
         private void BlankDamage()
         {
-            Messages.ShowInfo("Damage canceled by Countdown!");
+            Messages.ShowInfo("Countdown cancels all the attack's damage at the cost of 1 Hit and 1 stress token");
 
             DamageSourceEventArgs countdownDamage = new DamageSourceEventArgs
             {

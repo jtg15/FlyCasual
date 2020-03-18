@@ -46,7 +46,7 @@ namespace Abilities.SecondEdition
                 && Combat.ArcForShot.ArcType == ArcType.Front
                 && HostShip.ArcsInfo.GetArc<ArcSingleTurret>().Facing == ArcFacing.Front)
             {
-                Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": +1 attack die");
+                Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + "gains +1 attack die");
                 count++;
             }
         }
@@ -55,7 +55,8 @@ namespace Abilities.SecondEdition
         {
             if (Combat.ShotInfo.Weapon.WeaponType == WeaponTypes.PrimaryWeapon
                 && Combat.ArcForShot.ArcType == ArcType.Front
-                && HostShip.ArcsInfo.GetArc<ArcSingleTurret>().Facing == ArcFacing.Rear)
+                && HostShip.ArcsInfo.GetArc<ArcSingleTurret>().Facing == ArcFacing.Rear
+                && !HostShip.IsCannotAttackSecondTime)
             {
                 HostShip.OnCombatCheckExtraAttack += RegisterExtraAttack;
             }
@@ -69,17 +70,21 @@ namespace Abilities.SecondEdition
 
         private void DoExtraPrimaryTurretAttack(object sender, System.EventArgs e)
         {
-            Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + ": bonus attack");
+            Messages.ShowInfo(HostUpgrade.UpgradeInfo.Name + "'s bonus attack");
 
-            Combat.StartAdditionalAttack(
+            HostShip.IsCannotAttackSecondTime = true;
+
+            Combat.StartSelectAttackTarget(
                 HostShip,
                 delegate {
                     Selection.ThisShip.IsAttackPerformed = true;
+                    //if bonus attack was skipped, allow bonus attacks again
+                    if (Selection.ThisShip.IsAttackSkipped) Selection.ThisShip.IsCannotAttackSecondTime = false;
                     Triggers.FinishTrigger();
                 },
                 IsPrimaryTurretAttack,
                 HostUpgrade.UpgradeInfo.Name,
-                "You may perform an bonus primary attack from your turret arc.",
+                "You may perform an bonus attack from your primary turret arc",
                 HostUpgrade
             );
         }
@@ -90,7 +95,7 @@ namespace Abilities.SecondEdition
 
             if (weapon.WeaponType != WeaponTypes.PrimaryWeapon || !weapon.WeaponInfo.ArcRestrictions.Contains(ArcType.SingleTurret))
             {
-                if (!isSilent) Messages.ShowErrorToHuman("You can perform only primary turret attack");
+                if (!isSilent) Messages.ShowErrorToHuman("You can only perform primary weapon turret attacks");
                 result = false;
             }
 

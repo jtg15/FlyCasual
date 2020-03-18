@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Ship;
+using System.Collections.Generic;
 using Upgrade;
 
 namespace Ship
@@ -12,7 +13,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "L'ulo L'ampar",
                     5,
-                    38,
+                    43,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.LuloLamparAbility),
                     extraUpgradeIcons: new List<UpgradeType> { UpgradeType.Talent, UpgradeType.Talent } //,
@@ -45,9 +46,9 @@ namespace Abilities.SecondEdition
 
         private void LuloLamparAbilityAtkPilotAbility(ref int result)
         {
-            if (HostShip.IsStressed)
+            if (HostShip.IsStressed && Combat.ChosenWeapon.WeaponType == WeaponTypes.PrimaryWeapon)
             {
-                Messages.ShowInfo("L'ulo L'ampar: +1 attack die");
+                Messages.ShowInfo("L'ulo L'ampar is stressed and gains +1 attack die");
                 result++;
             }
         }
@@ -56,7 +57,7 @@ namespace Abilities.SecondEdition
         {
             if (HostShip.IsStressed)
             {
-                Messages.ShowInfo("L'ulo L'ampar: -1 defense die");
+                Messages.ShowInfo("L'ulo L'ampar is stressed and gains -1 defense die");
                 result--;
             }
         }

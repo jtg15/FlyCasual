@@ -31,7 +31,7 @@ namespace UpgradesList.FirstEdition
         public override bool IsAllowedForSquadBuilderPostCheck(SquadList squadList)
         {
             bool result = HostShip.PilotInfo.Initiative > 6;
-            if (!result) Messages.ShowError("You cannot equip \"Black One\" if pilot's skill is \"6\" or lower");
+            if (!result) Messages.ShowError("You cannot equip \"Black One\" if the pilot's skill is \"6\" or lower");
             return result;
         }
     }
@@ -71,7 +71,7 @@ namespace Abilities.FirstEdition
                 GetAiPriorityOfTarget,
                 HostShip.Owner.PlayerNo,
                 HostUpgrade.UpgradeInfo.Name,
-                "Choose a ship to remove enemy Target Lock from it.",
+                "Choose a ship to remove enemy Target Lock from it",
                 HostUpgrade
             );
         }
@@ -133,7 +133,7 @@ namespace Abilities.FirstEdition
             }
             else
             {
-                Messages.ShowErrorToHuman(string.Format("{0}'s ship does not have an enemy Target Lock.", TargetShip.PilotInfo.PilotName));
+                Messages.ShowErrorToHuman(string.Format("{0}'s ship does not have an enemy Target Lock", TargetShip.PilotInfo.PilotName));
             }
         }
 
@@ -145,7 +145,7 @@ namespace Abilities.FirstEdition
                 SelectShipSubPhase.FinishSelection
             );
 
-            decisionPhase.InfoText = "Determine which Target Lock to remove:";
+            decisionPhase.DescriptionShort = "Determine which Target Lock to remove:";
 
             foreach (Tokens.RedTargetLockToken token in GetShipRedTargetLocks(TargetShip))
             {
@@ -166,7 +166,7 @@ namespace Abilities.FirstEdition
 
         private void RemoveRedTargetLock(char targetLockTokenLetter, Action callback)
         {
-            Messages.ShowInfoToHuman(string.Format("Target Lock has been removed from {0}.", TargetShip.PilotInfo.PilotName));
+            Messages.ShowInfoToHuman(string.Format("Target Lock has been removed from {0}", TargetShip.PilotInfo.PilotName));
             TargetShip.Tokens.RemoveToken(
                 typeof(Tokens.RedTargetLockToken),
                 callback,

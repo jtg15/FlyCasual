@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UpgradesList;
 
 namespace Upgrade
 {
@@ -15,6 +16,8 @@ namespace Upgrade
         private List<UpgradeType> ForbiddenSlots;
         private Dictionary<UpgradeType, int> CostReductionByType;
 
+        public List<GenericUpgrade> InstalledUpgradesAll_System { get; set; }
+
         public ShipUpgradeBar(GenericShip hostShip)
         {
             HostShip = hostShip;
@@ -22,6 +25,7 @@ namespace Upgrade
             UpgradeSlots = new List<UpgradeSlot>();
             ForbiddenSlots = new List<UpgradeType>();
             CostReductionByType = new Dictionary<UpgradeType, int>();
+            InstalledUpgradesAll_System = new List<GenericUpgrade>();
         }
 
         public void AddSlot(UpgradeType slotType)
@@ -41,6 +45,27 @@ namespace Upgrade
         public void RemoveSlot(UpgradeType upgradeType, object grantedBy = null)
         {
             UpgradeSlot slot = UpgradeSlots.Find(n => (n.Type == upgradeType) && (n.GrantedBy == grantedBy));
+            if (slot != null)
+            {
+                if (slot.InstalledUpgrade != null)
+                {
+                    if (slot.InstalledUpgrade is EmptyUpgrade)
+                    {
+                        UpgradeSlot realUpgradeSlot = UpgradeSlots.Find(n => (n.InstalledUpgrade != null) && (n.InstalledUpgrade.UpgradeInfo.Name == slot.InstalledUpgrade.UpgradeInfo.Name) && (!(n.InstalledUpgrade is EmptyUpgrade)));
+                        realUpgradeSlot.RemovePreInstallUpgrade();
+                    }
+                    else
+                    {
+                        slot.RemovePreInstallUpgrade();
+                    }
+                }
+                UpgradeSlots.Remove(slot);
+            }
+        }
+
+        public void RemoveEmptySlot(UpgradeType upgradeType, object grantedBy = null)
+        {
+            UpgradeSlot slot = UpgradeSlots.Find(n => (n.Type == upgradeType) && (n.GrantedBy == grantedBy) && n.IsEmpty);
             if (slot != null) UpgradeSlots.Remove(slot);
         }
 
@@ -82,7 +107,7 @@ namespace Upgrade
                 UpgradeType uType = upgradeTypes [i];
                 for (int j = 0; j < holder.Count; j++) {
                     UpgradeSlot uslot = holder [j];
-                    if (uType == uslot.Type && uslot.IsEmpty) {
+                    if ((uType == uslot.Type || uslot.Type == UpgradeType.Omni) && uslot.IsEmpty) {
                         results.Add (uslot);
                         holder.Remove (uslot);
                         break;
@@ -92,10 +117,15 @@ namespace Upgrade
             return results;
         }
 
+        public bool HasFreeSlots()
+        {
+            return UpgradeSlots.Where(n => n.InstalledUpgrade == null).ToList().Count > 0;
+        }
+
         public List<GenericUpgrade> GetUpgradesAll()
         {
-            List<GenericUpgrade> result = UpgradeSlots.Where(n => (!n.IsEmpty && n.InstalledUpgrade.GetType() != typeof(UpgradesList.EmptyUpgrade))).ToList().Select(n => n.InstalledUpgrade).ToList();
-            if (result == null) result = new List<GenericUpgrade>();
+            List<GenericUpgrade> result = new List<GenericUpgrade>();
+            result.AddRange(InstalledUpgradesAll_System.Where(n => !n.isPlaceholder));
             return result;
         }
 
@@ -148,8 +178,8 @@ namespace Upgrade
 
         public List<GenericUpgrade> GetSpecialWeaponsActive()
         {
-            return GetUpgradesAll().Where(n => 
-                n is GenericSpecialWeapon 
+            return GetUpgradesAll().Where(n =>
+                n is GenericSpecialWeapon
                 && n.State.IsFaceup
                 && (
                     ((n as GenericSpecialWeapon).WeaponInfo.UsesCharges == false)
@@ -179,6 +209,11 @@ namespace Upgrade
         public bool HasUpgradeInstalled(Type upgradeType)
         {
             return GetUpgradesAll().Any(n => n.GetType() == upgradeType);
+        }
+
+        public bool HasUpgradeTypeInstalled(UpgradeType upgradeType)
+        {
+            return GetUpgradesAll().Any(n => n.HasType(upgradeType));
         }
 
         /**

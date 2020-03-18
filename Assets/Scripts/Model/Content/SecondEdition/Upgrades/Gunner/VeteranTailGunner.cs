@@ -59,7 +59,7 @@ namespace Abilities.SecondEdition
             {
                 HostShip.IsCannotAttackSecondTime = true;
 
-                Combat.StartAdditionalAttack(
+                Combat.StartSelectAttackTarget(
                     HostShip,
                     FinishAdditionalAttack,
                     IsRearArcShot,
@@ -70,7 +70,7 @@ namespace Abilities.SecondEdition
             }
             else
             {
-                Messages.ShowErrorToHuman(string.Format("{0} cannot attack one more time", HostShip.PilotInfo.PilotName));
+                Messages.ShowErrorToHuman(string.Format("{0} cannot make additional attacks", HostShip.PilotInfo.PilotName));
                 Triggers.FinishTrigger();
             }
         }
@@ -80,6 +80,9 @@ namespace Abilities.SecondEdition
             // If attack is skipped, set this flag, otherwise regular attack can be performed second time
             HostShip.IsAttackPerformed = true;
 
+            //if bonus attack was skipped, allow bonus attacks again
+            if (HostShip.IsAttackSkipped) HostShip.IsCannotAttackSecondTime = false;
+
             Triggers.FinishTrigger();
         }
 
@@ -87,13 +90,13 @@ namespace Abilities.SecondEdition
         {
             bool result = false;
 
-            if (Combat.ChosenWeapon.WeaponType == WeaponTypes.PrimaryWeapon && Combat.ChosenWeapon.WeaponInfo.ArcRestrictions.Contains(ArcType.Rear))
+            if (weapon.WeaponType == WeaponTypes.PrimaryWeapon && weapon.WeaponInfo.ArcRestrictions.Contains(ArcType.Rear))
             {
                 result = true;
             }
             else
             {
-                if (!isSilent) Messages.ShowError("Attack must use rear firing arc");
+                if (!isSilent) Messages.ShowError("This attack must use the ship's rear firing arc");
             }
 
             return result;

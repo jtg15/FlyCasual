@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using Ship;
+using System.Linq;
 
 namespace Ship
 {
@@ -11,7 +12,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Sunny Bounder",
                     1,
-                    30,
+                    27,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.SunnyBounderAbility),
                     seImageNumber: 188
@@ -26,11 +27,13 @@ namespace Abilities.SecondEdition
     public class SunnyBounderAbility : Abilities.FirstEdition.SunnyBounderAbility
     {
         // No more "once per round".
-        protected override void AddAbility(DiceRoll diceroll)
+        protected override void AddAbility(GenericShip ship)
         {
-            if (diceroll.DiceList.All(die => die.Side == diceroll.DiceList.First().Side))
+            if (Combat.CurrentDiceRoll.DiceList.All(die => die.Side == Combat.CurrentDiceRoll.DiceList.First().Side))
             {
-                HostShip.OnGenerateDiceModifications += AddAvailableActionEffect;
+                HostShip.AddAvailableDiceModification(
+                    new ActionsList.FirstEdition.SunnyBounderAbilityAction(() => { IsAbilityUsed = true; HostShip = HostShip; })
+                );
             }
         }
     }

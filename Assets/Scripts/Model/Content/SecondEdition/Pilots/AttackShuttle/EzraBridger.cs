@@ -12,11 +12,11 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Ezra Bridger",
                     3,
-                    41,
+                    40,
                     isLimited: true,
-                    abilityType: typeof(Abilities.FirstEdition.ZebOrreliosPilotAbility),
+                    abilityType: typeof(Abilities.SecondEdition.EzraBridgerPilotAbility),
                     force: 1,
-                    extraUpgradeIcon: UpgradeType.Force,
+                    extraUpgradeIcon: UpgradeType.ForcePower,
                     seImageNumber: 36
                 );
             }

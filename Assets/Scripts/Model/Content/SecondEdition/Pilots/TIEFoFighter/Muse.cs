@@ -15,7 +15,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "\"Muse\"",
                     2,
-                    32,
+                    30,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.MuseAbility),
                     extraUpgradeIcon: UpgradeType.Talent //,
@@ -60,7 +60,7 @@ namespace Abilities.SecondEdition
                 GetAiPriorityOfTarget,
                 HostShip.Owner.PlayerNo,
                 HostShip.PilotInfo.PilotName,
-                "Choose a ship to remove 1 Stress token from it.",
+                "Choose a ship to remove 1 Stress token from it",
                 HostShip
             );
         }

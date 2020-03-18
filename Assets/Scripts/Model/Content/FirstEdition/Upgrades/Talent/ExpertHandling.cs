@@ -41,7 +41,8 @@ namespace Abilities.FirstEdition
             GenericAction newAction = new ExpertHandlingAction()
             {
                 ImageUrl = HostUpgrade.ImageUrl,
-                HostShip = host
+                HostShip = host,
+                Source = HostUpgrade
             };
             host.AddAvailableAction(newAction);
         }
@@ -61,7 +62,7 @@ namespace ActionsList
         public override void ActionTake()
         {
             Phases.CurrentSubPhase.Pause();
-            if (!Selection.ThisShip.IsAlreadyExecutedAction(typeof(BarrelRollAction)))
+            if (!Selection.ThisShip.IsAlreadyExecutedAction(new BarrelRollAction()))
             {
                 Phases.StartTemporarySubPhaseOld(
                     "Expert Handling: Barrel Roll",
@@ -71,7 +72,7 @@ namespace ActionsList
             }
             else
             {
-                Messages.ShowError("Cannot use Expert Handling: Barrel Roll is already executed");
+                Messages.ShowError(Selection.ThisShip.PilotInfo.PilotName + " cannot use Expert Handling: this ship has already executed a Barrel Roll action this round");
                 Phases.CurrentSubPhase.Resume();
             }
         }
@@ -97,11 +98,16 @@ namespace ActionsList
         {
             if (HostShip.Tokens.HasToken(typeof(RedTargetLockToken), '*'))
             {
-                Phases.StartTemporarySubPhaseOld(
+                ExpertHandlingTargetLockDecisionSubPhase subphase = Phases.StartTemporarySubPhaseNew<ExpertHandlingTargetLockDecisionSubPhase>(
                     "Expert Handling: Select target lock to remove",
-                    typeof(ExpertHandlingTargetLockDecisionSubPhase),
                     Finish
                 );
+
+                subphase.DescriptionShort = "Expert Handling";
+                subphase.DescriptionLong = "Select a target lock to remove";
+                subphase.ImageSource = Source;
+
+                subphase.Start();
             }
             else
             {
@@ -126,8 +132,6 @@ namespace SubPhases
 
         public override void PrepareDecision(System.Action callBack)
         {
-            InfoText = "Select target lock to remove";
-
             foreach (var token in Selection.ThisShip.Tokens.GetAllTokens())
             {
                 if (token.GetType() == typeof(RedTargetLockToken))

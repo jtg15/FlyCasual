@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using Mods;
+using ExtraOptions;
 
 public static class Options
 {
     private static OptionsUI optionsUI;
 
     public static string Playmat;
+    public static string BackgroundImage;
     public static string CheckVersionUrl;
     public static float MusicVolume;
     public static float SfxVolume;
@@ -21,6 +23,11 @@ public static class Options
     public static string Edition;
     public static bool DontShowAiInfo;
     public static string AiType;
+    public static string DiceStats;
+    public static bool FullScreen;
+    public static bool ShowFps;
+    public static int Quality;
+    public static string Resolution;
 
     public static readonly string DefaultAvatar = "UpgradesList.FirstEdition.VeteranInstincts";
 
@@ -31,7 +38,8 @@ public static class Options
 
     public static void ReadOptions()
     {
-        Playmat = PlayerPrefs.GetString("PlaymatName", "3DSceneHoth");
+        Playmat = PlayerPrefs.GetString("PlaymatName", "Endor");
+        BackgroundImage = PlayerPrefs.GetString("BackgroundImage", "_RANDOM");
         CheckVersionUrl = PlayerPrefs.GetString("CheckVersionUrl", "http://sandrem.freeasphost.net/data/currentversion.txt");
         MusicVolume = PlayerPrefs.GetFloat("Music Volume", 0.25f);
         SfxVolume = PlayerPrefs.GetFloat("SFX Volume", 0.25f);
@@ -42,8 +50,15 @@ public static class Options
         Title = PlayerPrefs.GetString("Title", "Test Pilot");
         DontShowAiInfo = PlayerPrefs.GetInt("DontShowAiInfo", 0) == 1;
         AiType = PlayerPrefs.GetString("AiType", "AI: Aggressor");
-
         Edition = PlayerPrefs.GetString("Edition", "SecondEdition");
+        FullScreen = PlayerPrefs.GetInt("FullScreen", 1) == 1;
+        ShowFps = PlayerPrefs.GetInt("ShowFps", 0) == 1;
+        Resolution = PlayerPrefs.GetString("Resolution", Screen.currentResolution.ToString());
+        Quality = PlayerPrefs.GetInt("Quality", 4);
+
+        DiceStats = PlayerPrefs.GetString("DiceStats", "AT-0|AC-0|AS-0|AE-0|AB-0|DT-0|DS-0|DE-0|DB-0&AT-0|AC-0|AS-0|AE-0|AB-0|DT-0|DS-0|DE-0|DB-0");
+        DiceStatsTracker.ReadFromString(DiceStats);
+
         MainMenu.SetEdition(Edition);
 
         ReadMods();
@@ -119,6 +134,12 @@ public static class Options
     public static void ChangeParameterValue(string parameter, bool value)
     {
         PlayerPrefs.SetInt(parameter, (value) ? 1 : 0);
+        PlayerPrefs.Save();
+    }
+
+    public static void ChangeParameterValue(string parameter, int value)
+    {
+        PlayerPrefs.SetInt(parameter, value);
         PlayerPrefs.Save();
     }
 

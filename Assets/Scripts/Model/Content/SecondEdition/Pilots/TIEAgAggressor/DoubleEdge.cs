@@ -15,7 +15,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "\"Double Edge\"",
                     2,
-                    33,
+                    29,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.DoubleEdgeAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -87,18 +87,20 @@ namespace Abilities.SecondEdition
         {
             if (!HostShip.IsCannotAttackSecondTime)
             {
-                Combat.StartAdditionalAttack(
+                HostShip.IsCannotAttackSecondTime = true;
+
+                Combat.StartSelectAttackTarget(
                     HostShip,
                     FinishAdditionalAttack,
                     IsAnotherWeapon,
                     "\"Double Edge\"",
-                    "You may perform a bonus attack using different weapon.",
+                    "You may perform a bonus attack using different weapon",
                     HostShip
                 );
             }
             else
             {
-                Messages.ShowErrorToHuman(string.Format("{0} cannot attack one more time", HostShip.PilotInfo.PilotName));
+                Messages.ShowErrorToHuman(string.Format("{0} cannot attack an additional time", HostShip.PilotInfo.PilotName));
                 Triggers.FinishTrigger();
             }
         }
@@ -107,6 +109,9 @@ namespace Abilities.SecondEdition
         {
             // If attack is skipped, set this flag, otherwise regular attack can be performed second time
             Selection.ThisShip.IsAttackPerformed = true;
+
+            //if bonus attack was skipped, allow bonus attacks again
+            if (Selection.ThisShip.IsAttackSkipped) Selection.ThisShip.IsCannotAttackSecondTime = false;
 
             Triggers.FinishTrigger();
         }
@@ -121,7 +126,7 @@ namespace Abilities.SecondEdition
             }
             else
             {
-                if (!isSilent) Messages.ShowError("Attack must be performed using another weapon");
+                if (!isSilent) Messages.ShowError("This attack must be performed using a different weapon");
             }
 
             return result;

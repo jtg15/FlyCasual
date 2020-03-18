@@ -8,7 +8,8 @@ public enum Direction
     Bottom,
     Left,
     Right,
-    None
+    None,
+    All
 }
 
 namespace RulesList
@@ -45,7 +46,7 @@ namespace RulesList
         {
             GenericShip ship = sender as GenericShip;
 
-            Messages.ShowError("Ship left the play area and was destroyed!");
+            Messages.ShowInfo(ship.PilotInfo.PilotName + " left the play area and was destroyed!");
             ship.DestroyShipForced(Triggers.FinishTrigger, true);
         }
 

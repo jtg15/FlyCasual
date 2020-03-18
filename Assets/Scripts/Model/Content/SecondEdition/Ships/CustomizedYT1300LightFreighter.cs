@@ -4,6 +4,7 @@ using Actions;
 using ActionsList;
 using Arcs;
 using Movement;
+using UnityEngine;
 using Upgrade;
 
 namespace Ship.SecondEdition.CustomizedYT1300LightFreighter
@@ -13,7 +14,6 @@ namespace Ship.SecondEdition.CustomizedYT1300LightFreighter
         public CustomizedYT1300LightFreighter() : base()
         {
             ShipInfo.ShipName = "Customized YT-1300 Light Freighter";
-            OldShipTypeName = "";
 
             ShipInfo.ArcInfo = new ShipArcsInfo(ArcType.DoubleTurret, 2);
 
@@ -23,6 +23,9 @@ namespace Ship.SecondEdition.CustomizedYT1300LightFreighter
             ShipInfo.Hull = 8;
             ShipInfo.Shields = 3;
 
+            ShipInfo.UpgradeIcons.Upgrades.Remove(UpgradeType.Modification);
+            ShipInfo.UpgradeIcons.Upgrades.Add(UpgradeType.Illicit);
+
             ShipInfo.ActionIcons.AddActions(new ActionInfo(typeof(RotateArcAction)));
             ShipInfo.ActionIcons.AddActions(new ActionInfo(typeof(BoostAction), ActionColor.Red));
 
@@ -30,7 +33,9 @@ namespace Ship.SecondEdition.CustomizedYT1300LightFreighter
 
             ModelInfo = new ShipModelInfo(
                 "Customized YT-1300 Light Freighter",
-                "Default"
+                "Default",
+                new Vector3(-3.3f, 7.3f, 5.55f),
+                3.5f
             );
 
             DialInfo.ChangeManeuverComplexity(new ManeuverHolder(ManeuverSpeed.Speed1, ManeuverDirection.Left, ManeuverBearing.Bank), MovementComplexity.Easy);

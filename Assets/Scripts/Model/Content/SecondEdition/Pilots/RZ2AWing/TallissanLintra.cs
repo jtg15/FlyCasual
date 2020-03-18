@@ -19,7 +19,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Tallissan Lintra",
                     5,
-                    35,
+                    36,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.TallissanLintraAbility),
                     charges: 1,
@@ -55,7 +55,7 @@ namespace Abilities.SecondEdition
             bool IsDifferentPlayer = (HostShip.Owner.PlayerNo != Combat.Attacker.Owner.PlayerNo);
             bool InTaliArc = HostShip.SectorsInfo.IsShipInSector(Combat.Attacker, ArcType.Bullseye);
 
-            if (IsDifferentPlayer && InTaliArc)
+            if (IsDifferentPlayer && InTaliArc && HostShip.State.Charges > 0)
             {
                 RegisterAbilityTrigger(TriggerTypes.OnAttackStart, AskIncreaseDefense);
             }
@@ -63,7 +63,13 @@ namespace Abilities.SecondEdition
 
         protected void AskIncreaseDefense(object sender, System.EventArgs e)
         {
-            AskToUseAbility(AlwaysUseByDefault, IncreaseDefense, null, null, false);
+            AskToUseAbility(
+                HostShip.PilotInfo.PilotName,
+                AlwaysUseByDefault,
+                IncreaseDefense,
+                descriptionLong: "Do you want to spend 1 Charge to allow defender to roll 1 additional die?",
+                imageHolder: HostShip
+            );
         }
 
         protected virtual void IncreaseDefense(object sender, System.EventArgs e)

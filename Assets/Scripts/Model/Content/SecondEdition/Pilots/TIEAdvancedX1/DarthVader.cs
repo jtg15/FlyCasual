@@ -15,11 +15,11 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Darth Vader",
                     6,
-                    65,
+                    67,
                     isLimited: true,
                     abilityType: typeof(DarthVaderAbility),
                     force: 3,
-                    extraUpgradeIcon: UpgradeType.Force,
+                    extraUpgradeIcon: UpgradeType.ForcePower,
                     seImageNumber: 93
                 );
 
@@ -61,23 +61,28 @@ namespace Abilities.SecondEdition
 
         private void PerformAction(object sender, System.EventArgs e)
         {
-            Messages.ShowInfoToHuman("Darth Vader: you may spend 1 force to perform an action");
-
-            HostShip.BeforeFreeActionIsPerformed += PayForceCost;
+            HostShip.BeforeActionIsPerformed += PayForceCost;
 
             List<GenericAction> actions = Selection.ThisShip.GetAvailableActions();
-            HostShip.AskPerformFreeAction(actions, CleanUp);
+
+            HostShip.AskPerformFreeAction(
+                actions,
+                CleanUp,
+                HostShip.PilotInfo.PilotName,
+                "After you perform an action, you may spend 1 Force to perform an action",
+                HostShip
+            );
         }
 
-        private void PayForceCost(GenericAction action)
+        private void PayForceCost(GenericAction action, ref bool isFreeAction)
         {
             HostShip.State.Force--;
-            HostShip.BeforeFreeActionIsPerformed -= PayForceCost;
+            HostShip.BeforeActionIsPerformed -= PayForceCost;
         }
 
         private void CleanUp()
         {
-            HostShip.BeforeFreeActionIsPerformed -= PayForceCost;
+            HostShip.BeforeActionIsPerformed -= PayForceCost;
             Triggers.FinishTrigger();
         }
 

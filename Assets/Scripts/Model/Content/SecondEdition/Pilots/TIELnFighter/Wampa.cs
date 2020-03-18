@@ -14,7 +14,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "\"Wampa\"",
                     1,
-                    30,
+                    29,
                     isLimited: true,
                     abilityType: typeof(WampaAbility),
                     charges: 1,
@@ -53,7 +53,13 @@ namespace Abilities.SecondEdition
             if (HostShip.State.Charges > 0)
             {
                 // give user the option to use ability
-                AskToUseAbility(AlwaysUseByDefault, UseAbility);
+                AskToUseAbility(
+                    HostShip.PilotInfo.PilotName,
+                    AlwaysUseByDefault,
+                    UseAbility,
+                    descriptionLong: "Do you want ot spend 1 Charge to roll 1 additional attack die?",
+                    imageHolder: HostShip
+                );
             }
             else
             {
@@ -80,7 +86,7 @@ namespace Abilities.SecondEdition
             {
                 RegisterAbilityTrigger(TriggerTypes.OnAttackFinish, delegate
                 {
-                    Messages.ShowError("Wampa lost a charge after defending!");
+                    Messages.ShowInfo("Wampa lost a charge after defending!");
                     HostShip.RemoveCharge(Triggers.FinishTrigger);
                 });
             }
