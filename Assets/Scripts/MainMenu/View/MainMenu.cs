@@ -77,7 +77,7 @@ public partial class MainMenu : MonoBehaviour {
                 CreditsUI.InitializePanel();
                 break;
             case "BrowseRoomsPanel":
-                Network.BrowseMatches();
+                BrowseMatches();
                 break;
             case "SelectFactionPanel":
                 SquadBuilder.SetCurrentPlayerFaction(Faction.None);
@@ -128,6 +128,13 @@ public partial class MainMenu : MonoBehaviour {
                 break;
             case "BrowseObstaclesPanel":
                 SquadBuilder.ShowBrowseObstaclesPanel();
+                break;
+            case "BrowsePopularSquadsPanel":
+                if (previousPanelName == "SquadOptionsPanel") PopularSquads.LastChosenFaction = "All";
+                PopularSquads.LoadPopularSquads();
+                break;
+            case "BrowsePopularSquadsVariantsPanel":
+                PopularSquads.LoadPopularSquadsVariants();
                 break;
         }
     }
@@ -189,6 +196,11 @@ public partial class MainMenu : MonoBehaviour {
     public void OpenPatreon()
     {
         Application.OpenURL("https://www.patreon.com/Sandrem");
+    }
+
+    public void SetFaction(string factionChar)
+    {
+        PopularSquads.SetFaction(factionChar);
     }
 
 }

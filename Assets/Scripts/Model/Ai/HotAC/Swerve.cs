@@ -44,7 +44,7 @@ namespace AI
 
                     Selection.ThisShip.SetAssignedManeuver(newMovementAttempt);
                     newMovementAttempt.Initialize();
-                    movementPrediction = new MovementPrediction(newMovementAttempt, CheckSwerveAlternativePrediction);
+                    //movementPrediction = new MovementPrediction(newMovementAttempt, CheckSwerveAlternativePrediction);
                 }
             }
             else
@@ -153,17 +153,17 @@ namespace AI
             {
                 if (result.Speed == ManeuverSpeed.Speed1)
                 {
-                    result.SpeedInt++;
+                    result.SpeedIntUnsigned++;
                 }
                 else
                 {
-                    result.SpeedInt--;
+                    result.SpeedIntUnsigned--;
                     if (!Selection.ThisShip.HasManeuver(result) || (failedManeuvers.Contains(result)))
                     {
-                        result.SpeedInt--;
+                        result.SpeedIntUnsigned--;
                         if (!Selection.ThisShip.HasManeuver(result) || (failedManeuvers.Contains(result)))
                         {
-                            result.SpeedInt--;  //for example, 5 bank -> 2 bank
+                            result.SpeedIntUnsigned--;  //for example, 5 bank -> 2 bank
                         }
                     }
                 }

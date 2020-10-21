@@ -45,7 +45,7 @@ namespace Abilities.FirstEdition
                 HostShip = host,
                 ImageUrl = HostUpgrade.ImageUrl
             };
-            host.AddAvailableDiceModification(newAction);
+            host.AddAvailableDiceModificationOwn(newAction);
         }
     }
 }
@@ -62,9 +62,7 @@ namespace ActionsList.FirstEdition
 
         public override void ActionEffect(System.Action callBack)
         {
-            Combat.CurrentDiceRoll.AddDice(DieSide.Blank).ShowWithoutRoll();
-            Combat.CurrentDiceRoll.OrganizeDicePositions();
-
+            Combat.CurrentDiceRoll.AddDiceAndShow(DieSide.Blank);
             callBack();
         }
 

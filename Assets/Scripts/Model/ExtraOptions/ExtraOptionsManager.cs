@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GameModes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -11,6 +12,8 @@ namespace ExtraOptions
     {
         public string Name;
         public string Description;
+        public bool IsAvailable = true;
+        public virtual bool IsAllowedOnline => true;
 
         private bool isOn;
         public bool IsOn
@@ -21,6 +24,11 @@ namespace ExtraOptions
                 isOn = value;
                 if (value) Activate(); else Deactivate();
             }
+        }
+
+        protected bool IsAllowed()
+        {
+            return IsAllowedOnline || (GameMode.CurrentGameMode.GetType() != typeof(NetworkGame));
         }
 
         protected abstract void Activate();
@@ -42,9 +50,14 @@ namespace ExtraOptions
             ExtraOptions = new Dictionary<Type, ExtraOption>();
             foreach (Type type in namespaceIEnum)
             {
+                if (type.MemberType == MemberTypes.NestedType) continue;
+
                 ExtraOption newExtraOption = (ExtraOption)System.Activator.CreateInstance(type);
-                ExtraOptions.Add(type, newExtraOption);
-                ExtraOptionToggleIsActive(newExtraOption.ToString(), PlayerPrefs.GetInt("extraOptions/" + newExtraOption.ToString(), 0) == 1);
+                if (newExtraOption.IsAvailable)
+                {
+                    ExtraOptions.Add(type, newExtraOption);
+                    ExtraOptionToggleIsActive(newExtraOption.ToString(), PlayerPrefs.GetInt("extraOptions/" + newExtraOption.ToString(), 0) == 1);
+                }
             }
         }
 

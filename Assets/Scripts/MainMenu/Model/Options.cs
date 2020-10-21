@@ -28,6 +28,7 @@ public static class Options
     public static bool ShowFps;
     public static int Quality;
     public static string Resolution;
+    public static int DisplayId;
 
     public static readonly string DefaultAvatar = "UpgradesList.FirstEdition.VeteranInstincts";
 
@@ -43,18 +44,29 @@ public static class Options
         CheckVersionUrl = PlayerPrefs.GetString("CheckVersionUrl", "http://sandrem.freeasphost.net/data/currentversion.txt");
         MusicVolume = PlayerPrefs.GetFloat("Music Volume", 0.25f);
         SfxVolume = PlayerPrefs.GetFloat("SFX Volume", 0.25f);
-        AnimationSpeed = PlayerPrefs.GetFloat("Animation Speed", 0.25f);
-        ManeuverSpeed = PlayerPrefs.GetFloat("Maneuver Speed", 0.25f);
+        AnimationSpeed = PlayerPrefs.GetFloat("Animation Speed V2", 0.25f);
+        ManeuverSpeed = PlayerPrefs.GetFloat("Maneuver Speed V2", 0.25f);
         Avatar = PlayerPrefs.GetString("Avatar", Options.DefaultAvatar);
         NickName = PlayerPrefs.GetString("NickName", "Unknown Pilot");
         Title = PlayerPrefs.GetString("Title", "Test Pilot");
         DontShowAiInfo = PlayerPrefs.GetInt("DontShowAiInfo", 0) == 1;
         AiType = PlayerPrefs.GetString("AiType", "AI: Aggressor");
         Edition = PlayerPrefs.GetString("Edition", "SecondEdition");
-        FullScreen = PlayerPrefs.GetInt("FullScreen", 1) == 1;
         ShowFps = PlayerPrefs.GetInt("ShowFps", 0) == 1;
         Resolution = PlayerPrefs.GetString("Resolution", Screen.currentResolution.ToString());
-        Quality = PlayerPrefs.GetInt("Quality", 4);
+
+        FullScreen = PlayerPrefs.GetInt("FullScreen", 1) == 1;
+        Screen.fullScreen = FullScreen;
+
+        DisplayId = PlayerPrefs.GetInt("DisplayId", 0);
+        if (DisplayId < 0 || DisplayId >= Display.displays.Count())
+        {
+            DisplayId = 0;
+            ChangeParameterValue("DisplayId", 0);
+        }
+
+        Quality = PlayerPrefs.GetInt("Quality", 2);
+        if (Quality > 2) Quality = 2;
 
         DiceStats = PlayerPrefs.GetString("DiceStats", "AT-0|AC-0|AS-0|AE-0|AB-0|DT-0|DS-0|DE-0|DB-0&AT-0|AC-0|AS-0|AE-0|AB-0|DT-0|DS-0|DE-0|DB-0");
         DiceStatsTracker.ReadFromString(DiceStats);
@@ -114,10 +126,10 @@ public static class Options
             case "SFX Volume":
                 SfxVolume = value;
                 break;
-            case "Animation Speed":
+            case "Animation Speed V2":
                 AnimationSpeed = value;
                 break;
-            case "Maneuver Speed":
+            case "Maneuver Speed V2":
                 ManeuverSpeed = value;
                 break;
             default:

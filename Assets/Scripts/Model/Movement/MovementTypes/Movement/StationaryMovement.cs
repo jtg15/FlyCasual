@@ -13,12 +13,12 @@ namespace Movement
 
         }
 
-        public override void Perform()
+        public override IEnumerator Perform()
         {
-            base.Perform();
             Initialize();
 
-            movementPrediction = new MovementPrediction(this, TheShip.Owner.AfterShipMovementPrediction);
+            movementPrediction = new MovementPrediction(TheShip, this);
+            yield return movementPrediction.CalculateMovementPredicition();
         }
 
         protected override float SetProgressTarget()
@@ -28,7 +28,7 @@ namespace Movement
 
         protected override float SetAnimationSpeed()
         {
-            return 1;
+            return 1f;
         }
 
         public override GameObject[] PlanMovement()
@@ -49,6 +49,11 @@ namespace Movement
             result[0] = ShipStand;
 
             return result;
+        }
+
+        public override GameObject[] PlanFinalPosition()
+        {
+            return PlanMovement();
         }
 
         public override void AdaptSuccessProgress() { }

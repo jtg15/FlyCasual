@@ -8,6 +8,7 @@ using Players;
 using System.Linq;
 using ActionsList;
 using BoardTools;
+using Arcs;
 
 namespace Abilities
 {
@@ -45,15 +46,10 @@ namespace Abilities
             protected set { hostShip = value; }
         }
 
-        private GenericUpgrade hostUpgrade;
         /// <summary>
         /// Upgrade that is host of ability
         /// </summary>
-        public GenericUpgrade HostUpgrade
-        {
-            get { return hostUpgrade; }
-            private set { hostUpgrade = value; }
-        }
+        public GenericUpgrade HostUpgrade { get; set; }
 
         /// <summary>
         /// Name of host (ship or upgrade)
@@ -131,7 +127,7 @@ namespace Abilities
         /// <summary>
         /// Register trigger of ability
         /// </summary>
-        protected Trigger RegisterAbilityTrigger(TriggerTypes triggerType, EventHandler eventHandler, System.EventArgs e = null, bool isSkippable = false)
+        public Trigger RegisterAbilityTrigger(TriggerTypes triggerType, EventHandler eventHandler, System.EventArgs e = null, bool isSkippable = false)
         {
             var trigger = new Trigger()
             {
@@ -157,7 +153,7 @@ namespace Abilities
         /// <summary>
         /// Shows "Take a decision" window for ability with Yes / No / [Always] buttons
         /// </summary>
-        protected void AskToUseAbility(string descriptionShort, Func<bool> useByDefault, EventHandler useAbility, EventHandler dontUseAbility = null, Action callback = null, bool showAlwaysUseOption = false, string descriptionLong = null, IImageHolder imageHolder = null, bool showSkipButton = true, PlayerNo requiredPlayer = PlayerNo.PlayerNone)
+        public void AskToUseAbility(string descriptionShort, Func<bool> useByDefault, EventHandler useAbility, EventHandler dontUseAbility = null, Action callback = null, bool showAlwaysUseOption = false, string descriptionLong = null, IImageHolder imageHolder = null, bool showSkipButton = true, PlayerNo requiredPlayer = PlayerNo.PlayerNone)
         {
             if (dontUseAbility == null) dontUseAbility = DontUseAbility;
 
@@ -223,7 +219,7 @@ namespace Abilities
         /// <summary>
         /// Use in AskToUseAbility to always use ability by AI
         /// </summary>
-        protected bool AlwaysUseByDefault()
+        public bool AlwaysUseByDefault()
         {
             return true;
         }
@@ -244,12 +240,12 @@ namespace Abilities
 
         // SELECT SHIP AS TARGET OF ABILITY
 
-        protected GenericShip TargetShip;
+        public GenericShip TargetShip;
 
         /// <summary>
         /// Starts "Select ship for ability" subphase
         /// </summary>
-        protected void SelectTargetForAbility(Action selectTargetAction, Func<GenericShip, bool> filterTargets, Func<GenericShip, int> getAiPriority, PlayerNo subphaseOwnerPlayerNo, string name = null, string description = null, IImageHolder imageSource = null, bool showSkipButton = true, Action callback = null)
+        public void SelectTargetForAbility(Action selectTargetAction, Func<GenericShip, bool> filterTargets, Func<GenericShip, int> getAiPriority, PlayerNo subphaseOwnerPlayerNo, string name = null, string description = null, IImageHolder imageSource = null, bool showSkipButton = true, Action callback = null)
         {
             if (callback == null) callback = Triggers.FinishTrigger;
 
@@ -293,7 +289,7 @@ namespace Abilities
             return result;
         }
 
-        protected bool FilterTargetsByRange(GenericShip ship, int minRange, int maxRange)
+        public bool FilterTargetsByRange(GenericShip ship, int minRange, int maxRange)
         {
             bool result = true;
 
@@ -307,7 +303,7 @@ namespace Abilities
             return result;
         }
 
-        protected bool FilterTargetsByRangeInArc(GenericShip ship, int minRange, int maxRange)
+        public bool FilterTargetsByRangeInArc(GenericShip ship, int minRange, int maxRange)
         {
             bool result = true;
 
@@ -322,10 +318,29 @@ namespace Abilities
             return result;
         }
 
+        public bool FilterTargetsByParameters(GenericShip ship, int minRange, int maxRange, ArcType arcType, TargetTypes targetTypes, Type tokenType = null)
+        {
+            bool result = true;
+
+            if ((Phases.CurrentSubPhase as SelectShipSubPhase) == null || (Phases.CurrentSubPhase as SelectShipSubPhase).CanMeasureRangeBeforeSelection)
+            {
+                if (!Tools.CheckShipsTeam(ship, hostShip, targetTypes)) return false;
+
+                if (tokenType != null && !ship.Tokens.HasToken(tokenType, '*')) return false;
+
+                ShotInfo shotInfo = new ShotInfo(hostShip, ship, hostShip.PrimaryWeapons);
+                if (arcType != ArcType.None && !shotInfo.InArcByType(arcType)) return false;
+                if (shotInfo.Range < minRange) return false;
+                if (shotInfo.Range > maxRange) return false;
+            }
+
+            return result;
+        }
+
         /// <summary>
         /// Checks if ships that can be selected by abilities are present
         /// </summary>
-        protected bool TargetsForAbilityExist(Func<GenericShip, bool> filter)
+        public bool TargetsForAbilityExist(Func<GenericShip, bool> filter)
         {
             return Roster.AllShips.Values.FirstOrDefault(n => filter(n)) != null;
         }
@@ -445,7 +460,8 @@ namespace Abilities
             Action<Action<bool>> payAbilityCost = null,
             Action payAbilityPostCost = null,
             bool isTrueReroll = true,
-            bool isForcedFullReroll = false
+            bool isForcedFullReroll = false,
+            bool isForcedModification = false
         )
         {
             AddDiceModification(
@@ -461,7 +477,8 @@ namespace Abilities
                 payAbilityCost,
                 payAbilityPostCost,
                 isTrueReroll,
-                isForcedFullReroll
+                isForcedFullReroll,
+                isForcedModification
             );
         }
 
@@ -481,7 +498,8 @@ namespace Abilities
             Action<Action<bool>> payAbilityCost = null,
             Action payAbilityPostCost = null,
             bool isTrueReroll = true,
-            bool isForcedFullReroll = false
+            bool isForcedFullReroll = false,
+            bool isForcedModification = false
         )
         {
             if (sidesCanBeSelected == null) sidesCanBeSelected = new List<DieSide>() { DieSide.Blank, DieSide.Focus, DieSide.Success, DieSide.Crit };
@@ -498,6 +516,7 @@ namespace Abilities
                     Source = HostUpgrade,
                     CheckDiceModificationAvailable = isAvailable,
                     GenerateDiceModificationAiPriority = aiPriority,
+                    IsForced = isForcedModification,
                     DoDiceModification = (Action callback) =>
                     {
                         if (payAbilityCost == null) payAbilityCost = payCallback => payCallback(true);
@@ -518,7 +537,8 @@ namespace Abilities
                                     sideCanBeChangedTo,
                                     timing,
                                     isTrueReroll,
-                                    isForcedFullReroll
+                                    isForcedFullReroll,
+                                    isForcedModification
                                 );
                             }
                             else callback();
@@ -526,7 +546,15 @@ namespace Abilities
                     },
                     IsReroll = modificationType == DiceModificationType.Reroll,
                 };
-                ship.AddAvailableDiceModification(diceModification);
+
+                if (!isGlobal)
+                {
+                    ship.AddAvailableDiceModificationOwn(diceModification);
+                }
+                else
+                {
+                    ship.AddAvailableDiceModification(diceModification, HostShip);
+                }
             };
             
             if (!isGlobal)
@@ -589,13 +617,14 @@ namespace Abilities
             DieSide newSide,
             DiceModificationTimingType timing,
             bool isTrueReroll = true,
-            bool isForcedFullReroll = false
+            bool isForcedFullReroll = false,
+            bool isForcedModification = false
         )
         {
             switch (modificationType)
             {
                 case DiceModificationType.Reroll:
-                    DiceModificationReroll(callback, getCount, sidesCanBeSelected, timing, isTrueReroll, isForcedFullReroll);
+                    DiceModificationReroll(callback, getCount, sidesCanBeSelected, timing, isTrueReroll, isForcedFullReroll, isForcedModification);
                     break;
                 case DiceModificationType.Change:
                     DiceModificationChange(callback, getCount, sidesCanBeSelected, newSide);
@@ -636,7 +665,7 @@ namespace Abilities
             }
         }
 
-        private void DiceModificationReroll(Action callback, Func<int> getCount, List<DieSide> sidesCanBeSelected, DiceModificationTimingType timing, bool isTrueReroll = true, bool isForcedFullReroll = false)
+        private void DiceModificationReroll(Action callback, Func<int> getCount, List<DieSide> sidesCanBeSelected, DiceModificationTimingType timing, bool isTrueReroll = true, bool isForcedFullReroll = false, bool isForcedModification = false)
         {
             int diceCount = getCount();
 
@@ -649,6 +678,7 @@ namespace Abilities
                     IsOpposite = timing == DiceModificationTimingType.Opposite,
                     IsTrueReroll = isTrueReroll,
                     IsForcedFullReroll = isForcedFullReroll,
+                    IsForcedModification = isForcedModification,
                     CallBack = callback
                 };
                 diceRerollManager.Start();
@@ -677,10 +707,26 @@ namespace Abilities
 
         public void DiceModificationAdd(Action callBack, Func<int> getCount, DieSide side)
         {
-            for (int i = 0; i < getCount(); i++)
-                Combat.CurrentDiceRoll.AddDice(side).ShowWithoutRoll();
+            // TODO: Replace this quick hack to real roll of a dice
+            if (side == DieSide.Unknown)
+            {
+                List<DieSide> AttackDieSides = new List<DieSide>()
+                {
+                    DieSide.Crit,
+                    DieSide.Success,
+                    DieSide.Success,
+                    DieSide.Success,
+                    DieSide.Focus,
+                    DieSide.Focus,
+                    DieSide.Blank,
+                    DieSide.Blank
+                };
 
-            Combat.CurrentDiceRoll.OrganizeDicePositions();
+                int index = UnityEngine.Random.Range(0, AttackDieSides.Count);
+                side = AttackDieSides[index];
+            }
+
+            for (int i = 0; i < getCount(); i++) Combat.CurrentDiceRoll.AddDiceAndShow(side);
 
             callBack();
         }

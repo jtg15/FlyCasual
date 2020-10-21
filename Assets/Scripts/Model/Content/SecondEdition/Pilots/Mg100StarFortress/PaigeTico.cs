@@ -14,7 +14,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Paige Tico",
                     5,
-                    60,
+                    58,
                     isLimited: true,
                     charges: 1,
                     regensCharges: true,
@@ -65,7 +65,7 @@ namespace Abilities.SecondEdition
                     HostName,
                     NeverUseByDefault,
                     DropBomb,
-                    descriptionLong: "Do you want to drop an additional bomb?",
+                    descriptionLong: "Do you want to drop an additional device?",
                     imageHolder: HostShip
                 );
             }

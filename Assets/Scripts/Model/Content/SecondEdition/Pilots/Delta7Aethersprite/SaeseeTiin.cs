@@ -65,7 +65,7 @@ namespace Abilities.SecondEdition
         private void ManeuverSelected(string maneuverString)
         {
             if (maneuverString != TargetShip.AssignedManeuver.ToString()) HostShip.State.Force--;
-            GameMode.CurrentGameMode.AssignManeuver(maneuverString);
+            ShipMovementScript.SendAssignManeuverCommand(maneuverString);
         }
 
         private bool IsSameComplexityAndSpeed(string maneuverString)
@@ -73,7 +73,7 @@ namespace Abilities.SecondEdition
             ManeuverHolder movementStruct = new ManeuverHolder(maneuverString);
 
             return movementStruct.ColorComplexity == TargetShip.AssignedManeuver.ColorComplexity
-                && movementStruct.SpeedInt == TargetShip.AssignedManeuver.Speed;
+                && movementStruct.SpeedIntUnsigned == TargetShip.AssignedManeuver.Speed;
         }
     }
 }

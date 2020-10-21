@@ -30,8 +30,7 @@ namespace Ship
                         UpgradeType.Title,
                         UpgradeType.Modification,
                         UpgradeType.Torpedo
-                    ),
-                    icon: 'M'
+                    )
                 );
 
                 IconicPilots = new Dictionary<Faction, System.Type> {
@@ -40,7 +39,7 @@ namespace Ship
 
                 ModelInfo = new ShipModelInfo(
                     "Protectorate Starfighter",
-                    "Protectorate Starfighter"
+                    "Zealous Recruit"
                 );
 
                 DialInfo = new ShipDialInfo(
@@ -82,7 +81,7 @@ namespace Ship
                     "TIE-Fire", 3
                 );
 
-                ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures/images/8/83/MS_PROTECTORATE-STARFIGHTER.png";
+                ShipIconLetter = 'M';
 
                 HotacManeuverTable = new AI.ProtectorateStarfighterTable();
             }

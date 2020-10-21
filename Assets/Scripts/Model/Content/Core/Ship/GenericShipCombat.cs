@@ -109,10 +109,12 @@ namespace Ship
         public static event EventHandlerShipBomb OnAfterSufferBombEffect;
 
         public event EventHandlerShipRefBool OnCheckPreventDestruction;
+        public static event EventHandlerShipRefBool OnCheckPreventDestructionGlobal;
         public event EventHandlerShipBool OnShipIsDestroyed;
         public static event EventHandlerShipBool OnShipIsDestroyedGlobal;
-        public event EventHandlerShip OnShipIsRemoved;
-        public static event EventHandlerShip OnShipIsRemovedGlobal;
+        public event EventHandlerShip OnShipIsReadyToBeRemoved;
+        public event EventHandlerShip OnShipIsRemoved_System;
+        public static event EventHandlerShip OnShipIsReadyToBeRemovedGlobal;
 
         public event EventHandler AfterAttackWindow;
 
@@ -538,7 +540,7 @@ namespace Ship
 
         public void ProcessDrawnDamageCard(EventArgs e)
         {
-            AssignedDamageDiceroll.CancelHits(1);
+            AssignedDamageDiceroll.CancelHitsSpecial(1);
             AssignedDamageDiceroll.RemoveAllFailures();
 
             if (Combat.CurrentCriticalHitCard.IsFaceup)
@@ -605,7 +607,7 @@ namespace Ship
 
         public void SufferShieldDamage(bool isCritical)
         {
-            AssignedDamageDiceroll.CancelHits(1);
+            AssignedDamageDiceroll.CancelHitsSpecial(1);
             AssignedDamageDiceroll.RemoveAllFailures();
 
             State.ShieldsCurrent--;
@@ -636,6 +638,8 @@ namespace Ship
                 bool preventDestruction = false;
 
                 OnCheckPreventDestruction?.Invoke(this, ref preventDestruction);
+
+                OnCheckPreventDestructionGlobal?.Invoke(this, ref preventDestruction);
 
                 if (!preventDestruction)
                 {
@@ -712,8 +716,15 @@ namespace Ship
 
         private void RemoveDestroyedShip(Action callback)
         {
-            OnShipIsRemoved?.Invoke(this);
-            OnShipIsRemovedGlobal?.Invoke(this);
+            OnShipIsReadyToBeRemoved?.Invoke(this);
+            OnShipIsReadyToBeRemovedGlobal?.Invoke(this);
+
+            Triggers.ResolveTriggers(TriggerTypes.OnShipIsReadyToBeRemoved, delegate{ RemoveDestroyedShip_System(callback); });
+        }
+
+        private void RemoveDestroyedShip_System(Action callback)
+        {
+            OnShipIsRemoved_System?.Invoke(this);
 
             Triggers.ResolveTriggers(TriggerTypes.OnShipIsRemoved, callback);
         }

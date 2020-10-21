@@ -9,6 +9,8 @@ using Obstacles;
 using ActionsList;
 using Actions;
 using Bombs;
+using Ship;
+using Movement;
 
 namespace ActionsList
 {
@@ -217,17 +219,12 @@ namespace SubPhases
             if (SelectedBoostHelper != null)
             {
                 (HostAction as BoostAction).SelectedBoostTemplate = SelectedBoostHelper;
-                TryPerformBoost();
+                TryConfirmBoostPosition();
             }
             else
             {
                 CancelBoost(new List<ActionFailReason>() { ActionFailReason.NoTemplateAvailable});
             }
-        }
-
-        public void TryPerformBoost()
-        {
-            GameMode.CurrentGameMode.TryConfirmBoostPosition(SelectedBoostHelper);
         }
 
         private void ShowBoosterHelper()
@@ -242,7 +239,7 @@ namespace SubPhases
             obstaclesStayDetectorMovementTemplate.TheShip = TheShip;
         }
 
-        public virtual void StartBoostExecution()
+        public virtual void StartBoostExecution(ShipPositionInfo finalPositionInfo)
         {
             BoostExecutionSubPhase execution = (BoostExecutionSubPhase) Phases.StartTemporarySubPhaseNew(
                 "Boost execution",
@@ -252,6 +249,7 @@ namespace SubPhases
             execution.TheShip = TheShip;
             execution.IsTractorBeamBoost = IsTractorBeamBoost;
             execution.SelectedBoostHelper = SelectedBoostHelper;
+            execution.FinalPositionInfo = finalPositionInfo;
             execution.Start();
         }
 
@@ -274,11 +272,6 @@ namespace SubPhases
             MonoBehaviour.Destroy(ShipStand);
 
             Roster.SetRaycastTargets(true);
-        }
-
-        public void TryConfirmBoostPositionNetwork(string selectedBoostHelper)
-        {
-            TryConfirmBoostPosition();
         }
 
         public void TryConfirmBoostPosition(System.Action<bool> canBoostCallback = null)
@@ -314,6 +307,9 @@ namespace SubPhases
         {
             obstaclesStayDetectorBase.ReCheckCollisionsFinish();
             obstaclesStayDetectorMovementTemplate.ReCheckCollisionsFinish();
+
+            ShipPositionInfo shipPositionInfo = new ShipPositionInfo(ShipStand.transform.position, ShipStand.transform.eulerAngles);
+
             HidePlanningTemplates();
 
             if (canBoostCallback != null)
@@ -330,11 +326,11 @@ namespace SubPhases
                 obstaclesStayDetectorMovementTemplate.OverlappedAsteroidsNow
                     .Where((a) => !TheShip.ObstaclesHit.Contains(a)).ToList()
                     .ForEach(TheShip.ObstaclesHit.Add);
-                GameMode.CurrentGameMode.StartBoostExecution();
+                StartBoostExecution(shipPositionInfo);
             }
             else
             {
-                GameMode.CurrentGameMode.CancelBoost(boostProblems);
+                CancelBoost(boostProblems);
             }
         }
 
@@ -377,12 +373,12 @@ namespace SubPhases
             UpdateHelpInfo();
         }
 
-        public override bool ThisShipCanBeSelected(Ship.GenericShip ship, int mouseKeyIsPressed)
+        public override bool ThisShipCanBeSelected(GenericShip ship, int mouseKeyIsPressed)
         {
             return false;
         }
 
-        public override bool AnotherShipCanBeSelected(Ship.GenericShip anotherShip, int mouseKeyIsPressed)
+        public override bool AnotherShipCanBeSelected(GenericShip anotherShip, int mouseKeyIsPressed)
         {
             return false;
         }
@@ -393,6 +389,9 @@ namespace SubPhases
     {
         public string SelectedBoostHelper;
         public bool IsTractorBeamBoost;
+        public ShipPositionInfo FinalPositionInfo;
+
+        private GenericMovement BoostMovement;
 
         public override void Start()
         {
@@ -407,49 +406,54 @@ namespace SubPhases
         {
             Rules.Collision.ClearBumps(TheShip);
 
-            Movement.GenericMovement boostMovement;
             switch (SelectedBoostHelper)
             {
                 case "Straight 1":
-                    boostMovement = new Movement.StraightBoost(1, Movement.ManeuverDirection.Forward, Movement.ManeuverBearing.Straight, Movement.MovementComplexity.None);
+                    BoostMovement = new StraightBoost(1, ManeuverDirection.Forward, ManeuverBearing.Straight, MovementComplexity.None);
                     break;
                 case "Bank 1 Left":
-                    boostMovement = new Movement.BankBoost(1, Movement.ManeuverDirection.Left, Movement.ManeuverBearing.Bank, Movement.MovementComplexity.None);
+                    BoostMovement = new BankBoost(1, ManeuverDirection.Left, ManeuverBearing.Bank, MovementComplexity.None);
                     break;
                 case "Bank 1 Right":
-                    boostMovement = new Movement.BankBoost(1, Movement.ManeuverDirection.Right, Movement.ManeuverBearing.Bank, Movement.MovementComplexity.None);
+                    BoostMovement = new BankBoost(1, ManeuverDirection.Right, ManeuverBearing.Bank, MovementComplexity.None);
                     break;
                 case "Turn 1 Right":
-                    boostMovement = new Movement.TurnBoost(1, Movement.ManeuverDirection.Right, Movement.ManeuverBearing.Turn, Movement.MovementComplexity.None);
+                    BoostMovement = new TurnBoost(1, ManeuverDirection.Right, ManeuverBearing.Turn, MovementComplexity.None);
                     break;
                 case "Turn 1 Left":
-                    boostMovement = new Movement.TurnBoost(1, Movement.ManeuverDirection.Left, Movement.ManeuverBearing.Turn, Movement.MovementComplexity.None);
+                    BoostMovement = new TurnBoost(1, ManeuverDirection.Left, ManeuverBearing.Turn, MovementComplexity.None);
                     break;
                 case "Straight 2":
-                    boostMovement = new Movement.StraightBoost(2, Movement.ManeuverDirection.Forward, Movement.ManeuverBearing.Straight, Movement.MovementComplexity.None);
+                    BoostMovement = new StraightBoost(2, ManeuverDirection.Forward, ManeuverBearing.Straight, MovementComplexity.None);
                     break;
                 case "Bank 2 Left":
-                    boostMovement = new Movement.BankBoost(2, Movement.ManeuverDirection.Left, Movement.ManeuverBearing.Bank, Movement.MovementComplexity.None);
+                    BoostMovement = new BankBoost(2, ManeuverDirection.Left, ManeuverBearing.Bank, MovementComplexity.None);
                     break;
                 case "Bank 2 Right":
-                    boostMovement = new Movement.BankBoost(2, Movement.ManeuverDirection.Right, Movement.ManeuverBearing.Bank, Movement.MovementComplexity.None);
+                    BoostMovement = new BankBoost(2, ManeuverDirection.Right, ManeuverBearing.Bank, MovementComplexity.None);
                     break;
                 default:
-                    boostMovement = new Movement.StraightBoost(1, Movement.ManeuverDirection.Forward, Movement.ManeuverBearing.Straight, Movement.MovementComplexity.None);
+                    BoostMovement = new StraightBoost(1, ManeuverDirection.Forward, ManeuverBearing.Straight, MovementComplexity.None);
                     break;
             }
 
-            boostMovement.TheShip = TheShip;
+            BoostMovement.FinalPositionInfo = FinalPositionInfo;
+            BoostMovement.TheShip = TheShip;
 
-            MovementTemplates.ApplyMovementRuler(TheShip, boostMovement);
+            MovementTemplates.ApplyMovementRuler(TheShip, BoostMovement);
 
-            boostMovement.Perform();
+            GameManagerScript.Instance.StartCoroutine(BoostExecutionCoroutine());
+        }
+
+        private IEnumerator BoostExecutionCoroutine()
+        {
+            yield return BoostMovement.Perform();
             if (!IsTractorBeamBoost) Sounds.PlayFly(TheShip);
         }
 
         public virtual void FinishBoost()
         {
-            GameMode.CurrentGameMode.FinishBoost();
+            Phases.FinishSubPhase(Phases.CurrentSubPhase.GetType());
         }
 
         public override void Next()

@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Players;
+using Ship;
+using System;
+using SubPhases;
 
 public static partial class Tools
 {
@@ -55,6 +58,8 @@ public static partial class Tools
             result = result.Replace("advanced", "adv");
         }
 
+        result = result.Replace("é", "e");
+
         return result;
     }
 
@@ -67,4 +72,40 @@ public static partial class Tools
         }
     }
 
+    public static bool IsSameTeam(GenericShip ship1, GenericShip ship2)
+    {
+        return ship1.Owner.PlayerNo == ship2.Owner.PlayerNo;
+    }
+
+    public static bool IsAnotherTeam(GenericShip ship1, GenericShip ship2)
+    {
+        return ship1.Owner.PlayerNo != ship2.Owner.PlayerNo;
+    }
+
+    public static bool IsSameShip(GenericShip ship1, GenericShip ship2)
+    {
+        return ship1.ShipId == ship2.ShipId;
+    }
+
+    public static bool IsAnotherFriendly(GenericShip ship1, GenericShip ship2)
+    {
+        return IsSameTeam(ship1, ship2) && !IsSameShip(ship1, ship2);
+    }
+
+    public static bool CheckShipsTeam(GenericShip ship1, GenericShip ship2, TargetTypes targetTypes)
+    {
+        switch (targetTypes)
+        {
+            case TargetTypes.This:
+                return (IsSameShip(ship1, ship2));
+            case TargetTypes.OtherFriendly:
+                return (IsAnotherFriendly(ship1, ship2));
+            case TargetTypes.Enemy:
+                return (IsAnotherTeam(ship1, ship2));
+            case TargetTypes.Any:
+                return true;
+            default:
+                return true;
+        }
+    }
 }

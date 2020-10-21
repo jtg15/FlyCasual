@@ -51,7 +51,7 @@ namespace Abilities.FirstEdition
                 Name = this.HostShip.PilotInfo.PilotName + "'s Ability",
                 DiceModificationName = this.HostShip.PilotInfo.PilotName + "'s Ability"
             };
-            ship.AddAvailableDiceModification(newAction);
+            ship.AddAvailableDiceModificationOwn(newAction);
         }
 
         private class NorraWexleyYWingAction : ActionsList.GenericAction
@@ -67,9 +67,7 @@ namespace Abilities.FirstEdition
                 char targetLockPair = GetTargetLockTokenLetterOnAnotherShip();
                 if (targetLockPair != ' ')
                 {
-                    Combat.CurrentDiceRoll.AddDice(DieSide.Focus).ShowWithoutRoll();
-                    Combat.CurrentDiceRoll.OrganizeDicePositions();
-
+                    Combat.CurrentDiceRoll.AddDiceAndShow(DieSide.Focus);
                     HostShip.Tokens.SpendToken(typeof(Tokens.BlueTargetLockToken), callBack, targetLockPair);
                 }
                 else

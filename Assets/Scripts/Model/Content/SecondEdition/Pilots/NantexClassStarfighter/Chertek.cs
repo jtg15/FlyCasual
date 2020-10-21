@@ -13,7 +13,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Chertek",
                     4,
-                    39,
+                    34,
                     isLimited: true,
                     extraUpgradeIcon: UpgradeType.Talent,
                     abilityType: typeof(Abilities.SecondEdition.ChertekAbility),
@@ -33,7 +33,7 @@ namespace Abilities.SecondEdition
         public override void ActivateAbility()
         {
             AddDiceModification(
-                "Chertek",
+                HostShip.PilotInfo.PilotName,
                 IsAvailable,
                 GetAiPriority,
                 DiceModificationType.Reroll,

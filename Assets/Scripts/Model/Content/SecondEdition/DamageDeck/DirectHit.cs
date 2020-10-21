@@ -8,12 +8,14 @@ namespace DamageDeckCardSE
 
     public class DirectHit : GenericDamageCard
     {
+        DiceRoll SavedAssignedDamageDiceRoll;
+
         public DirectHit()
         {
             Name = "Direct Hit";
             Type = CriticalCardType.Ship;
             AiAvoids = true;
-            ImageUrl = "https://i.imgur.com/snTuXL7.png";
+            ImageUrl = "https://i.imgur.com/hmybQQt.jpg";
         }
 
         public override void ApplyEffect(object sender, EventArgs e)
@@ -31,11 +33,16 @@ namespace DamageDeckCardSE
                 DamageType = DamageTypes.CriticalHitCard
             };
 
+            SavedAssignedDamageDiceRoll = Host.AssignedDamageDiceroll;
+            Host.AssignedDamageDiceroll = new DiceRoll(DiceKind.Attack, 0, DiceRollCheckType.Virtual);
+
             Host.Damage.TryResolveDamage(1, directhitDamage, RepairDirectHit);
         }
 
         public void RepairDirectHit()
         {
+            Host.AssignedDamageDiceroll = SavedAssignedDamageDiceRoll;
+
             DiscardEffect();
             Triggers.FinishTrigger();
         }

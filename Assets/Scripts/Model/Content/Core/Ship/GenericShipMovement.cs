@@ -20,6 +20,7 @@ namespace Ship
         public GenericMovement RevealedManeuver { get; set; }
 
         public List<GenericRemote> RemotesOverlapped = new List<GenericRemote>();
+        public List<GenericRemote> RemotesMovedThrough = new List<GenericRemote>();
 
         public bool IsIgnoreObstacles;
         public bool IsIgnoreObstaclesDuringBoost;
@@ -71,6 +72,8 @@ namespace Ship
         }
 
         public List<GenericShip> ShipsBumped = new List<GenericShip>();
+
+        public List<GenericShip> ShipsMovedThrough = new List<GenericShip>();
 
         public GenericShip LastShipCollision { get; set; }
 
@@ -127,7 +130,7 @@ namespace Ship
             if (AssignedManeuver != null && AssignedManeuver.IsRevealDial)
             {
                 // Make a new copy of AssignedManeuver, so changes to it doesn't affect RevealedManeuver
-                RevealedManeuver = ShipMovementScript.MovementFromString(AssignedManeuver.ToString());
+                RevealedManeuver = ShipMovementScript.CopyMovement(AssignedManeuver);
 
                 OnManeuverIsRevealed?.Invoke(this);
                 OnManeuverIsRevealedGlobal?.Invoke(this);
@@ -187,7 +190,7 @@ namespace Ship
             if (OnMovementFinishGlobal != null) OnMovementFinishGlobal(this);
             
             // If we didn't bump, or end up off the board then we have succesfully completed our manuever.
-            if ((Selection.ThisShip.AssignedManeuver.Speed == 0 || !IsBumped) && !BoardTools.Board.IsOffTheBoard(this))
+            if (CheckSuccessOfManeuver())
             {
                 if (OnMovementFinishSuccessfully != null) OnMovementFinishSuccessfully(this);
                 if (OnMovementFinishSuccessfullyGlobal != null) OnMovementFinishSuccessfullyGlobal(this);
@@ -209,6 +212,11 @@ namespace Ship
                     Selection.ThisShip.CallPositionIsReadyToFinish(callback);
                 }
             );
+        }
+
+        public bool CheckSuccessOfManeuver()
+        {
+            return (AssignedManeuver.Speed == 0 || !IsBumped) && !BoardTools.Board.IsOffTheBoard(this);
         }
 
         public void CallPositionIsReadyToFinish(System.Action callback)

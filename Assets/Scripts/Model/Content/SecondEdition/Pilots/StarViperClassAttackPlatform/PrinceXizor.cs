@@ -67,6 +67,8 @@ namespace Abilities.SecondEdition
         {
             bool result = false;
 
+            if (ship.Owner.PlayerNo != HostShip.Owner.PlayerNo) return false;
+
             if (ship.ShipId == HostShip.ShipId) return false;
 
             DistanceInfo distInfo = new DistanceInfo(HostShip, ship);
@@ -131,10 +133,10 @@ namespace Abilities.SecondEdition
 
         private void StartHitCritDecisionSubphase()
         {
-            var subphase = Phases.StartTemporarySubPhaseNew<HitOrCritDecisionSubphase>("Prince Xizor", Triggers.FinishTrigger);
+            var subphase = Phases.StartTemporarySubPhaseNew<HitOrCritDecisionSubphase>(HostName, Triggers.FinishTrigger);
 
-            subphase.DescriptionShort = "Prince Xizor";
-            subphase.DescriptionLong = "Suffer Hit or Crit result instead of " + HostShip.PilotInfo.PilotName + "?";
+            subphase.DescriptionShort = HostName;
+            subphase.DescriptionLong = "Suffer Hit or Crit result instead of " + HostName + "?";
             subphase.ImageSource = HostShip;
 
             subphase.AddDecision(

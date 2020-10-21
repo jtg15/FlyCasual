@@ -15,7 +15,7 @@ namespace Ship.SecondEdition.Delta7Aethersprite
             PilotInfo = new PilotCardInfo(
                 "Plo Koon",
                 5,
-                44,
+                45,
                 true,
                 force: 2,
                 abilityType: typeof(Abilities.SecondEdition.PloKoonAbility),
@@ -124,7 +124,7 @@ namespace Abilities.SecondEdition
             {
                 DecisionSubPhase.ConfirmDecisionNoCallback();
                 SelectShipSubPhase.FinishSelection();
-            });
+            }, HostShip.Owner);
         }
 
         private int GetAiAbilityPriority(GenericShip ship)

@@ -43,14 +43,14 @@ namespace Abilities.SecondEdition
 
         private void AddFinnDiceModifications(GenericShip ship)
         {
-            ship.AddAvailableDiceModification(
+            ship.AddAvailableDiceModificationOwn(
                 new FinnTransportPodDiceModificationBlank() {
                     HostShip = HostShip,
                     ImageUrl = HostShip.ImageUrl
                 }
             );
 
-            ship.AddAvailableDiceModification(
+            ship.AddAvailableDiceModificationOwn(
                 new FinnTransportPodDiceModificationFocus() {
                     HostShip = HostShip,
                     ImageUrl = HostShip.ImageUrl
@@ -83,8 +83,7 @@ namespace ActionsList
         {
             HostShip.AddAlreadyUsedDiceModification(new FinnTransportPodDiceModificationFocus() { HostShip = HostShip });
 
-            Combat.CurrentDiceRoll.AddDice(DieSide.Blank).ShowWithoutRoll();
-            Combat.CurrentDiceRoll.OrganizeDicePositions();
+            Combat.CurrentDiceRoll.AddDiceAndShow(DieSide.Blank);
 
             callBack();
         }
@@ -111,8 +110,7 @@ namespace ActionsList
         {
             HostShip.AddAlreadyUsedDiceModification(new FinnTransportPodDiceModificationBlank() { HostShip = HostShip });
 
-            Combat.CurrentDiceRoll.AddDice(DieSide.Focus).ShowWithoutRoll();
-            Combat.CurrentDiceRoll.OrganizeDicePositions();
+            Combat.CurrentDiceRoll.AddDiceAndShow(DieSide.Focus);
 
             HostShip.Tokens.AssignToken(typeof(Tokens.StrainToken), callBack);
         }

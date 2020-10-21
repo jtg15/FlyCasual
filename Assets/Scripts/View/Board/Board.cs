@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Arcs;
+using Players;
 using Ship;
 using UnityEngine;
 
@@ -65,10 +66,10 @@ namespace BoardTools
 
         private static void SetPlaymat(string playmatName)
         {
-            LoadSceneFromResources("TableClassic");
+            LoadSceneFromResources("SpaceStationScene");
 
             Texture playmatTexture = (Texture)Resources.Load("Playmats/Playmat" + Options.Playmat + "Texture", typeof(Texture));
-            GameObject.Find("SceneHolder/TableClassic/Playmat").GetComponent<Renderer>().material.mainTexture = playmatTexture;
+            GameObject.Find("SceneHolder/SpaceStationScene/TableClassic/Playmat").GetComponent<Renderer>().material.mainTexture = playmatTexture;
 
             RenderSettings.fog = false;
         }
@@ -395,6 +396,19 @@ namespace BoardTools
         public static void ToggleOffTheBoardHolder(bool isActive)
         {
             BoardTransform.Find("OffTheBoardHolder").gameObject.SetActive(isActive);
+        }
+
+        public static void HighlightOfStartingZoneOn()
+        {
+            if (Roster.GetPlayer(Phases.CurrentSubPhase.RequiredPlayer) is HumanPlayer)
+            {
+                GameObject.Find("SceneHolder").transform.Find("Board").Find("ObstaclesZone").Find("ObstaclesZoneHighlight").gameObject.SetActive(true);
+            }
+        }
+
+        public static void HighlightOfStartingZoneOff()
+        {
+            GameObject.Find("SceneHolder").transform.Find("Board").Find("ObstaclesZone").Find("ObstaclesZoneHighlight").gameObject.SetActive(false);
         }
     }
 }

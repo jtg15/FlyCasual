@@ -13,7 +13,7 @@ namespace Ship.SecondEdition.Delta7Aethersprite
             PilotInfo = new PilotCardInfo(
                 "Obi-Wan Kenobi",
                 5,
-                48,
+                49,
                 true,
                 force: 3,
                 abilityType: typeof(Abilities.SecondEdition.ObiWanKenobiAbility),
@@ -66,6 +66,7 @@ namespace Abilities.SecondEdition
         private void UseAbility(object sender, EventArgs e)
         {
             HostShip.State.Force--;
+            Messages.ShowInfo(HostShip.PilotInfo.PilotName + ": " + TargetShip.PilotInfo.PilotName + " gains Focus token");
             TargetShip.Tokens.AssignToken(new Tokens.FocusToken(TargetShip), SubPhases.DecisionSubPhase.ConfirmDecision);
         }
     }

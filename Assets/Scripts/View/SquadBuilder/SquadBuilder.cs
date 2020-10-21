@@ -194,9 +194,9 @@ namespace SquadBuilderNS
                 case Faction.FirstOrder:
                     return FactionSize.Medium6;
                 case Faction.Republic:
-                    return FactionSize.Medium6;
+                    return (Mods.ModsManager.Mods[typeof(Mods.ModsList.UnreleasedContentMod)].IsOn) ? FactionSize.Medium8 : FactionSize.Medium6;
                 case Faction.Separatists:
-                    return FactionSize.Medium6;
+                    return (Mods.ModsManager.Mods[typeof(Mods.ModsList.UnreleasedContentMod)].IsOn) ? FactionSize.Medium8 : FactionSize.Medium6;
                 default:
                     return FactionSize.Large20;
             }
@@ -274,7 +274,7 @@ namespace SquadBuilderNS
 
         public static void PilotSelectedIsClicked(GenericShip ship)
         {
-            AddPilotToSquad(ship, CurrentPlayer);
+            AddPilotToSquad(ship, GetSquadList(CurrentPlayer), isFromUi: true);
             MainMenu.CurrentMainMenu.ChangePanel("SquadBuilderPanel");
         }
 
@@ -675,7 +675,11 @@ namespace SquadBuilderNS
 
                 foreach (UpgradeRecord upgrade in filteredUpgrades)
                 {
-                    if (upgrade.Instance is IVariableCost && Edition.Current is SecondEdition) (upgrade.Instance as IVariableCost).UpdateCost(CurrentSquadBuilderShip.Instance);
+                    if (upgrade.Instance is IVariableCost && Edition.Current is SecondEdition)
+                    {
+                        (upgrade.Instance as IVariableCost).UpdateCost(CurrentSquadBuilderShip.Instance);
+                        if (upgrade.Instance.UpgradeInfo.Cost == int.MaxValue) upgrade.Instance.IsHidden = true;
+                    }
                 }
 
                 filteredUpgrades = filteredUpgrades.OrderBy(n => n.Instance.UpgradeInfo.Cost).ToList();
@@ -740,7 +744,11 @@ namespace SquadBuilderNS
 
             string upgradeType = AllUpgrades.Find(n => n.UpgradeNameCanonical == upgrade.UpgradeNameCanonical && n.UpgradeType == upgrade.UpgradeType).UpgradeTypeName;
             GenericUpgrade newUpgrade = (GenericUpgrade)System.Activator.CreateInstance(Type.GetType(upgradeType));
-            if (newUpgrade is IVariableCost && Edition.Current is SecondEdition) (newUpgrade as IVariableCost).UpdateCost(CurrentSquadBuilderShip.Instance);
+            if (newUpgrade is IVariableCost && Edition.Current is SecondEdition)
+            {
+                (newUpgrade as IVariableCost).UpdateCost(CurrentSquadBuilderShip.Instance);
+                if (newUpgrade.UpgradeInfo.Cost == int.MaxValue) newUpgrade.IsHidden = true;
+            }
             Edition.Current.AdaptUpgradeToRules(newUpgrade);
 
             UpgradePanelSquadBuilder script = newUpgradePanel.GetComponent<UpgradePanelSquadBuilder>();
@@ -871,7 +879,7 @@ namespace SquadBuilderNS
                 SquadListRecord.name = squadList["filename"].str;
 
                 SquadListRecord.transform.Find("DeleteButton").GetComponent<Button>().onClick.AddListener(delegate { DeleteSavedSquadAndRefresh(SquadListRecord.name); });
-                SquadListRecord.transform.Find("LoadButton").GetComponent<Button>().onClick.AddListener(delegate { LoadSavedSquadAndReturn(SquadListRecord.name); });
+                SquadListRecord.transform.Find("LoadButton").GetComponent<Button>().onClick.AddListener(delegate { LoadSavedSquadAndReturn(GetSavedSquadJson(SquadListRecord.name)); });
             }
 
             OrganizePanels(contentTransform, FREE_SPACE);
@@ -951,7 +959,7 @@ namespace SquadBuilderNS
             GameObject.Find("UI/Panels/SaveSquadronPanel/Panel/Name/InputField").GetComponent<InputField>().text = CurrentSquadList.Name;
         }
 
-        public static void SaveSquadron(SquadList squadList, string squadName, Action callback)
+        public static void SaveSquadronToFile(SquadList squadList, string squadName, Action callback)
         {
             squadList.Name = CleanFileName(squadName);
 
@@ -979,14 +987,16 @@ namespace SquadBuilderNS
         {
             string filename = "";
             var json = GetRandomAiSquad(out filename);
-            SetPlayerSquadFromImportedJson(
-                filename,
+            SetPlayerSquadFromImportedJson
+            (
                 json,
-                CurrentPlayer,
-                delegate {
+                GetSquadList(CurrentPlayer),
+                delegate
+                {
                     SetAiType(Options.AiType);
                     callback();
-                });
+                }
+            );
         }
 
         private static JSONObject GetRandomAiSquad(out string filename)
@@ -1061,10 +1071,10 @@ namespace SquadBuilderNS
         {
             GenericShip ship = (MainMenu.CurrentMainMenu.PreviousPanelName == "SelectPilotPanel") ? AllShips.Find(n => n.ShipName == CurrentShip).Instance : CurrentSquadBuilderShip.Instance;
 
-            Text shipNameText = GameObject.Find("UI/Panels/ShipInfoPanel/Content/LargerPanel/ShipTypeText").GetComponent<Text>();
+            Text shipNameText = GameObject.Find("UI/Panels/ShipInfoPanel/Content/TopPanel/ShipTypeText").GetComponent<Text>();
             shipNameText.text = ship.ShipInfo.ShipName;
 
-            Text sizeText = GameObject.Find("UI/Panels/ShipInfoPanel/Content/LargerPanel/ShipSizeText").GetComponent<Text>();
+            Text sizeText = GameObject.Find("UI/Panels/ShipInfoPanel/Content/TopPanel/ShipSizeText").GetComponent<Text>();
             switch (ship.ShipInfo.BaseSize)
             {
                 case BaseSize.Small:
@@ -1080,8 +1090,17 @@ namespace SquadBuilderNS
                     break;
             }
 
-            Text descriptionText = GameObject.Find("UI/Panels/ShipInfoPanel/Content/LargerPanel/ShipDescriptionText").GetComponent<Text>();
-            descriptionText.text = ship.ShipInfo.Description;
+            Transform parentTransform = GameObject.Find("UI/Panels").transform
+                .Find("ShipInfoPanel")
+                .Find("Content")
+                .Find("CenterPanel");
+
+            GameObject oldDial = parentTransform.Find("ManeuversDialView")?.gameObject;
+            if (oldDial != null) GameObject.Destroy(oldDial);
+
+            GameObject dial = GameObject.Instantiate<GameObject>(Resources.Load<GameObject>("Prefabs/UI/ManeuversDial/ManeuversDialView"), parentTransform);
+            dial.name = "ManeuversDialView";
+            dial.GetComponent<ManeuversDialView>().Initialize(ship.DialInfo.PrintedDial, isDisabled: true);
         }
 
         private static void ShowLoadingContentStub(string panelType)

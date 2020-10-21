@@ -17,8 +17,8 @@ namespace Ship
             {
                 PilotInfo = new PilotCardInfo(
                     "\"Holo\"",
-                    4,
-                    54,
+                    5,
+                    53,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.HoloAbility)
                 );
@@ -83,7 +83,7 @@ namespace Abilities.SecondEdition
                 ownTokens.ForEach(token =>
                 {
                     subphase.AddDecision(
-                        token.Name,
+                        (token is RedTargetLockToken) ? token.Name + " \"" + (token as RedTargetLockToken).Letter + "\"" : token.Name,
                         delegate {
                             SelectedToken = token;
                             DecisionSubPhase.ConfirmDecisionNoCallback();

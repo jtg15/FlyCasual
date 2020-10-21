@@ -44,7 +44,7 @@ namespace Ship
                     "Alpha-class Star Wing",
                     "Gray",
                     new Vector3(-4, 8, 5.5f),
-                    1.5f
+                    1.8f
                 );
 
                 DialInfo = new ShipDialInfo(
@@ -77,6 +77,8 @@ namespace Ship
                 );
 
                 ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures/images/d/d9/20171223_151405.jpg";
+
+                ShipIconLetter = '&';
 
                 HotacManeuverTable = new AI.AlphaClassStarWingTable();
             }

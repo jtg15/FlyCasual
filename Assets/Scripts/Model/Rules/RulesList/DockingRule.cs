@@ -294,11 +294,11 @@ namespace RulesList
 
             if (Editions.Edition.Current is Editions.SecondEdition)
             {
-                DirectionsMenu.Show(GameMode.CurrentGameMode.AssignManeuver, delegate { RegisterPerformManeuver(isEmergencyDeploy); }, FilterOnlyForward);
+                DirectionsMenu.Show(ShipMovementScript.SendAssignManeuverCommand, delegate { RegisterPerformManeuver(isEmergencyDeploy); }, FilterOnlyForward);
             }
             else
             {
-                DirectionsMenu.Show(GameMode.CurrentGameMode.AssignManeuver, delegate { RegisterPerformManeuver(isEmergencyDeploy); });
+                DirectionsMenu.Show(ShipMovementScript.SendAssignManeuverCommand, delegate { RegisterPerformManeuver(isEmergencyDeploy); });
             }
         }
 
@@ -341,7 +341,13 @@ namespace RulesList
             Selection.ThisShip.IsHitObstacles = false;
             Selection.ThisShip.MinesHit = new List<GenericDeviceGameObject>();
 
-            Selection.ThisShip.AssignedManeuver.Perform();
+            GameManagerScript.Instance.StartCoroutine(PerformAssignedManeuverCoroutine());
+        }
+
+        private IEnumerator PerformAssignedManeuverCoroutine()
+        {
+            yield return Selection.ThisShip.AssignedManeuver.Perform();
+            Selection.ThisShip.Owner.AfterShipMovementPrediction();
         }
 
         private void AfterUndockingManeuverIsFinished(bool isEmergencyDeploy)
@@ -379,6 +385,8 @@ namespace RulesList
 
         private void AfterUndockingFinished()
         {
+            GenericShip undockedShip = Selection.ThisShip;
+
             if (!Selection.ThisShip.DockingHost.IsDestroyed)
             {
                 Selection.ChangeActiveShip("ShipId:" + Selection.ThisShip.DockingHost.ShipId);
@@ -387,6 +395,8 @@ namespace RulesList
             {
                 Selection.ThisShip = Selection.ThisShip.DockingHost;
             }
+
+            undockedShip.DockingHost = null;
 
             Triggers.FinishTrigger();
         }

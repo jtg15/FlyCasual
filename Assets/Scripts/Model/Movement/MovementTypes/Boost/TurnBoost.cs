@@ -10,13 +10,15 @@ namespace Movement
         {
         }
 
-        public override void Perform()
+        public override IEnumerator Perform()
         {
             Initialize();
 
             //Temporary
             GameManagerScript Game = GameObject.Find("GameManager").GetComponent<GameManagerScript>();
             Game.Movement.FuncsToUpdate.Add(UpdateBoost);
+
+            yield return true;
         }
 
         private bool UpdateBoost()
@@ -33,6 +35,9 @@ namespace Movement
 
             MovementTemplates.HideLastMovementRuler();
             TheShip.ResetRotationHelpers();
+
+            // Important! Fixes final position according to prediction - otherwise animation can cause another final position
+            TheShip.SetPositionInfo(FinalPositionInfo);
 
             (Phases.CurrentSubPhase as SubPhases.BoostExecutionSubPhase).FinishBoost();
         }

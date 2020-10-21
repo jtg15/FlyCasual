@@ -7,6 +7,7 @@ using Ship;
 using System.Linq;
 using SubPhases;
 using Bombs;
+using SubPhases.FirstEdition;
 
 namespace UpgradesList.FirstEdition
 {
@@ -23,8 +24,8 @@ namespace UpgradesList.FirstEdition
             bombPrefabPath = "Prefabs/Bombs/ClusterMinesCentral";
 
             bombSidePrefabPath = "Prefabs/Bombs/ClusterMinesSide";
-            bombSideDistanceX = 2.362f;
-            bombSideDistanceZ = 0.0764f;
+            bombSideDistanceX = 4.05f;
+            bombSideDistanceZ = 0.1264f;
 
             IsDiscardedAfterDropped = true;
         }
@@ -55,7 +56,7 @@ namespace UpgradesList.FirstEdition
 
 }
 
-namespace SubPhases
+namespace SubPhases.FirstEdition
 {
 
     public class ClusterMinesCheckSubPhase : DiceRollCheckSubPhase

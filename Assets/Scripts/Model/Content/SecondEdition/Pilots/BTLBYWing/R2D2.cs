@@ -18,7 +18,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "R2-D2",
                     2,
-                    35,
+                    32,
                     isLimited: true,
                     extraUpgradeIcons: new List<UpgradeType> { UpgradeType.Talent, UpgradeType.Crew },
                     abilityType: typeof(Abilities.SecondEdition.R2D2PilotAbility)
@@ -66,13 +66,13 @@ namespace Abilities.SecondEdition
 
             if (isEnemyShipInRearSector)
             {
-                Messages.ShowInfo("R2-D2: 1 Calculate token is gained");
+                Messages.ShowInfo(HostShip.PilotInfo.PilotName + ": 1 Calculate token is gained");
                 Sounds.PlayShipSound("R2D2-Proud");
                 HostShip.Tokens.AssignToken(typeof(Tokens.CalculateToken), Triggers.FinishTrigger);
             }
             else
             {
-                Messages.ShowInfoToHuman("R2-D2: No enemy ships in rear sector");
+                Messages.ShowInfoToHuman(HostShip.PilotInfo.PilotName + ": No enemy ships in rear sector");
                 Triggers.FinishTrigger();
             }
         }

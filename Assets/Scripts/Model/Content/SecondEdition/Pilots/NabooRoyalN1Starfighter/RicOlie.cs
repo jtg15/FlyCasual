@@ -14,7 +14,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Ric Olie",
                     5,
-                    42,
+                    45,
                     isLimited: true,
                     abilityText: "When you defend or perform a primary attack, if the maneuver you revealed is greater than the enemy ship’s maneuver, roll 1 additional die.",
                     abilityType: typeof(RicOlieAbility),
@@ -49,7 +49,7 @@ namespace Abilities.SecondEdition
 
             if (HostShip.RevealedManeuver.Speed > Combat.Defender.RevealedManeuver.Speed)
             {
-                Messages.ShowInfo("Ric Olie: +1 attack die");
+                Messages.ShowInfo(HostShip.PilotInfo.PilotName + ": +1 attack die");
                 count++;
             }
         }
@@ -60,7 +60,7 @@ namespace Abilities.SecondEdition
 
             if (HostShip.RevealedManeuver.Speed > Combat.Attacker.RevealedManeuver.Speed)
             {
-                Messages.ShowInfo("Ric Olie: +1 defense die");
+                Messages.ShowInfo(HostShip.PilotInfo.PilotName + ": +1 defense die");
                 count++;
             }
         }

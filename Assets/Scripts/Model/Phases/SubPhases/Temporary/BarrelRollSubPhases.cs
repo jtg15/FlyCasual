@@ -135,12 +135,7 @@ namespace SubPhases
             SyncCollisions(TemporaryBaseCollider);
             DestroyTemporaryElements();
 
-            GameModeStartRepositionExecution();
-        }
-
-        protected virtual void GameModeStartRepositionExecution()
-        {
-            GameMode.CurrentGameMode.StartBarrelRollExecution();
+            StartRepositionExecution();
         }
 
         public void StartRepositionExecution()
@@ -335,12 +330,7 @@ namespace SubPhases
             DestroyTemporaryElements(isAll: true);
             ShowInformationAboutProblems();
 
-            GameModeCancelReposition();
-        }
-
-        protected virtual void GameModeCancelReposition()
-        {
-            GameMode.CurrentGameMode.CancelBarrelRoll(BarrelRollProblems);
+            WhenCancelBarrelRollWithProblems(BarrelRollProblems);
         }
 
         private void ShowInformationAboutProblems()
@@ -380,7 +370,11 @@ namespace SubPhases
             {
                 BarrelRollProblems.Add(ActionFailReason.Bumped);
             }
-            else if (!TheShip.IsIgnoreObstacles && !TheShip.IsIgnoreObstaclesDuringBarrelRoll && !IsTractorBeamBarrelRoll && collider.OverlapsAsteroidNow)
+            else if (!TheShip.IsIgnoreObstacles 
+                && !TheShip.IsIgnoreObstaclesDuringBarrelRoll 
+                && !IsTractorBeamBarrelRoll 
+                && collider.OverlapsAsteroidNow
+                && !TheShip.IgnoreObstacleTypes.Contains(typeof(Asteroid)))
             {
                 BarrelRollProblems.Add(ActionFailReason.ObstacleHit);
             }
@@ -543,7 +537,7 @@ namespace SubPhases
 
         protected class BarrelRollPositionDecisionSubPhase : DecisionSubPhase { }
 
-        public void CancelBarrelRoll(List<ActionFailReason> barrelRollProblems)
+        public void WhenCancelBarrelRollWithProblems(List<ActionFailReason> barrelRollProblems)
         {
             if (HostAction == null) HostAction = new BarrelRollAction() { HostShip = TheShip };
             Rules.Actions.ActionIsFailed(TheShip, HostAction, barrelRollProblems);
@@ -684,7 +678,7 @@ namespace SubPhases
 
         private void DoBarrelRollAnimation()
         {
-            float progressStep = 2.5f * Time.deltaTime * Options.AnimationSpeed;
+            float progressStep = Time.deltaTime * 0.2f * (0.5f + Options.AnimationSpeed * 10f);
             progressStep = Mathf.Min(progressStep, progressTarget - progressCurrent);
             progressCurrent += progressStep;
 
@@ -700,13 +694,13 @@ namespace SubPhases
             if (progressCurrent >= progressTarget)
             {
                 performingAnimation = false;
-                GameModeFinishReposition();
+                FinishReposition();
             }
         }
 
-        protected virtual void GameModeFinishReposition()
+        protected virtual void FinishReposition()
         {
-            GameMode.CurrentGameMode.FinishBarrelRoll();
+            FinishBarrelRollAnimation();
         }
 
         public void FinishBarrelRollAnimation()

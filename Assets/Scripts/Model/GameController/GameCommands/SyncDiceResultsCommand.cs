@@ -16,6 +16,8 @@ namespace GameCommands
 
         public override void Execute()
         {
+            Phases.CurrentSubPhase.IsReadyForCommands = false;
+
             List<DieSide> correctSides = new List<DieSide>();
             JSONObject jsonHolder = (JSONObject)GetParameter("sides");
             foreach (var dieInfo in jsonHolder.list)
@@ -24,6 +26,8 @@ namespace GameCommands
                 correctSides.Add(side);
             }
             DiceRoll.SyncDiceResults(correctSides);
+
+            Phases.CurrentSubPhase.IsReadyForCommands = true;
         }
     }
 

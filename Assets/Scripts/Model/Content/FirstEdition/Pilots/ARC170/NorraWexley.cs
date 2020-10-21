@@ -43,20 +43,17 @@ namespace Abilities.FirstEdition
 
         private void AddNorraWexleyPilotAbility(GenericShip ship)
         {
-            NorraWexleyARC170Action newAction = new NorraWexleyARC170Action()
-            {
-                HostShip = this.HostShip,
-                Name = this.HostShip.PilotInfo.PilotName + "'s Ability",
-                DiceModificationName = this.HostShip.PilotInfo.PilotName + "'s Ability"
-            };
-            ship.AddAvailableDiceModification(newAction);
+            ship.AddAvailableDiceModificationOwn(new NorraWexleyARC170Action());
         }
 
         private class NorraWexleyARC170Action : GenericAction
         {
+            public override string Name => HostShip.PilotInfo.PilotName;
+            public override string DiceModificationName => HostShip.PilotInfo.PilotName;
+            public override string ImageUrl => HostShip.ImageUrl;
+
             public NorraWexleyARC170Action()
             {
-                //Name = DiceModificationName = "Norra Wexley's ability"; // Will be overwritten
                 TokensSpend.Add(typeof(BlueTargetLockToken));
             }
 
@@ -65,9 +62,7 @@ namespace Abilities.FirstEdition
                 char targetLockPair = GetTargetLockTokenLetterOnAnotherShip();
                 if (targetLockPair != ' ')
                 {
-                    Combat.CurrentDiceRoll.AddDice(DieSide.Focus).ShowWithoutRoll();
-                    Combat.CurrentDiceRoll.OrganizeDicePositions();
-
+                    Combat.CurrentDiceRoll.AddDiceAndShow(DieSide.Focus);
                     HostShip.Tokens.SpendToken(typeof(BlueTargetLockToken), callBack, targetLockPair);
                 }
                 else
@@ -104,18 +99,7 @@ namespace Abilities.FirstEdition
 
             public override bool IsDiceModificationAvailable()
             {
-                bool result = false;
-
-                // Second edition Shara Bey only affects Primary Weapon Attacks
-                if (HostShip.Owner.PlayerNo == Combat.Attacker.Owner.PlayerNo &&
-                    HostShip.GetType() == typeof(Ship.SecondEdition.ARC170Starfighter.SharaBey) &&
-                    Combat.ChosenWeapon.WeaponType != WeaponTypes.PrimaryWeapon)
-                {
-                    return false;
-                }
-
-                if (GetTargetLockTokenLetterOnAnotherShip() != ' ') result = true;
-                return result;
+                return (GetTargetLockTokenLetterOnAnotherShip() != ' ');
             }
 
             public override int GetDiceModificationPriority()

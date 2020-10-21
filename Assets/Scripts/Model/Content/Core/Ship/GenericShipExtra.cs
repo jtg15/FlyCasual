@@ -92,7 +92,7 @@ namespace Ship
 
         public bool IsDefending { get { return Combat.AttackStep == CombatStep.Defence && Combat.Defender == this; } }
 
-        public char ShipIconLetter { get; protected set; }
+        public char ShipIconLetter { get; protected set; } = '*';
 
         public List<Type> RequiredMods { get; set; }
 
@@ -124,6 +124,19 @@ namespace Ship
         public bool IsDepleted
         {
             get { return Tokens.HasToken<DepleteToken>(); }
+        }
+
+        public bool IsReinforcedAgainstShip(GenericShip attacker)
+        {
+            if (Tokens.HasToken<ReinforceAftToken>()
+                && Edition.Current.DefenderIsReinforcedAgainstAttacker(Arcs.ArcFacing.FullRear, this, attacker))
+                return true;
+
+            if (Tokens.HasToken<ReinforceForeToken>()
+                && Edition.Current.DefenderIsReinforcedAgainstAttacker(Arcs.ArcFacing.FullFront, this, attacker))
+                return true;
+
+            return false;
         }
 
         public virtual bool IsAllowedForSquadBuilderPostCheck(SquadList squadList)

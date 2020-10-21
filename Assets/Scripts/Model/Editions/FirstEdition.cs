@@ -24,6 +24,7 @@ namespace Editions
         public override int MaxShipsCount { get { return 8; } }
         public override string CombatPhaseName { get { return "Combat"; } }
         public override Color MovementEasyColor { get { return Color.green; } }
+        public override bool CanAttackBumpedTarget { get { return false; } }
         public override MovementComplexity IonManeuverComplexity { get { return MovementComplexity.Normal; } }
         public override string PathToSavedSquadrons { get { return "SavedSquadrons"; } }
 
@@ -90,7 +91,7 @@ namespace Editions
 
         public override void EvadeDiceModification(DiceRoll diceRoll)
         {
-            diceRoll.AddDice(DieSide.Success).ShowWithoutRoll();
+            diceRoll.AddDiceAndShow(DieSide.Success);
         }
 
         public override bool IsWeaponHaveRangeBonus(IShipWeapon weapon)
@@ -123,14 +124,16 @@ namespace Editions
             ActionsList.ReloadAction.FlipFaceupRecursive();
         }
 
-        public override bool ReinforceEffectCanBeUsed(ArcFacing facing)
+        public override bool DefenderIsReinforcedAgainstAttacker(ArcFacing facing, GenericShip defender, GenericShip attacker)
         {
-            bool result = false;
 
             ArcType arcType = (facing == ArcFacing.FullFront) ? ArcType.FullFront : ArcType.FullRear;
-            result = Combat.Defender.SectorsInfo.IsShipInSector(Combat.Attacker, arcType);
+            return defender.SectorsInfo.IsShipInSector(attacker, arcType);
+        }
 
-            return result;
+        public override bool ReinforceEffectCanBeUsed(ArcFacing facing)
+        {
+            return DefenderIsReinforcedAgainstAttacker(facing, Combat.Defender, Combat.Attacker);
         }
 
         public override bool ReinforcePostCombatEffectCanBeUsed(ArcFacing facing)
@@ -160,9 +163,12 @@ namespace Editions
             return RootUrlForImages + "pilots/" + ImageUrls.FormatFaction(ship.SubFaction) + "/" + ImageUrls.FormatShipType(ship.ShipInfo.ShipName) + "/" + (filename ?? (ImageUrls.FormatName(ship.PilotInfo.PilotName) + ".png"));
         }
 
-        public override string GetUpgradeImageUrl(GenericUpgrade upgrade)
+        public override string GetUpgradeImageUrl(GenericUpgrade upgrade, string filename = null)
         {
-            return RootUrlForImages + "upgrades/" + ImageUrls.FormatUpgradeTypes(upgrade.UpgradeInfo.UpgradeTypes) + "/" + ImageUrls.FormatName(ImageUrls.FormatUpgradeName(upgrade.UpgradeInfo.Name)) + ".png";
+            return RootUrlForImages
+                + "upgrades/" + ImageUrls.FormatUpgradeTypes(upgrade.UpgradeInfo.UpgradeTypes)
+                + "/" + ImageUrls.FormatName(filename ?? ImageUrls.FormatUpgradeName(upgrade.UpgradeInfo.Name))
+                + ".png";
         }
 
         public override string FactionToXws(Faction faction)

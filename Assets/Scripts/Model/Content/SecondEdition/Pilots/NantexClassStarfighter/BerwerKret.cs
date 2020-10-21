@@ -16,7 +16,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Berwer Kret",
                     5,
-                    40,
+                    36,
                     isLimited: true,
                     extraUpgradeIcon: UpgradeType.Talent,
                     abilityType: typeof(Abilities.SecondEdition.BerwerKretAbility),
@@ -56,14 +56,14 @@ namespace Abilities.SecondEdition
             }
             else
             {
-                Messages.ShowInfo("Berwer Kret: No ships that can use this ability");
+                Messages.ShowInfo(HostShip.PilotInfo.PilotName + ": No ships that can use this ability");
                 Triggers.FinishTrigger();
             }
         }
 
         private void StartMultiSelectionSubphase()
         {
-            BerwerKretMultiSelectionSubphase subphase = Phases.StartTemporarySubPhaseNew<BerwerKretMultiSelectionSubphase>("Kraken", Triggers.FinishTrigger);
+            BerwerKretMultiSelectionSubphase subphase = Phases.StartTemporarySubPhaseNew<BerwerKretMultiSelectionSubphase>(HostShip.PilotInfo.PilotName, Triggers.FinishTrigger);
 
             subphase.RequiredPlayer = HostShip.Owner.PlayerNo;
 
@@ -100,7 +100,7 @@ namespace Abilities.SecondEdition
                     {
                         PerformRedCalculateActionRecursive(callback);
                     },
-                    "Berwer Kret",
+                    HostShip.PilotInfo.PilotName,
                     "You may perform red Calculate action",
                     HostShip
                 );

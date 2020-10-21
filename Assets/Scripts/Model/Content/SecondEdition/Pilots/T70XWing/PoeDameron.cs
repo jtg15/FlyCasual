@@ -15,13 +15,12 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Poe Dameron",
                     6,
-                    68,
+                    67,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.PoeDameronAbility),
                     charges: 1,
                     regensCharges: true,
                     extraUpgradeIcon: UpgradeType.Talent
-                    //seImageNumber: 93
                 );
 
                 ModelInfo.SkinName = "Black One";

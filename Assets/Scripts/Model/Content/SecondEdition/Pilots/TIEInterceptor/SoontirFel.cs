@@ -15,7 +15,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Soontir Fel",
                     6,
-                    53,
+                    54,
                     isLimited: true,
                     abilityType: typeof(SoontirFelAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -52,6 +52,7 @@ namespace Abilities.SecondEdition
 
         private void OnCombatAssignFocus(object sender, EventArgs e)
         {
+            Messages.ShowInfo(HostShip.PilotInfo.PilotName + " has an enemy ship in Bullseye arc and gains Focus token");
             HostShip.Tokens.AssignToken(typeof(FocusToken), Triggers.FinishTrigger);
         }
     }

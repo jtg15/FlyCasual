@@ -17,13 +17,15 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Asajj Ventress",
                     4,
-                    72,
+                    69,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.AsajjVentressPilotAbility),
                     force: 2,
                     extraUpgradeIcon: UpgradeType.ForcePower,
                     seImageNumber: 219
                 );
+
+                ModelInfo.SkinName = "Asajj";
             }
         }
     }
@@ -62,7 +64,7 @@ namespace Abilities.SecondEdition
             SelectShipSubPhase.FinishSelectionNoCallback();
             AsajjVentressAbilityDecisionSubPhaseSE subphase = (AsajjVentressAbilityDecisionSubPhaseSE)
                 Phases.StartTemporarySubPhaseNew(
-                "Choose effect of Asajj Ventress' ability.",
+                "Choose effect of " + HostShip.PilotInfo.PilotName + "' ability.",
                 typeof(AsajjVentressAbilityDecisionSubPhaseSE),
                 Triggers.FinishTrigger
             );

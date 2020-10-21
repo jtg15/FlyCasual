@@ -22,8 +22,6 @@ namespace Ship
 
                 ShipAbilities.Add(new Abilities.SecondEdition.ModifiedTIELnFighterAbility());
 
-                ShipAbilities.Add(new Abilities.SecondEdition.ModifiedTIELnFighterAbility());
-
                 ModelInfo = new ShipModelInfo(
                     "Modified TIE Fighter",
                     "Mining Guild Yellow",
@@ -31,7 +29,7 @@ namespace Ship
                     1.75f
                 );
 
-                ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/7/7a/Maneuver_modified_tie_ln_fighter.png";
+                ShipIconLetter = 'C';
 
                 HotacManeuverTable = new AI.ModifiedTIELnFighterTable();
             }

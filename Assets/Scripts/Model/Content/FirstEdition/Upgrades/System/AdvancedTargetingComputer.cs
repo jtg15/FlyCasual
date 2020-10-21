@@ -19,8 +19,7 @@ namespace UpgradesList.FirstEdition
                 restriction: new ShipRestriction(typeof(Ship.FirstEdition.TIEAdvanced.TIEAdvanced))
             );
 
-            // TODOREVERT
-            // ImageUrl = ImageUrls.GetImageUrl(this, "advanced-targeting-computer.png");
+            ImageUrl = ImageUrls.GetImageUrl(this, "advanced-targeting-computer");
         }
     }
 }
@@ -53,7 +52,7 @@ namespace Abilities.FirstEdition
                 ImageUrl = HostUpgrade.ImageUrl,
                 HostShip = host
             };
-            host.AddAvailableDiceModification(newAction);
+            host.AddAvailableDiceModificationOwn(newAction);
         }
     }
 }
@@ -96,8 +95,7 @@ namespace ActionsList
         {
             if (ActionsHolder.HasTargetLockOn(Combat.Attacker, Combat.Defender))
             {
-                Combat.CurrentDiceRoll.AddDice(DieSide.Crit).ShowWithoutRoll();
-                Combat.CurrentDiceRoll.OrganizeDicePositions();
+                Combat.CurrentDiceRoll.AddDiceAndShow(DieSide.Crit);
 
                 targetLockLetters = ActionsHolder.GetTargetLocksLetterPairs(Combat.Attacker, Combat.Defender);
                 foreach (char targetLockLetter in targetLockLetters)

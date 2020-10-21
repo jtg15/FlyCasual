@@ -51,7 +51,7 @@ namespace Abilities.SecondEdition
                 HostShip = HostShip,
                 DoDiceModification = DoTreacherousDiceModification
             };
-            HostShip.AddAvailableDiceModification(newAction);
+            HostShip.AddAvailableDiceModificationOwn(newAction);
         }
 
         private void DoTreacherousDiceModification(Action action)
@@ -172,7 +172,9 @@ namespace ActionsList
 
         public override bool IsDiceModificationAvailable()
         {
-            return Combat.AttackStep == CombatStep.Attack && Combat.ShotInfo.ObstructedByShips.Count > 0;
+            return Combat.AttackStep == CombatStep.Attack
+                && Combat.ShotInfo.ObstructedByShips.Count > 0
+                && Source.State.Charges > 0;
         }
     }
 

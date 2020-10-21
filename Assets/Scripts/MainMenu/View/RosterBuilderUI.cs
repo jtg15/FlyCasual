@@ -21,10 +21,10 @@ public class RosterBuilderUI : MonoBehaviour {
 
     public void Import()
     {
-        SquadBuilder.CreateSquadFromImportedJson(
-            "",
+        SquadBuilder.CreateSquadFromImportedJson
+        (
             GameObject.Find("UI/Panels/ImportExportPanel/Content/InputField").GetComponent<InputField>().text,
-            SquadBuilder.CurrentPlayer,
+            SquadBuilder.GetSquadList(SquadBuilder.CurrentPlayer),
             delegate { MainMenu.CurrentMainMenu.ChangePanel("SquadBuilderPanel"); }
         );
     }
@@ -49,13 +49,17 @@ public class RosterBuilderUI : MonoBehaviour {
     {
         if (SquadBuilder.ValidateCurrentPlayersRoster())
         {
-            if (!SquadBuilder.IsVsAiGame)
+            if (SquadBuilder.IsVsAiGame)
             {
-                NextPlayerOpen();
+                MainMenu.CurrentMainMenu.ChangePanel("AiDecisionPanel");
+            }
+            else if (SquadBuilder.IsNetworkGame)
+            {
+                MainMenu.CurrentMainMenu.ChangePanel("MultiplayerDecisionPanel");
             }
             else
             {
-                MainMenu.CurrentMainMenu.ChangePanel("AiDecisionPanel");
+                NextPlayerOpen();
             }
         }
     }
@@ -120,7 +124,7 @@ public class RosterBuilderUI : MonoBehaviour {
         string squadName = GameObject.Find("UI/Panels/SaveSquadronPanel/Panel/Name/InputField").GetComponent<InputField>().text;
         if (squadName == "") squadName = "Unnamed squadron";
 
-        SquadBuilder.SaveSquadron(SquadBuilder.CurrentSquadList, squadName, SquadBuilder.ReturnToSquadBuilder);
+        SquadBuilder.SaveSquadronToFile(SquadBuilder.CurrentSquadList, squadName, SquadBuilder.ReturnToSquadBuilder);
     }
 
     public void StartBattle()
@@ -131,6 +135,8 @@ public class RosterBuilderUI : MonoBehaviour {
 
             if (!SquadBuilder.IsNetworkGame)
             {
+                SquadBuilder.GenerateSavedConfigurationsLocal();
+
                 GameController.StartBattle();
             }
             else

@@ -147,7 +147,9 @@ namespace SubPhases
         public static GameCommand GenerateDecisionCommand(string decisionName)
         {
             JSONObject parameters = new JSONObject();
+            decisionName = decisionName.Replace("\"", "\\\"");
             parameters.AddField("name", decisionName);
+
             return GameController.GenerateGameCommand(
                 GameCommandTypes.Decision,
                 Phases.CurrentSubPhase.GetType(),
@@ -159,29 +161,35 @@ namespace SubPhases
         {
             Phases.CurrentSubPhase.IsReadyForCommands = false;
 
-            Decision decision = (Phases.CurrentSubPhase as DecisionSubPhase).GetDecisions().FirstOrDefault(n => n.Name == decisionName);
-
-            if (decision == null)
+            if (decisionName == "")
             {
-                Console.Write("Cannot find decision name: " + decisionName, LogTypes.Errors, true, "red");
-
-                string alldecisions = null;
-                foreach (var singleDecision in (Phases.CurrentSubPhase as DecisionSubPhase).GetDecisions())
-                {
-                    alldecisions += singleDecision.Name + " ";
-                }
-                Console.Write("Available decisions: " + alldecisions, LogTypes.Errors, true, "red");
-
-                Decision altDecision = (Phases.CurrentSubPhase as DecisionSubPhase).GetDecisions().FirstOrDefault(n => n.Name.Contains(decisionName));
-
-                if (altDecision != null)
-                {
-                    decision = altDecision;
-                    Console.Write("Similar decision is taken: " + altDecision.Name);
-                }
+                (Phases.CurrentSubPhase as DecisionSubPhase).SkipButton();
             }
+            else
+            {
+                Decision decision = (Phases.CurrentSubPhase as DecisionSubPhase).GetDecisions().FirstOrDefault(n => n.Name == decisionName);
+                if (decision == null)
+                {
+                    Console.Write("Cannot find decision name: " + decisionName, LogTypes.Errors, true, "red");
 
-            decision.ExecuteDecision();
+                    string alldecisions = null;
+                    foreach (var singleDecision in (Phases.CurrentSubPhase as DecisionSubPhase).GetDecisions())
+                    {
+                        alldecisions += singleDecision.Name + " ";
+                    }
+                    Console.Write("Available decisions: " + alldecisions, LogTypes.Errors, true, "red");
+
+                    Decision altDecision = (Phases.CurrentSubPhase as DecisionSubPhase).GetDecisions().FirstOrDefault(n => n.Name.Contains(decisionName));
+
+                    if (altDecision != null)
+                    {
+                        decision = altDecision;
+                        Console.Write("Similar decision is taken: " + altDecision.Name);
+                    }
+                }
+
+                decision.ExecuteDecision();
+            }
         }
 
         public override void Initialize()
@@ -482,7 +490,10 @@ namespace SubPhases
         public void ShowDecisionWindowUI()
         {
             WasDecisionButtonPressed = false;
-            GameObject.Find("UI/DecisionPanelHolder").transform.Find("DecisionsPanel").gameObject.SetActive(true);
+            foreach (Transform transform in GameObject.Find("UI/DecisionPanelHolder").transform)
+            {
+                transform.gameObject.SetActive(true);
+            }
         }
 
         public void ShowDecisionDescription(string title, string description, IImageHolder imageSource = null)

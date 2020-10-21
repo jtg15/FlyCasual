@@ -18,12 +18,13 @@ public static class GameController
     public static void StartBattle(ReplaysMode mode = ReplaysMode.Write)
     {
         GameController.Initialize();
-        ReplaysManager.Initialize(mode);
+        if (ReplaysManager.TryInitialize(mode))
+        {
+            if (mode == ReplaysMode.Read) MainMenu.CurrentMainMenu.InitializeSquadBuilder("Replay");
 
-        if (mode == ReplaysMode.Read) MainMenu.CurrentMainMenu.InitializeSquadBuilder("Replay");
-
-        Console.Write("Game is started", LogTypes.GameCommands, true, "aqua");
-        SquadBuilder.StartLocalGame();
+            Console.Write("Game is started", LogTypes.GameCommands, true, "aqua");
+            SquadBuilder.StartLocalGame();
+        }
     }
 
     public static void SendCommand(GameCommand command)
@@ -37,7 +38,7 @@ public static class GameController
             ReplaysManager.RecordCommand(command);
         }
 
-        command.TryExecute();
+        // command.TryExecute();
     }
 
     public static void SendCommand(GameCommandTypes commandType, Type subPhase, string parameters = null)
@@ -136,6 +137,9 @@ public static class GameController
             case GameCommandTypes.MoveObstacle:
                 command = new MoveObstacleCommand(commandType, subPhase, parameters);
                 break;
+            case GameCommandTypes.CancelShipSelection:
+                command = new CancelShipSelectionCommand(commandType, subPhase, parameters);
+                break;
             default:
                 Console.Write("Constructor for GameCommand is not found", LogTypes.Errors, true, "red");
                 break;
@@ -148,12 +152,6 @@ public static class GameController
         return command;
     }
 
-    public static void CheckExistingCommands()
-    {
-        GameCommand command = GameController.GetCommand();
-        if (command != null) command.TryExecute();
-    }
-
     public static GameCommand GetCommand()
     {
         return (CommandsReceived.Count > 0) ? CommandsReceived.First() : null;
@@ -162,6 +160,22 @@ public static class GameController
     public static void ConfirmCommand()
     {
         CommandsReceived.RemoveAt(0);
+    }
+
+    public static void WaitForCommand()
+    {
+        GameCommand command = GameController.GetCommand();
+        if (command != null)
+        {
+            // Console.Write("=> Execute");
+            command.TryExecute();
+        }
+        else
+        {
+            // Console.Write("=> Wait");
+        }
+
+        GameManagerScript.Wait(0.1f, WaitForCommand);
     }
 
 }

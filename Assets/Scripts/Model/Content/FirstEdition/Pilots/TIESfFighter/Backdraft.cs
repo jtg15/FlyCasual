@@ -39,7 +39,7 @@ namespace Abilities.FirstEdition
 
         private void AddBackdraftAbility(GenericShip ship)
         {
-            ship.AddAvailableDiceModification(new BackdraftAbilityAction());
+            ship.AddAvailableDiceModificationOwn(new BackdraftAbilityAction());
         }
     }
 }
@@ -72,8 +72,7 @@ namespace ActionsList
 
         public override void ActionEffect(System.Action callBack)
         {
-            Combat.CurrentDiceRoll.AddDice(DieSide.Crit).ShowWithoutRoll();
-            Combat.CurrentDiceRoll.OrganizeDicePositions();
+            Combat.CurrentDiceRoll.AddDiceAndShow(DieSide.Crit);
             callBack();
         }
     }

@@ -14,7 +14,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Corran Horn",
                     5,
-                    66,
+                    64,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.CorranHornAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -61,13 +61,13 @@ namespace Abilities.SecondEdition
         private bool IsBullsEyePrimary(GenericShip defender, IShipWeapon weapon, bool isSilent)
         {
             bool result = false;
-            if (Combat.ChosenWeapon.WeaponType == WeaponTypes.PrimaryWeapon && HostShip.SectorsInfo.IsShipInSector(defender, ArcType.Bullseye))
+            if (weapon.WeaponType == WeaponTypes.PrimaryWeapon && HostShip.SectorsInfo.IsShipInSector(defender, ArcType.Bullseye))
             {
                 result = true;
             }
             else
             {
-                if(Combat.ChosenWeapon.WeaponType != WeaponTypes.PrimaryWeapon)
+                if (weapon.WeaponType != WeaponTypes.PrimaryWeapon)
                 {
                     if (!isSilent) Messages.ShowError("This attack must be performed with the primary weapon");
                 }

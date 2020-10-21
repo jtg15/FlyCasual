@@ -5,10 +5,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using SubPhases;
+using Ship;
 
 public static class DirectionsMenu
 {
     private static readonly float WarningPanelHeight = 55f;
+    private static bool HasAnyAvailableManeuver = true;
 
     public static bool IsVisible
     {
@@ -21,6 +23,8 @@ public static class DirectionsMenu
 
     public static void Show(Action<string> doWithSelectedManeuver, Action callback, Func<string, bool> filter = null, bool isRegularPlanning = false)
     {
+        UI.HideNextButton();
+
         PrepareSubphase(doWithSelectedManeuver, callback);
 
         GameObject prefab = (GameObject)Resources.Load("Prefabs/UI/DirectionsWindow", typeof(GameObject));
@@ -44,6 +48,14 @@ public static class DirectionsMenu
         Phases.CurrentSubPhase.IsReadyForCommands = true;
 
         if (isRegularPlanning) Selection.ThisShip.Owner.AskAssignManeuver();
+
+        if (!HasAnyAvailableManeuver)
+        {
+            Messages.ShowError("No available maneuvers!");
+
+            DirectionsMenu.Hide();
+            DirectionsMenu.FinishManeuverSelections();
+        }
     }
 
     public static void ShowForAll(Action<string> doWithSelectedManeuver, Action callback, Func<string, bool> filter = null)
@@ -106,6 +118,7 @@ public static class DirectionsMenu
     private static void CustomizeDirectionsMenu(Func<string, bool> filter = null)
     {
         List<char> linesExist = new List<char>();
+        HasAnyAvailableManeuver = false;
 
         foreach (KeyValuePair<string, MovementComplexity> maneuverData in Selection.ThisShip.GetManeuvers())
         {
@@ -131,6 +144,8 @@ public static class DirectionsMenu
             {
                 if (filter == null || filter(maneuverData.Key))
                 {
+                    HasAnyAvailableManeuver = true;
+
                     if (!linesExist.Contains(maneuverSpeed)) linesExist.Add(maneuverSpeed);
 
                     SetManeuverColor(button, maneuverData);
@@ -292,6 +307,11 @@ public static class DirectionsMenu
             maneuverColor = Color.red;
             if (Selection.ThisShip != null && Selection.ThisShip.IsStressed) button.transform.Find("RedBackground").gameObject.SetActive(true);
         }
+        if (maneuverData.Value == MovementComplexity.Purple)
+        {
+            maneuverColor = new Color(0.5f, 0, 0.5f);
+            if (Selection.ThisShip != null && Selection.ThisShip.State.Force < 1) button.transform.Find("RedBackground").gameObject.SetActive(true);
+        }
         button.GetComponentInChildren<Text>().color = maneuverColor;
     }
 
@@ -350,6 +370,18 @@ namespace SubPhases
         {
             Phases.CurrentSubPhase = PreviousSubPhase;
             CallBack();
+        }
+
+        public override bool ThisShipCanBeSelected(GenericShip ship, int mouseKeyIsPressed)
+        {
+            bool result = false;
+            return result;
+        }
+
+        public override bool AnotherShipCanBeSelected(GenericShip anotherShip, int mouseKeyIsPressed)
+        {
+            bool result = false;
+            return result;
         }
     }
 }

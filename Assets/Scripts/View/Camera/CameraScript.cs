@@ -53,12 +53,12 @@ public class CameraScript : MonoBehaviour {
     private const float SENSITIVITY_MOVE = 0.125f;
     private const float SENSITIVITY_TURN = 5;
     private const float SENSITIVITY_ZOOM = 5;
-    private const float MOUSE_MOVE_START_OFFSET = 5f;
-    private const float BORDER_SQUARE = 9f;
-    private const float MAX_HEIGHT = 6f;
+    private const float MOUSE_MOVE_START_OFFSET = 2f;
+    private const float BORDER_SQUARE = 18f;
+    private const float MAX_HEIGHT = 8f;
     private const float MIN_HEIGHT = 1.5f;
     private const float MAX_ROTATION = 89.99f;
-    private const float MIN_ROTATION = 0f;
+    private const float MIN_ROTATION = 314.99f;
 
     // Constants for touch controls
     private const float SENSITIVITY_TOUCH_MOVE = 0.010f;
@@ -160,24 +160,25 @@ public class CameraScript : MonoBehaviour {
         CheckChangeMode();
 
         //Don't move camera while "Select a maneuver" window is shown - fixes problem with touch input
-        if (DirectionsMenu.IsVisible) return;
-
-        if (InputTouchIsEnabled)
+        if (!DirectionsMenu.IsVisible)
         {
-            CamRotateZoomByTouch();
-            CamMoveByTouch();
-        }
+            if (InputTouchIsEnabled)
+            {
+                CamRotateZoomByTouch();
+                CamMoveByTouch();
+            }
 
-        if (InputMouseIsEnabled)
-        {
-            CamMoveByMouse();
-            CamZoomByMouseScroll();
-            CamRotateByMouse();
-        }
+            if (InputMouseIsEnabled)
+            {
+                CamMoveByMouse();
+                CamZoomByMouseScroll();
+                CamRotateByMouse();
+            }
 
-        if (InputAxisAreEnabled)
-        {
-            CamMoveByAxis();
+            if (InputAxisAreEnabled)
+            {
+                CamMoveByAxis();
+            }
         }
 
         CamClampPosition();
@@ -211,12 +212,48 @@ public class CameraScript : MonoBehaviour {
     private void CamMoveByAxis()
     {
         if (Console.IsActive || Input.GetKey(KeyCode.LeftControl)) return;
+        float runScale = (Input.GetKey(KeyCode.LeftShift)) ? 3 : 1;
 
-        float x = Input.GetAxis("Horizontal") * SENSITIVITY_MOVE;
-        float y = Input.GetAxis("Vertical") * SENSITIVITY_MOVE;
+        float x = GetXMovement();
+        if (x != 0) x = x * SENSITIVITY_MOVE * runScale;
+
+        float y = GetYMovement();
+        if (y != 0) y = y * SENSITIVITY_MOVE * runScale;
+
         if ((x != 0) || (y != 0)) WhenViewChanged();
         transform.Translate (x, y, 0);
 	}
+
+    private float GetXMovement()
+    {
+        float result = 0f;
+        if (DebugManager.AlternativeCameraControls)
+        {
+            result += Mathf.Clamp(Input.GetAxis("Horizontal"), -1f, 1f);
+        }
+        else
+        {
+            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) result += -1f;
+            if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) result += 1f;
+        }
+        return result;
+    }
+
+    private float GetYMovement()
+    {
+        float result = 0f;
+        if (DebugManager.AlternativeCameraControls)
+        {
+            result += Mathf.Clamp(Input.GetAxis("Vertical"), -1f, 1f);
+        }
+        else
+        {
+            if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) result += -1f;
+            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) result += 1f;
+        }
+        return result;
+    }
+
 
     private void CamMoveByMouse()
     {
@@ -528,13 +565,14 @@ public class CameraScript : MonoBehaviour {
     {
         float currentTurnX = Camera.eulerAngles.x;
         float newTurnX = turnX + currentTurnX;
-        if (newTurnX > MAX_ROTATION)
+        
+        if (newTurnX > MAX_ROTATION && newTurnX < 180)
         {
             turnX = MAX_ROTATION - currentTurnX;
         }
-        else if (newTurnX < MIN_ROTATION)
+        else if (newTurnX < MIN_ROTATION && newTurnX > 180)
         {
-            turnX = MIN_ROTATION - currentTurnX;
+            turnX = currentTurnX - MIN_ROTATION;
         }
         return turnX;
     }

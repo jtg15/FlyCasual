@@ -35,15 +35,15 @@ namespace Abilities.SecondEdition
             Selection.ThisShip = (GenericShip)sender;
 
             ToraniKuldaAbilityDecisionSubPhaseSE subphase = Phases.StartTemporarySubPhaseNew<ToraniKuldaAbilityDecisionSubPhaseSE>(
-                "Select effect of Torani Kulda's ability",
+                "Select effect of " + HostShip.PilotInfo.PilotName + "'s ability",
                 delegate {
                     Selection.ThisShip = HostShip;
                     Triggers.FinishTrigger();
                 }
             );
 
-            subphase.DescriptionShort = "Torani Kulda";
-            subphase.DescriptionLong = Selection.ThisShip.ShipId + ": " + "Select effect of Torani Kulda's ability";
+            subphase.DescriptionShort = HostShip.PilotInfo.PilotName;
+            subphase.DescriptionLong = Selection.ThisShip.ShipId + ": " + "Select effect of " + HostShip.PilotInfo.PilotName + "'s ability";
             subphase.ImageSource = HostShip;
 
             subphase.Start();
@@ -64,6 +64,8 @@ namespace SubPhases
 
         private void SufferDamage(object sender, System.EventArgs e)
         {
+            Messages.ShowInfo("Torani Kulda's ability: " + Selection.ThisShip.PilotInfo.PilotName + " decided to suffer 1 damage");
+
             DamageSourceEventArgs toranikuldaDamage = new DamageSourceEventArgs()
             {
                 Source = "Torani Kulda",

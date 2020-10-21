@@ -9,12 +9,19 @@ using UnityEngine;
 
 namespace Obstacles
 {
+    public enum CollisionDetectionQuality
+    {
+        Low,
+        High
+    }
+
     public class ObstaclesManager
     {
         public static ObstaclesManager Instance;
 
         public List<GenericObstacle> AllPossibleObstacles { get; private set; }
         public List<GenericObstacle> ChosenObstacles { get; set; }
+        public static CollisionDetectionQuality CollisionDetectionQuality { get; private set; }
 
         public ObstaclesManager()
         {
@@ -58,12 +65,12 @@ namespace Obstacles
                 Instance.AllPossibleObstacles.Add(
                     new Debris(
                         "VT49 Debris " + i,
-                        "vt49debris" + i
+                        "vt49decimatordebris" + i
                     )
                 );
             }
 
-            for (int i = 1; i < 4; i++)
+            for (int i = 1; i < 7; i++)
             {
                 Instance.AllPossibleObstacles.Add(
                     new GasCloud(
@@ -99,6 +106,7 @@ namespace Obstacles
 
         public static GenericObstacle GetPossibleObstacle(string obstacleShortName)
         {
+            obstacleShortName = obstacleShortName.Replace("vt49debris", "vt49decimatordebris"); // Pre 1.4
             return Instance.AllPossibleObstacles.First(n => n.ShortName == obstacleShortName);
         }
 
@@ -131,6 +139,27 @@ namespace Obstacles
             Instance.ChosenObstacles.Remove(obstacle);
             Board.Objects.Remove(obstacle.ObstacleGO.GetComponentInChildren<MeshCollider>());
             GameObject.Destroy(obstacle.ObstacleGO);
+        }
+
+        public static void SetObstaclesCollisionDetectionQuality(CollisionDetectionQuality quality)
+        {
+            CollisionDetectionQuality = quality;
+            if (quality == CollisionDetectionQuality.High)
+            {
+                foreach (GenericObstacle obstacle in Instance.ChosenObstacles)
+                {
+                    obstacle.ObstacleGO.GetComponentInChildren<MeshCollider>().isTrigger = false;
+                    obstacle.ObstacleGO.GetComponentInChildren<MeshCollider>().convex = false;
+                }
+            }
+            else
+            {
+                foreach (GenericObstacle obstacle in Instance.ChosenObstacles)
+                {
+                    obstacle.ObstacleGO.GetComponentInChildren<MeshCollider>().convex = true;
+                    obstacle.ObstacleGO.GetComponentInChildren<MeshCollider>().isTrigger = true;
+                }
+            }
         }
     }
 }

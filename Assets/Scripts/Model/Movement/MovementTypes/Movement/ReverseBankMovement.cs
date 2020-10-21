@@ -15,14 +15,15 @@ namespace Movement
 
         }
 
-        public override void Perform()
+        public override IEnumerator Perform()
         {
-            base.Perform();
+            Initialize();
 
             Rotate180Hidden();
             AlterDirection();
 
-            movementPrediction = new MovementPrediction(this, TheShip.Owner.AfterShipMovementPrediction);
+            movementPrediction = new MovementPrediction(TheShip, this);
+            yield return movementPrediction.CalculateMovementPredicition();
         }
 
         private void Rotate180Hidden()
@@ -48,7 +49,7 @@ namespace Movement
 
         protected override float SetAnimationSpeed()
         {
-            return 360f / Speed;
+            return 2f * 360f / Speed;
         }
 
         protected override float SetTurningAroundDistance()

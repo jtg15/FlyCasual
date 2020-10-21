@@ -15,7 +15,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Chewbacca",
                     4,
-                    63,
+                    61,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.ChewbaccaPilotAbility),
                     extraUpgradeIcon: UpgradeType.Talent
@@ -90,17 +90,17 @@ namespace Abilities.SecondEdition
                 HostShip.IsCannotAttackSecondTime = true;
 
                 Combat.StartSelectAttackTarget(
-                        HostShip,
-                        CleanupBonusAttack,
-                        null,
-                        HostShip.PilotInfo.PilotName,
-                        "Chewbacca: a friendly ship was destroyed you may to perform a bonus attack",
-                        HostShip
-                    );
+                    HostShip,
+                    CleanupBonusAttack,
+                    null,
+                    HostShip.PilotInfo.PilotName,
+                    "A friendly ship was destroyed - you may perform a bonus attack",
+                    HostShip
+                );
             }
             else
             {
-                Messages.ShowErrorToHuman(string.Format("{0} cannot preform a second bonus attack", HostShip.PilotInfo.PilotName));
+                Messages.ShowErrorToHuman(string.Format("{0} cannot perform second bonus attack", HostShip.PilotInfo.PilotName));
                 CleanupBonusAttack();
             }
         }

@@ -23,6 +23,7 @@ namespace Editions
         public abstract int MinShipsCount { get; }
         public abstract string CombatPhaseName { get; }
         public abstract Color MovementEasyColor { get; }
+        public abstract bool CanAttackBumpedTarget { get; }
         public abstract MovementComplexity IonManeuverComplexity { get; }
         public abstract Dictionary<Type, int> DamageDeckContent { get; }
         public abstract Dictionary<BaseSize, int> NegativeTokensToAffectShip { get; }
@@ -58,13 +59,14 @@ namespace Editions
         public abstract void BarrelRollTemplatePlanning();
         public abstract void DecloakTemplatePlanning();
         public abstract void ReloadAction();
+        public abstract bool DefenderIsReinforcedAgainstAttacker(ArcFacing facing, GenericShip defender, GenericShip attacker);
         public abstract bool ReinforceEffectCanBeUsed(ArcFacing facing);
         public abstract bool ReinforcePostCombatEffectCanBeUsed(ArcFacing facing);
         public abstract void TimedBombActivationTime(GenericShip ship);
         public abstract void SquadBuilderIsOpened();
         public abstract bool IsTokenCanBeDiscardedByJam(GenericToken token);
         public abstract string GetPilotImageUrl(GenericShip ship, string filename);
-        public abstract string GetUpgradeImageUrl(GenericUpgrade upgrade);
+        public abstract string GetUpgradeImageUrl(GenericUpgrade upgrade, string filename = null);
 
         public virtual void AdaptShipToRules(GenericShip ship) { }
         public virtual void AdaptPilotToRules(GenericShip ship) { }

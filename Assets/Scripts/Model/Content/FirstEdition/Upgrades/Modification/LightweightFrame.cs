@@ -44,7 +44,7 @@ namespace Abilities.FirstEdition
                 ImageUrl = HostUpgrade.ImageUrl,
                 HostShip = host,
             };
-            host.AddAvailableDiceModification(newAction);
+            host.AddAvailableDiceModificationOwn(newAction);
         }
     }
 }
@@ -83,7 +83,7 @@ namespace ActionsList
         public override void ActionEffect(System.Action callBack)
         {
             Messages.ShowInfo("Lightweight Frame gives this ship 1 additional defense die");
-            DiceRoll.CurrentDiceRoll.RollInDice(callBack);
+            DiceRoll.CurrentDiceRoll.RollInDice(delegate { callBack(); });
         }
     }
 

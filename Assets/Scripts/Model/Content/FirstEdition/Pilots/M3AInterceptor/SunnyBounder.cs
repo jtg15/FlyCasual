@@ -46,7 +46,10 @@ namespace Abilities.FirstEdition
         {
             if (!IsAbilityUsed && Combat.CurrentDiceRoll.DiceList.All(die => die.Side == Combat.CurrentDiceRoll.DiceList.First().Side))
             {
-                HostShip.AddAvailableDiceModification(new ActionsList.FirstEdition.SunnyBounderAbilityAction(() => { IsAbilityUsed = true; HostShip = HostShip; }));
+                HostShip.AddAvailableDiceModificationOwn
+                (
+                    new ActionsList.FirstEdition.SunnyBounderAbilityAction(() => { IsAbilityUsed = true; }) { ImageUrl = HostShip.ImageUrl }
+                );
             }
         }
     }
@@ -61,7 +64,7 @@ namespace ActionsList.FirstEdition
 
         public SunnyBounderAbilityAction(Action setAbilityIsUsed)
         {
-            Name = DiceModificationName = "Sunny Bounder ability";
+            Name = DiceModificationName = "Sunny Bounder";
             abilityIsUsed = setAbilityIsUsed;
         }
 
@@ -73,8 +76,7 @@ namespace ActionsList.FirstEdition
         public override void ActionEffect(System.Action callBack)
         {
             abilityIsUsed();
-            Combat.CurrentDiceRoll.AddDice(Combat.CurrentDiceRoll.DiceList.First().Side).ShowWithoutRoll();
-            Combat.CurrentDiceRoll.OrganizeDicePositions();
+            Combat.CurrentDiceRoll.AddDiceAndShow(Combat.CurrentDiceRoll.DiceList.First().Side);
             callBack();
         }
     }

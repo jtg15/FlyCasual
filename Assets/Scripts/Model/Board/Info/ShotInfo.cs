@@ -49,11 +49,6 @@ namespace BoardTools
         //EVENTS
         public delegate void EventHandlerShipShipWeaponInt(GenericShip thisShip, GenericShip anotherShip, IShipWeapon chosenWeapon, ref int range);
 
-        internal bool InArcByType(object bullseye)
-        {
-            throw new NotImplementedException();
-        }
-
         public static event EventHandlerShipShipWeaponInt OnRangeIsMeasured;
 
         /// <summary>
@@ -130,7 +125,11 @@ namespace BoardTools
 
                     IsShotAvailable = true;
 
-                    if (!(arc is ArcBullseye)) ShotAvailableFromArcs.Add(arc);
+                    if (!(arc is ArcBullseye)
+                        || (Weapon.WeaponInfo.ArcRestrictions.Count > 0 && Weapon.WeaponInfo.ArcRestrictions.Contains(ArcType.Bullseye)))
+                    {
+                        ShotAvailableFromArcs.Add(arc);
+                    }
                 }
 
                 if (NearestFailedDistance == null)

@@ -21,12 +21,6 @@ namespace Movement
 
         }
 
-        public override void Perform()
-        {
-            base.Perform();
-            Initialize();
-        }
-
         public override void Initialize()
         {
             base.Initialize();
@@ -233,6 +227,49 @@ namespace Movement
             }
 
             MonoBehaviour.Destroy(savedShipStand);
+
+            MovementTemplates.HideLastMovementRuler();
+
+            return result;
+        }
+
+        public override GameObject[] PlanFinalPosition()
+        {
+            //Temporary
+            MovementTemplates.ApplyMovementRuler(TheShip);
+
+            GameObject[] result = new GameObject[1];
+
+            float distance = ProgressTarget;
+            Vector3 position = TheShip.GetPosition();
+
+            GameObject prefab = (GameObject)Resources.Load(TheShip.ShipBase.TemporaryPrefabPath, typeof(GameObject));
+            GameObject ShipStand = MonoBehaviour.Instantiate(prefab, position, TheShip.GetRotation(), BoardTools.Board.GetBoard());
+
+            Renderer[] renderers = ShipStand.GetComponentsInChildren<Renderer>();
+            if (!DebugManager.DebugMovementShowTempBases)
+            {
+                foreach (var render in renderers)
+                {
+                    render.enabled = false;
+                }
+            }
+
+            float turningDirection = (Direction == ManeuverDirection.Right) ? 1 : -1;
+            ShipStand.transform.RotateAround(TheShip.TransformPoint(new Vector3(turningAroundDistance * turningDirection, 0, 0)), new Vector3(0, 1, 0), turningDirection * distance);
+
+            UpdatePlanningRotation(ShipStand);
+
+            position = ShipStand.transform.position;
+            distance = TheShip.ShipBase.GetShipBaseDistance();
+
+            ShipStand.transform.position = Vector3.MoveTowards(position, position + ShipStand.transform.TransformDirection(Vector3.forward), distance);
+            
+            UpdatePlanningRotationFinisher(ShipStand);
+
+            result[0] = ShipStand;
+
+            ShipStand.name = "Finishing";
 
             MovementTemplates.HideLastMovementRuler();
 

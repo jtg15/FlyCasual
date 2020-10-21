@@ -93,7 +93,7 @@ namespace Ship.SecondEdition.VultureClassDroidFighter
             // TODO: AI Table
             HotacManeuverTable = new AI.EscapeCraftTable();
 
-            ManeuversImageUrl = "https://vignette.wikia.nocookie.net/xwing-miniatures-second-edition/images/9/97/Maneuver_vulture_droid.png";
+            ShipIconLetter = '_';
         }
     }
 }
@@ -208,7 +208,7 @@ namespace Abilities.SecondEdition
 
         private bool FilterTargets(GenericShip ship)
         {
-            return FilterByTargetType(ship, TargetTypes.This, TargetTypes.OtherFriendly) && FilterTargetsByRange(ship, 0, 1);
+            return FilterByTargetType(ship, TargetTypes.This, TargetTypes.OtherFriendly) && FilterTargetsByRange(ship, 0, 1) && (ship.Tokens.HasToken<CalculateToken>());
         }
 
         private int GetAiPriority(GenericShip ship)

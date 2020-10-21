@@ -22,10 +22,7 @@ namespace Ship
             return AssignedTokens;
         }
 
-        public bool HasGreenTokens()
-        {
-            return HasTokenByColor(TokenColors.Green);
-        }
+        public bool HasGreenTokens => HasTokenByColor(TokenColors.Green);
 
         public bool HasTokenByColor(TokenColors tokensColor)
         {
@@ -135,9 +132,17 @@ namespace Ship
             );
         }
 
-        public void AssignToken(Type tokenType, Action callback)
+        public void AssignToken(Type tokenType, Action callback, Players.GenericPlayer assigner = null)
         {
-            AssignToken((GenericToken) Activator.CreateInstance(tokenType, Host), callback);
+            if (tokenType == typeof(JamToken) || tokenType == typeof(TractorBeamToken))
+            {
+                if (assigner == null)
+                    throw new InvalidOperationException("assigner must be specified when assigning a " + tokenType.ToString());
+                
+                AssignToken((GenericToken)Activator.CreateInstance(tokenType, Host, assigner), callback);
+            }
+            else
+                AssignToken((GenericToken)Activator.CreateInstance(tokenType, Host), callback);
         }
 
         public void AssignTokens(Func<GenericToken> createToken, int count, Action callback, char letter = ' ')
@@ -280,11 +285,11 @@ namespace Ship
             );
         }
 
-        public void TransferToken(Type tokenType, GenericShip targetShip, Action callback)
+        public void TransferToken(Type tokenType, GenericShip targetShip, Action callback, Players.GenericPlayer assigner = null)
         {
             Host.Tokens.RemoveToken(
                 tokenType,
-                () => targetShip.Tokens.AssignToken(tokenType, callback)
+                () => targetShip.Tokens.AssignToken(tokenType, callback, assigner)
             );
         }
 
@@ -314,7 +319,7 @@ namespace Ship
         public static TokenColors GetTokenColorByType(Type tokenType)
         {
             GenericToken token = null;
-            if (tokenType != typeof(TractorBeamToken))
+            if (tokenType != typeof(TractorBeamToken) && tokenType != typeof(JamToken))
             {
                 token = (GenericToken)Activator.CreateInstance(tokenType, Roster.AllUnits.First().Value);
             }

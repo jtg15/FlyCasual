@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Tokens;
+using UnityEngine;
 using Upgrade;
 
 namespace UpgradesList.SecondEdition
@@ -15,8 +16,6 @@ namespace UpgradesList.SecondEdition
     {
         public DiscordMissiles() : base()
         {
-            IsHidden = true;
-
             UpgradeInfo = new UpgradeCardInfo(
                 "Discord Missiles",
                 UpgradeType.Missile,
@@ -75,21 +74,39 @@ namespace Abilities.SecondEdition
 
         private void RegisterOwnAbilityTrigger()
         {
-            Phases.Events.OnEndPhaseStart_Triggers -= RegisterOwnAbilityTrigger;
+            Phases.Events.OnCombatPhaseStart_Triggers -= RegisterOwnAbilityTrigger;
 
-            RegisterAbilityTrigger(TriggerTypes.OnCombatPhaseStart, AskToUseOwnAbility);
+            Triggers.RegisterTrigger
+            (
+                new Trigger()
+                {
+                    Name = HostShip.ShipId + ": " + HostUpgrade.UpgradeInfo.Name,
+                    TriggerType = TriggerTypes.OnCombatPhaseStart,
+                    EventHandler = AskToUseOwnAbility,
+                    TriggerOwner = HostShip.Owner.PlayerNo
+                }
+            );
         }
 
         private void AskToUseOwnAbility(object sender, EventArgs e)
         {
-            AskToUseAbility(
-                HostUpgrade.UpgradeInfo.Name,
-                NeverUseByDefault,
-                StartRemoteDeployment,
-                descriptionLong: "Do you want to launch 1 Buzz Droid Swarm?",
-                imageHolder: HostUpgrade,
-                requiredPlayer: HostShip.Owner.PlayerNo
-            );
+            if (HostShip.Tokens.HasToken(typeof(CalculateToken)))
+            {
+                Selection.ChangeActiveShip(HostShip);
+
+                AskToUseAbility(
+                    HostUpgrade.UpgradeInfo.Name,
+                    NeverUseByDefault,
+                    StartRemoteDeployment,
+                    descriptionLong: "Do you want to launch 1 Buzz Droid Swarm?",
+                    imageHolder: HostUpgrade,
+                    requiredPlayer: HostShip.Owner.PlayerNo
+                );
+            }
+            else
+            {
+                Triggers.FinishTrigger();
+            }            
         }
 
         private void StartRemoteDeployment(object sender, EventArgs e)
@@ -111,7 +128,14 @@ namespace Abilities.SecondEdition
         private void FinishRemoteDeployment()
         {
             HostUpgrade.State.SpendCharge();
-            HostShip.Tokens.SpendToken(typeof(CalculateToken), Triggers.FinishTrigger);
+            HostShip.Tokens.SpendToken(typeof(CalculateToken), FinishAbility);
+        }
+
+        private void FinishAbility()
+        {
+            Selection.DeselectThisShip();
+
+            Triggers.FinishTrigger();
         }
     }
 }

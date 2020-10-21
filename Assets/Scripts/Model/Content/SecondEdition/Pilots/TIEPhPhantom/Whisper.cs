@@ -13,7 +13,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "\"Whisper\"",
                     5,
-                    57,
+                    60,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.WhisperAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -28,6 +28,9 @@ namespace Abilities.SecondEdition
 {
     public class WhisperAbility : Abilities.FirstEdition.WhisperAbility
     {
+        protected override string DescriptionLong => "Do you want to gain 1 Evade Token?";
+        protected override string TokenIsAssignedMessage => " gains Evade token";
+
         protected override Type GetTokenType()
         {
             return typeof(EvadeToken);

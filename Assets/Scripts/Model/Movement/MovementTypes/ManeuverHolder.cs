@@ -36,7 +36,10 @@ namespace Movement
         Stationary,
         ReverseStraight,
         ReverseBank,
-        SegnorsLoopUsingTurnTemplate
+        SegnorsLoopUsingTurnTemplate,
+        SideslipBank,
+        SideslipTurn,
+        SideslipAny
     }
 
     public enum MovementComplexity
@@ -44,7 +47,8 @@ namespace Movement
         None,
         Easy,
         Normal,
-        Complex
+        Complex,
+        Purple
     }
 
     public struct ManeuverHolder
@@ -131,8 +135,14 @@ namespace Movement
                 case "B":
                     bearing = ManeuverBearing.Bank;
                     break;
+                case "b":
+                    bearing = ManeuverBearing.SideslipBank;
+                    break;
                 case "T":
                     bearing = ManeuverBearing.Turn;
+                    break;
+                case "t":
+                    bearing = ManeuverBearing.SideslipTurn;
                     break;
                 case "V":
                     bearing = ManeuverBearing.ReverseStraight;
@@ -170,7 +180,7 @@ namespace Movement
             }
         }
 
-        public int SpeedInt
+        public int SpeedIntUnsigned
         {
             set
             {
@@ -233,11 +243,16 @@ namespace Movement
             }
         }
 
+        public int SpeedIntSigned
+        {
+            get { return SpeedIntUnsigned * ((Bearing == ManeuverBearing.ReverseStraight || Bearing == ManeuverBearing.ReverseBank) ? -1 : 1); }
+        }
+
         public override string ToString()
         {
             string maneuverString = "";
 
-            maneuverString += SpeedInt + ".";
+            maneuverString += SpeedIntUnsigned + ".";
 
             switch (Direction)
             {
@@ -265,8 +280,14 @@ namespace Movement
                 case ManeuverBearing.Bank:
                     maneuverString += "B";
                     break;
+                case ManeuverBearing.SideslipBank:
+                    maneuverString += "b";
+                    break;
                 case ManeuverBearing.Turn:
                     maneuverString += "T";
+                    break;
+                case ManeuverBearing.SideslipTurn:
+                    maneuverString += "t";
                     break;
                 case ManeuverBearing.KoiogranTurn:
                     maneuverString += "R";
@@ -291,6 +312,57 @@ namespace Movement
             }
 
             return maneuverString;
+        }
+
+        public char GetUiChar()
+        {
+            char result = '-';
+
+            if (Bearing == ManeuverBearing.Straight)
+            {
+                result = '8';
+            }
+            else if (Bearing == ManeuverBearing.Bank)
+            {
+                result = (Direction == ManeuverDirection.Left) ? '7' : '9';
+            }
+            else if (Bearing == ManeuverBearing.Turn)
+            {
+                result = (Direction == ManeuverDirection.Left) ? '4' : '6';
+            }
+            else if (Bearing == ManeuverBearing.KoiogranTurn)
+            {
+                result = '2';
+            }
+            else if (Bearing == ManeuverBearing.SegnorsLoop)
+            {
+                result = (Direction == ManeuverDirection.Left) ? '1' : '3';
+            }
+            else if (Bearing == ManeuverBearing.TallonRoll)
+            {
+                result = (Direction == ManeuverDirection.Left) ? ':' : ';';
+            }
+            else if (Bearing == ManeuverBearing.Stationary)
+            {
+                result = '5';
+            }
+            else if (Bearing == ManeuverBearing.ReverseStraight)
+            {
+                switch (Direction)
+                {
+                    case ManeuverDirection.Left:
+                        result = 'J';
+                        break;
+                    case ManeuverDirection.Forward:
+                        result = 'K';
+                        break;
+                    case ManeuverDirection.Right:
+                        result = 'L';
+                        break;
+                }
+            }
+
+            return result;
         }
     }
 }

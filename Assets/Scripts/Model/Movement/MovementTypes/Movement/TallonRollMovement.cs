@@ -15,11 +15,12 @@ namespace Movement
             RotationEndDegrees = (direction == ManeuverDirection.Left) ? -90 : 90;
         }
 
-        public override void Perform()
+        public override IEnumerator Perform()
         {
-            base.Perform();
+            Initialize();
 
-            movementPrediction = new MovementPrediction(this, TheShip.Owner.AfterShipMovementPrediction);
+            movementPrediction = new MovementPrediction(TheShip, this);
+            yield return movementPrediction.CalculateMovementPredicition();
         }
 
         protected override float SetProgressTarget()
@@ -29,7 +30,7 @@ namespace Movement
 
         protected override float SetAnimationSpeed()
         {
-            return 720f / Speed;
+            return 4f * 360f / Speed;
         }
 
         protected override float SetTurningAroundDistance()

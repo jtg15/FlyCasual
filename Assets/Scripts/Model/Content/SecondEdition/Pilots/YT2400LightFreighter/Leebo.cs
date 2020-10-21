@@ -1,6 +1,4 @@
-﻿using Actions;
-using ActionsList;
-using Ship;
+﻿using Ship;
 using System.Collections;
 using System.Collections.Generic;
 using Upgrade;
@@ -16,9 +14,10 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Leebo",
                     3,
-                    81,
+                    76,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.LeeboAbility),
+                    extraUpgradeIcon: UpgradeType.Talent,
                     seImageNumber: 78
                 );
 
@@ -70,11 +69,14 @@ namespace Abilities.SecondEdition
                     Name = "Assign calculate to Leebo.",
                     TriggerType = TriggerTypes.OnAttackFinish,
                     TriggerOwner = HostShip.Owner.PlayerNo,
-                    EventHandler = delegate {
-                        HostShip.Tokens.AssignToken(new Tokens.CalculateToken(HostShip), Triggers.FinishTrigger);
-                    }
+                    EventHandler = AssignCalculateToken
                 });
             }
+        }
+        private void AssignCalculateToken(object sender, System.EventArgs e)
+        {
+            Messages.ShowInfo("Calculate token is assigned to " + HostShip.PilotInfo.PilotName);
+            HostShip.Tokens.AssignToken(new Tokens.CalculateToken(HostShip), Triggers.FinishTrigger);
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "Lando Calrissian",
                     4,
-                    49,
+                    42,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.LandoCalrissianScumPilotAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -33,7 +33,7 @@ namespace Abilities.SecondEdition
         public override void ActivateAbility()
         {
             AddDiceModification(
-                HostShip.PilotInfo.PilotName,
+                "Lando Calrissian",
                 IsDiceModificationAvailable,
                 GetAiPriority,
                 DiceModificationType.Reroll,

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using BoardTools;
 using Ship;
@@ -20,7 +21,7 @@ namespace Ship
                     40,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.KazudaXionoAbility),
-                    extraUpgradeIcon: UpgradeType.Talent
+                    extraUpgradeIcons: new List<UpgradeType> { UpgradeType.Talent, UpgradeType.Astromech }
                 );
 
                 ImageUrl = "https://images-cdn.fantasyflightgames.com/filer_public/16/42/164202d5-47a5-44ea-a96b-49c795005ca8/swz63_a1_card_kazuda-xiono.png";
@@ -52,7 +53,7 @@ namespace Abilities.SecondEdition
             if (Combat.Attacker.State.Initiative > HostShip.Damage.DamageCards.Count)
             {
                 count++;
-                Messages.ShowInfo("Initiative of attacker is higher than the number of damage cards Kazuda Xiono has, Kazuda Xiono rolls +1 defense die");
+                Messages.ShowInfo("Initiative of attacker is higher than the number of damage cards " + HostShip.PilotInfo.PilotName + " has, " + HostShip.PilotInfo.PilotName + " rolls +1 defense die");
             }
         }
 
@@ -61,7 +62,7 @@ namespace Abilities.SecondEdition
             if (Combat.Defender.State.Initiative > HostShip.Damage.DamageCards.Count)
             {
                 count++;
-                Messages.ShowInfo("Initiative of defender is higher than the number of damage cards Kazuda Xiono has, Kazuda Xiono rolls +1 attack die");
+                Messages.ShowInfo("Initiative of defender is higher than the number of damage cards " + HostShip.PilotInfo.PilotName + " has, " + HostShip.PilotInfo.PilotName + " rolls +1 attack die");
             }
         }
     }

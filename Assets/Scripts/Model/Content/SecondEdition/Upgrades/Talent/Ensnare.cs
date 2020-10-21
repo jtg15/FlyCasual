@@ -25,13 +25,13 @@ namespace UpgradesList.SecondEdition
         {
             Dictionary<int, int> initiativeToCost = new Dictionary<int, int>()
             {
-                {0, 10},
-                {1, 10},
-                {2, 10},
-                {3, 10},
-                {4, 10},
-                {5, 16},
-                {6, 24}
+                {0, 21},
+                {1, 21},
+                {2, 21},
+                {3, 21},
+                {4, 21},
+                {5, 24},
+                {6, 28}
             };
 
             UpgradeInfo.Cost = initiativeToCost[ship.PilotInfo.Initiative];

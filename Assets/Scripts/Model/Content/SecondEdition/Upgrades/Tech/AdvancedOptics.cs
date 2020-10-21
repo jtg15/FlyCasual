@@ -44,7 +44,7 @@ namespace Abilities.SecondEdition
                 ImageUrl = HostUpgrade.ImageUrl,
                 HostShip = HostShip
             };
-            host.AddAvailableDiceModification(newAction);
+            host.AddAvailableDiceModificationOwn(newAction);
         }
 
     }
@@ -72,7 +72,6 @@ namespace ActionsList
             }
 
             Combat.CurrentDiceRoll.ChangeOne(DieSide.Blank, DieSide.Success);
-            Combat.CurrentDiceRoll.OrganizeDicePositions();
 
             HostShip.Tokens.SpendToken(
                 typeof(FocusToken),

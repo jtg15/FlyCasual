@@ -14,7 +14,7 @@ namespace Ship
                 PilotInfo = new PilotCardInfo(
                     "\"Countdown\"",
                     4,
-                    44,
+                    43,
                     isLimited: true,
                     abilityType: typeof(Abilities.SecondEdition.CountdownAbility),
                     extraUpgradeIcon: UpgradeType.Talent,
@@ -67,7 +67,7 @@ namespace Abilities.SecondEdition
 
             DamageSourceEventArgs countdownDamage = new DamageSourceEventArgs
             {
-                Source = "Countdown's ability",
+                Source = HostShip,
                 DamageType = DamageTypes.CardAbility
             };
 

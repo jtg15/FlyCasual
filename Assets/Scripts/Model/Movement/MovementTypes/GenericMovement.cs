@@ -5,6 +5,7 @@ using System;
 using Editions;
 using Obstacles;
 using Remote;
+using Ship;
 
 namespace Movement
 { 
@@ -20,22 +21,16 @@ namespace Movement
         public ManeuverBearing Bearing { get; set; }
         public MovementComplexity ColorComplexity { get; set; }
 
-        private Ship.GenericShip theShip;
-        public Ship.GenericShip TheShip {
-            get {
-                return theShip ?? Selection.ThisShip;
-            }
-            set {
-                theShip = value;
-            }
+        private GenericShip theShip;
+        public GenericShip TheShip
+        {
+            get { return theShip ?? Selection.ThisShip; }
+            set { theShip = value; }
         }
 
         public bool IsBasicManeuver
         {
-            get
-            {
-                return Bearing == ManeuverBearing.Straight || Bearing == ManeuverBearing.Bank || Bearing == ManeuverBearing.Turn;
-            }
+            get { return Bearing == ManeuverBearing.Straight || Bearing == ManeuverBearing.Bank || Bearing == ManeuverBearing.Turn; }
         }
 
         public bool IsAdvancedManeuver
@@ -52,6 +47,10 @@ namespace Movement
         public bool IsSimple;
 
         public int RotationEndDegrees = 0;
+        public bool HasRotationInTheEnd { get { return RotationEndDegrees != 0; } }
+
+        public ShipPositionInfo FinalPositionInfo;
+        public ShipPositionInfo FinalPositionInfoBeforeRotation;
 
         public GenericMovement(int speed, ManeuverDirection direction, ManeuverBearing bearing, MovementComplexity color)
         {
@@ -101,10 +100,7 @@ namespace Movement
             return maneuverSpeed;
         }
 
-        public virtual void Perform()
-        {
-            ProgressCurrent = 0f;
-        }
+        public abstract IEnumerator Perform();
 
         public virtual void LaunchShipMovement()
         {
@@ -120,6 +116,8 @@ namespace Movement
                 Rules.Collision.AddBump(TheShip, shipBumped);
             }
 
+            TheShip.ShipsMovedThrough = new List<GenericShip>(movementPrediction.ShipsMovedThrough);
+            TheShip.RemotesMovedThrough = new List<GenericRemote>(movementPrediction.RemotesMovedThrough);
             TheShip.RemotesOverlapped = new List<GenericRemote>(movementPrediction.RemotesOverlapped);
             TheShip.ObstaclesLanded = new List<GenericObstacle>(movementPrediction.LandedOnObstacles);
 
@@ -180,6 +178,9 @@ namespace Movement
             // TODO: Use Selection.ActiveShip instead of TheShip
             Selection.ActiveShip = TheShip;
 
+            // Important! Fixes final position according to prediction - otherwise animation can cause another final position
+            TheShip.SetPositionInfo(FinalPositionInfoBeforeRotation);
+
             ManeuverEndRotation(FinishManeuverExecution);
         }
 
@@ -203,6 +204,7 @@ namespace Movement
         }
 
         public abstract GameObject[] PlanMovement();
+        public abstract GameObject[] PlanFinalPosition();
 
         public override string ToString()
         {
@@ -330,6 +332,9 @@ namespace Movement
                     break;
                 case MovementComplexity.Complex:
                     result = Color.red;
+                    break;
+                case MovementComplexity.Purple:
+                    result = new Color(0.5f, 0, 0.5f);
                     break;
                 default:
                     break;
